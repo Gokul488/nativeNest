@@ -7,7 +7,11 @@
        password: process.env.DB_PASSWORD || '',
        database: process.env.DB_NAME || 'mydb',
        waitForConnections: true,
-       connectionLimit: 10
-     });
+       connectionLimit: 10,
+       ssl: process.env.MYSQL_USE_SSL === "true"
+    ? { ca: fs.readFileSync('/etc/secrets/aiven-ca.pem') }
+    : undefined
+});
+
 
      module.exports = pool;
