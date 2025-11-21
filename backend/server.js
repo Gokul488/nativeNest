@@ -20,10 +20,5 @@ app.use('/api/contact', contactRoutes);
 app.use('/api', userRoutes); 
 app.use('/api/blogs', blogRoutes); 
 
-
-app.get('/', (req, res) => {
-  res.send('NativeNest backend running. Use /api/* endpoints.');
-});
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));

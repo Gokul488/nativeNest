@@ -11,7 +11,7 @@ const ContactUs = () => {
     message: "",
   });
   const [status, setStatus] = useState(null);
-  const API_BASE_URL = "http://localhost:5000";
+  const API_BASE_URL = "https://nativenest-backend.onrender.com/";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

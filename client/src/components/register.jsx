@@ -16,7 +16,7 @@ const Register = () => {
   const [accountTypes, setAccountTypes] = useState([]);
   const navigate = useNavigate();
 
-  const API_BASE_URL = 'http://localhost:5000';
+  const API_BASE_URL = 'https://nativenest-backend.onrender.com/';
 
   // Random background image on each load
   const backgroundImage = useMemo(() => {
