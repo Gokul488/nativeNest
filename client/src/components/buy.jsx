@@ -40,7 +40,7 @@ const Buy = () => {
   // Memoized fetch functions
   const fetchPropertyTypes = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/properties/types');
+      const response = await fetch('https://nativenest-backend.onrender.com/api/properties/types');
       if (!response.ok) throw new Error(`Failed to fetch property types`);
       const data = await response.json();
       setPropertyTypes(['All', ...(data.propertyTypes || [])]);
@@ -51,7 +51,7 @@ const Buy = () => {
 
   const fetchBuilders = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/properties/builders');
+      const response = await fetch('https://nativenest-backend.onrender.com/api/properties/builders');
       if (!response.ok) throw new Error(`Failed to fetch builders`);
       const data = await response.json();
       setBuilders(['All', ...(data.builders || [])]);
@@ -62,7 +62,7 @@ const Buy = () => {
 
   const fetchMaxPrice = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/properties/max-price');
+      const response = await fetch('https://nativenest-backend.onrender.com/api/properties/max-price');
       if (!response.ok) throw new Error(`Failed to fetch max price`);
       const data = await response.json();
       const fetchedMaxPrice = data.maxPrice || 0;
@@ -84,7 +84,7 @@ const Buy = () => {
       if (filters.propertyType && filters.propertyType !== 'All') queryParams.append('propertyType', filters.propertyType);
       if (filters.builder && filters.builder !== 'All') queryParams.append('builder', filters.builder);
 
-      const url = `http://localhost:5000/api/properties/featured?${queryParams.toString()}`;
+      const url = `https://nativenest-backend.onrender.com/api/properties/featured?${queryParams.toString()}`;
       const response = await fetch(url);
 
       if (!response.ok) {

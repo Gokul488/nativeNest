@@ -95,8 +95,8 @@ const PostProperty = () => {
     const fetchData = async () => {
       try {
         const [typesRes, amenitiesRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/properties/types"),
-          axios.get("http://localhost:5000/api/properties/amenities"),
+          axios.get("https://nativenest-backend.onrender.com/api/properties/types"),
+          axios.get("https://nativenest-backend.onrender.com/api/properties/amenities"),
         ]);
 
         const types = typesRes.data.propertyTypes || [];
@@ -204,7 +204,7 @@ const PostProperty = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/properties", data, {
+      await axios.post("https://nativenest-backend.onrender.com/api/properties", data, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

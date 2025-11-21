@@ -12,7 +12,7 @@ const ViewProperties = () => {
     const fetchProperties = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/api/viewproperties", {
+        const response = await axios.get("https://nativenest-backend.onrender.com/api/viewproperties", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -28,7 +28,7 @@ const ViewProperties = () => {
     if (window.confirm("Are you sure you want to delete this property?")) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`http://localhost:5000/api/viewproperties/${id}`, {
+        await axios.delete(`https://nativenest-backend.onrender.com/api/viewproperties/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProperties(properties.filter((prop) => prop.id !== id));

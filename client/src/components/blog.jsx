@@ -12,7 +12,7 @@ const Blog = () => {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/blogs/featured");
+        const res = await fetch("https://nativenest-backend.onrender.com/api/blogs/featured");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const payload = await res.json();

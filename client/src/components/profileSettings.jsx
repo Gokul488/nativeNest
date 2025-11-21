@@ -14,7 +14,7 @@ const ProfileSettings = () => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/api/user", {
+        const response = await axios.get("https://nativenest-backend.onrender.com/api/user", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const user = response.data;
@@ -37,7 +37,7 @@ const ProfileSettings = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        "http://localhost:5000/api/user",
+        "https://nativenest-backend.onrender.com/api/user",
         { name, email, mobile_number: mobileNumber, password, account_type: accountType },
         {
           headers: { Authorization: `Bearer ${token}` },

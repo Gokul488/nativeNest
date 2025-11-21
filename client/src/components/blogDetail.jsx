@@ -16,7 +16,7 @@ const BlogDetail = () => {
     const fetchBlog = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/blogs/${id}`);
+        const response = await fetch(`https://nativenest-backend.onrender.com/api/blogs/${id}`);
         if (!response.ok) throw new Error('Failed to fetch blog');
         const data = await response.json();
         setBlog(data.blog);

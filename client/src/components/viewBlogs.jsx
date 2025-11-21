@@ -13,7 +13,7 @@ const ViewBlogs = () => {
         if (!token) {
           throw new Error('No token found. Please log in.');
         }
-        const response = await fetch('http://localhost:5000/api/blogs', {
+        const response = await fetch('https://nativenest-backend.onrender.com/api/blogs', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -43,7 +43,7 @@ const ViewBlogs = () => {
       if (!token) {
         throw new Error('No token found. Please log in.');
       }
-      const response = await fetch(`http://localhost:5000/api/blogs/${id}`, {
+      const response = await fetch(`https://nativenest-backend.onrender.com/api/blogs/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

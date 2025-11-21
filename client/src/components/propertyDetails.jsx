@@ -22,7 +22,7 @@ const PropertyDetails = () => {
 
   const fetchPropertyDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/properties/${id}`);
+      const response = await fetch(`https://nativenest-backend.onrender.com/api/properties/${id}`);
       if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
       const data = await response.json();
       setProperty(data.property);
