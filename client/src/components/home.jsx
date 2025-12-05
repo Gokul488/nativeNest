@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './header';
 import Footer from './footer';
-import API_BASE_URL from './config.js';
+import API_BASE_URL from '../config.js';   // ← one level up
 const Home = () => {
   const [blogs, setBlogs] = useState([]);
   const [featuredProperties, setFeaturedProperties] = useState([]);

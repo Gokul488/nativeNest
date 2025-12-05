@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
 import { motion } from "framer-motion";
-import API_BASE_URL from './config.js';   // ← This is now the ONLY place we get the URL
+import API_BASE_URL from '../config.js';   // ← one level up  // ← This is now the ONLY place we get the URL
 
 const Register = () => {
   const [showRegPassword, setShowRegPassword] = useState(false);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import API_BASE_URL from './config.js';
+import API_BASE_URL from '../config.js';   // ← one level up
 const ViewBlogs = () => {
   const [blogs, setBlogs] = useState([]);
   const [error, setError] = useState('');

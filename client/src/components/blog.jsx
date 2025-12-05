@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "./header";
 import Footer from "./footer";
-import API_BASE_URL from './config.js';   // Now used properly!
+import API_BASE_URL from '../config.js';   // ← one level up   // Now used properly!
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);

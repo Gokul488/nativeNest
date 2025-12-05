@@ -4,7 +4,7 @@ import Header from "./header";
 import Footer from "./footer";
 import { motion } from "framer-motion";
 import "./buy.css"; // Reuse home styles if needed
-import API_BASE_URL from './config.js';
+import API_BASE_URL from '../config.js';   // ← one level up
 const Buy = () => {
   const [properties, setProperties] = useState([]);
   const [propertyError, setPropertyError] = useState('');

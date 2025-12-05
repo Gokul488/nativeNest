@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import Header from "./header";
 import Footer from "./footer";
 import { motion } from "framer-motion";
-import API_BASE_URL from './config.js';
+import API_BASE_URL from '../config.js';   // ← one level up
 const PropertyDetails = () => {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
