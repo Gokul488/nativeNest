@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './header';
 import Footer from './footer';
-
+import API_BASE_URL from './config.js';
 const Home = () => {
   const [blogs, setBlogs] = useState([]);
   const [featuredProperties, setFeaturedProperties] = useState([]);
@@ -24,7 +24,7 @@ const Home = () => {
   // Fetch Functions
   const fetchBlogs = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/blogs/featured');
+      const res = await fetch(`${API_BASE_URL}/api/blogs/featured`);
       if (!res.ok) throw new Error('Failed to load blogs');
       const data = await res.json();
       setBlogs(data.blogs || []);
@@ -36,7 +36,7 @@ const Home = () => {
 
   const fetchPropertyTypes = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/properties/types');
+      const res = await fetch(`${API_BASE_URL}/api/properties/types`);
       if (!res.ok) return;
       const data = await res.json();
       setPropertyTypes(['All', ...(data.propertyTypes || [])]);
@@ -48,7 +48,7 @@ const Home = () => {
   const fetchFeaturedProperties = useCallback(async () => {
     setPropertyError('');
     try {
-      const res = await fetch('http://localhost:5000/api/properties/featured');
+      const res = await fetch(`${API_BASE_URL}/api/properties/featured`);
       if (!res.ok) throw new Error('Failed to load properties');
       const data = await res.json();
       setFeaturedProperties(data.properties || []);

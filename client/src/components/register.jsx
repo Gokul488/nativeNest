@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
 import { motion } from "framer-motion";
+import API_BASE_URL from './config.js';   // ← This is now the ONLY place we get the URL
 
 const Register = () => {
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -11,21 +12,20 @@ const Register = () => {
   const [accountTypes, setAccountTypes] = useState([]);
   const navigate = useNavigate();
 
-  const API_BASE_URL = 'http://localhost:5000';
-
+  // Fetch account types on mount
   useEffect(() => {
     const fetchAccountTypes = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/account-types`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Failed to fetch account types');
-        setAccountTypes(data.accountTypes);
+        setAccountTypes(data.accountTypes || []);
       } catch (err) {
         setError(err.message);
       }
     };
     fetchAccountTypes();
-  }, []);
+  }, []);   // ← No dependency on API_BASE_URL (it's a constant)
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -93,18 +93,14 @@ const Register = () => {
           )}
 
           <form onSubmit={handleRegister} className="space-y-5">
+            {/* All your input fields stay exactly the same */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
                 <FiType className="text-[#2e6171]" />
                 Full Name <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                name="name"
-                placeholder="Enter your name"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition"
-                required
-              />
+              <input type="text" name="name" placeholder="Enter your name" required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition" />
             </div>
 
             <div>
@@ -112,12 +108,8 @@ const Register = () => {
                 <FiMail className="text-[#2e6171]" />
                 Email (Optional)
               </label>
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter email"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition"
-              />
+              <input type="email" name="email" placeholder="Enter email"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition" />
             </div>
 
             <div>
@@ -131,13 +123,13 @@ const Register = () => {
                 placeholder="Enter 10-digit mobile"
                 maxLength="10"
                 pattern="\d{10}"
-                title="Please enter a 10-digit mobile number"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition"
                 required
                 onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition"
               />
             </div>
 
+            {/* Password fields */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
                 <FiLock className="text-[#2e6171]" />
@@ -148,14 +140,11 @@ const Register = () => {
                   type={showRegPassword ? "text" : "password"}
                   name="password"
                   placeholder="Create password"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 pr-12 transition"
                   required
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 pr-12 transition"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowRegPassword(!showRegPassword)}
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-[#2e6171]"
-                >
+                <button type="button" onClick={() => setShowRegPassword(!showRegPassword)}
+                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-[#2e6171]">
                   {showRegPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
@@ -171,14 +160,11 @@ const Register = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirm_password"
                   placeholder="Confirm password"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 pr-12 transition"
                   required
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 pr-12 transition"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-[#2e6171]"
-                >
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-[#2e6171]">
                   {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
@@ -189,12 +175,7 @@ const Register = () => {
                 <FiUser className="text-[#2e6171]" />
                 Account Type <span className="text-red-500">*</span>
               </label>
-              <select
-                name="account_type"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 transition"
-                required
-                defaultValue=""
-              >
+              <select name="account_type" required defaultValue="" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 transition">
                 <option value="" disabled>Select account type</option>
                 {accountTypes.map((type) => (
                   <option key={type} value={type}>
@@ -207,14 +188,8 @@ const Register = () => {
             <div className="flex items-start gap-2 text-sm text-gray-600">
               <input type="checkbox" required className="mt-1" />
               <span>
-                I accept the{" "}
-                <Link to="/terms-and-conditions" className="text-[#2e6171] font-medium hover:underline">
-                  Terms & Conditions
-                </Link>{" "}
-                and{" "}
-                <Link to="/privacy-policy" className="text-[#2e6171] font-medium hover:underline">
-                  Privacy Policy
-                </Link>
+                I accept the <Link to="/terms-and-conditions" className="text-[#2e6171] font-medium hover:underline">Terms & Conditions</Link> and{" "}
+                <Link to="/privacy-policy" className="text-[#2e6171] font-medium hover:underline">Privacy Policy</Link>
               </span>
             </div>
 

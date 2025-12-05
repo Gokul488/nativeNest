@@ -6,7 +6,7 @@ import { useQuill } from "react-quilljs";
 import "quill/dist/quill.snow.css";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
-
+import API_BASE_URL from './config.js';
 const animatedComponents = makeAnimated();
 
 const EditProperty = () => {
@@ -94,7 +94,7 @@ const EditProperty = () => {
     const fetchProperty = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`http://localhost:5000/api/viewproperties/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/api/viewproperties/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const prop = response.data;
@@ -126,7 +126,7 @@ const EditProperty = () => {
 
     const fetchPropertyTypes = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/properties/types");
+        const response = await axios.get(`${API_BASE_URL}/api/properties/types`);
         setPropertyTypes(response.data.propertyTypes);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to fetch property types");
@@ -135,7 +135,7 @@ const EditProperty = () => {
 
     const fetchAmenities = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/properties/amenities");
+        const response = await axios.get(`${API_BASE_URL}/api/properties/amenities`);
         const options = (response.data.amenities || []).map((a) => ({
           value: a.amenity_id,
           label: a.name,
@@ -204,7 +204,7 @@ const EditProperty = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`http://localhost:5000/api/viewproperties/${id}`, formData, {
+      await axios.put(`${API_BASE_URL}/api/viewproperties/${id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

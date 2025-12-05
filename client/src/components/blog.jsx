@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "./header";
 import Footer from "./footer";
+import API_BASE_URL from './config.js';   // Now used properly!
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
@@ -12,7 +13,7 @@ const Blog = () => {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/blogs/featured");
+        const res = await fetch(`${API_BASE_URL}/api/blogs/featured`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const payload = await res.json();
@@ -35,17 +36,17 @@ const Blog = () => {
 
         setBlogs(normalized);
       } catch (e) {
-        console.error(e);
-        setError(e.message);
+        console.error("Error fetching blogs:", e);
+        setError(e.message || "Failed to load blogs");
       } finally {
         setLoading(false);
       }
     };
 
     fetchBlogs();
-  }, []);
+  }, []);   // Dependency array is fine — API_BASE_URL is a constant
 
-  // Memoize skeleton cards to prevent re-creation
+  // Memoized skeleton cards
   const skeletonCards = useMemo(() => {
     return [0, 1, 2].map((i) => (
       <motion.div
@@ -92,7 +93,7 @@ const Blog = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-md w-full text-center"
           >
-            <i className="fas fa-exclamation-triangle text-xl mb-2 block" />
+            Failed to load blogs
             {error}
           </motion.div>
         </div>
@@ -105,7 +106,7 @@ const Blog = () => {
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white overflow-hidden">
       <Header />
 
-      {/* Decorative Orbs (Desktop Only) */}
+      {/* Decorative Orbs */}
       <div className="fixed inset-0 -z-10 hidden lg:block pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-linear-to-br from-[#2e6171] to-[#011936] rounded-full blur-3xl opacity-10 animate-pulse" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-linear-to-tr from-[#2e6171]/70 to-[#011936]/70 rounded-full blur-3xl opacity-10 animate-pulse animation-delay-2000" />
@@ -146,7 +147,6 @@ const Blog = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center text-gray-600 text-lg py-12"
           >
-            <i className="fas fa-newspaper text-4xl text-gray-300 mb-4 block" />
             No blogs available at the moment.
           </motion.div>
         )}
@@ -157,7 +157,7 @@ const Blog = () => {
   );
 };
 
-// Extracted Blog Card Component (for readability & performance)
+// Reusable Blog Card
 const BlogCard = React.memo(({ blog, index }) => {
   return (
     <motion.div
@@ -198,7 +198,7 @@ const BlogCard = React.memo(({ blog, index }) => {
         </h2>
 
         <p className="text-sm text-[#2e6171] font-medium mb-3 flex items-center gap-2">
-          <i className="fas fa-calendar-alt" />
+          Blog Date
           {blog.created_at
             ? new Date(blog.created_at).toLocaleDateString("en-US", {
                 year: "numeric",
