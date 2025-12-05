@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Header from "./header";
 import Footer from "./footer";
 import parse from 'html-react-parser';
-import API_BASE_URL from './config.js';   // Now used correctly!
+import API_BASE_URL from '../config.js';   // ← one level up  // Now used correctly!
 
 const BlogDetail = () => {
   const [blog, setBlog] = useState(null);

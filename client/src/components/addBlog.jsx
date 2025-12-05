@@ -5,7 +5,7 @@ import QuillBetterTable from 'quill-better-table';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
 import 'quill-better-table/dist/quill-better-table.css';
-import API_BASE_URL from './config.js';   // ← Now used correctly!
+import API_BASE_URL from '../config.js';   // ← one level up   // ← Now used correctly!
 
 const AddBlog = () => {
   Quill.register('modules/better-table', QuillBetterTable, true);

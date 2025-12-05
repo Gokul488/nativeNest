@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
-import API_BASE_URL from './config.js'; // Properly imported
+import API_BASE_URL from '../config.js';   // ← one level up// Properly imported
 
 const EditBlog = () => {
   const { quill, quillRef } = useQuill({
