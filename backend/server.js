@@ -9,43 +9,13 @@ const userRoutes = require('./routes/userRoutes');
 const blogRoutes = require('./routes/blogRoutes'); 
 const app = express();
 
-// Allowed origins (no trailing slashes)
-const allowedOrigins = [
-  'https://nativenest-frontend.onrender.com',
-  'http://localhost:5173' // local dev
-];
-
-// Lightweight middleware to set CORS headers for allowed origins and handle preflight
-app.use((req, res, next) => {
-  const origin = req.get('Origin');
-  if (origin && allowedOrigins.includes(origin)) {
-    // echo the origin back so the browser accepts the response
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-  );
-
-  // handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// also enable cors middleware (redundant but safe)
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS']
+  origin: [
+    "https://nativenest-frontend.onrender.com/",  // your actual frontend URL
+    "http://localhost:5173"                 // for local dev
+  ],
+  credentials: true
 }));
-
 app.use(express.json());
 
 // Add routes
@@ -56,7 +26,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api', userRoutes); 
 app.use('/api/blogs', blogRoutes); 
 
-// health route
+
 app.get('/health-db', async (req, res) => {
   try {
     const pool = require('./db');
@@ -70,6 +40,7 @@ app.get('/health-db', async (req, res) => {
     });
   }
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
