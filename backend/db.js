@@ -6,6 +6,9 @@
        user: process.env.DB_USER || 'root',
        password: process.env.DB_PASSWORD || '',
        database: process.env.DB_NAME || 'mydb',
+       ssl: {
+            rejectUnauthorized: true   // Required by Aiven
+            },
        waitForConnections: true,
        connectionLimit: 10
      });
