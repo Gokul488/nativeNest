@@ -5,7 +5,7 @@ import { useQuill } from "react-quilljs";
 import "quill/dist/quill.snow.css";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
-
+import API_BASE_URL from './config.js';
 const animatedComponents = makeAnimated();
 
 const PostProperty = () => {
@@ -95,8 +95,8 @@ const PostProperty = () => {
     const fetchData = async () => {
       try {
         const [typesRes, amenitiesRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/properties/types"),
-          axios.get("http://localhost:5000/api/properties/amenities"),
+          axios.get(`${API_BASE_URL}/api/properties/types`),
+          axios.get(`${API_BASE_URL}/api/properties/amenities`),
         ]);
 
         const types = typesRes.data.propertyTypes || [];
@@ -204,7 +204,7 @@ const PostProperty = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/properties", data, {
+      await axios.post(`${API_BASE_URL}/api/properties`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

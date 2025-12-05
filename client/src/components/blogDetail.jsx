@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Header from "./header";
 import Footer from "./footer";
 import parse from 'html-react-parser';
+import API_BASE_URL from './config.js';   // Now used correctly!
 
 const BlogDetail = () => {
   const [blog, setBlog] = useState(null);
@@ -16,21 +17,30 @@ const BlogDetail = () => {
     const fetchBlog = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/blogs/${id}`);
-        if (!response.ok) throw new Error('Failed to fetch blog');
+        setError('');
+
+        // Using API_BASE_URL from config.js → works locally AND on Render
+        const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Failed to fetch blog (HTTP ${response.status})`);
+        }
+
         const data = await response.json();
-        setBlog(data.blog);
+        setBlog(data.blog || data); // Some backends return { blog }, some return direct object
       } catch (err) {
-        setError(err.message);
+        console.error("Error fetching blog:", err);
+        setError(err.message || "Unable to load this blog");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBlog();
-  }, [id]);
+    if (id) fetchBlog();
+  }, [id]); // Re-fetch if ID changes
 
-  // Loading
+  // Loading State
   if (loading) {
     return (
       <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex flex-col overflow-hidden">
@@ -49,7 +59,7 @@ const BlogDetail = () => {
     );
   }
 
-  // Error
+  // Error State
   if (error) {
     return (
       <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex flex-col overflow-hidden">
@@ -60,7 +70,7 @@ const BlogDetail = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-md w-full text-center"
           >
-            <i className="fas fa-exclamation-triangle text-xl mb-2 block"></i>
+            Failed to load blog
             {error}
           </motion.div>
         </div>
@@ -69,17 +79,31 @@ const BlogDetail = () => {
     );
   }
 
-  if (!blog) return null;
+  if (!blog) {
+    return (
+      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex flex-col">
+        <Header />
+        <div className="grow flex-center pt-24">
+          <p className="text-gray-600 text-lg">Blog not found</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-  const publishedDate = new Date(blog.created_at).toLocaleDateString("en-US", {
-    year: "numeric", month: "long", day: "numeric"
-  });
+  const publishedDate = blog.created_at
+    ? new Date(blog.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      })
+    : "Date unavailable";
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white overflow-hidden">
       <Header />
 
-      {/* Desktop Orbs */}
+      {/* Desktop Decorative Orbs */}
       <div className="fixed inset-0 -z-10 overflow-hidden hidden lg:block">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-linear-to-br from-[#2e6171] to-[#011936] rounded-full blur-3xl opacity-10 animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-linear-to-tr from-[#2e6171]/70 to-[#011936]/70 rounded-full blur-3xl opacity-10 animate-pulse animation-delay-2000"></div>
@@ -93,11 +117,10 @@ const BlogDetail = () => {
           onClick={() => navigate(-1)}
           className="mb-8 inline-flex items-center gap-2 text-[#2e6171] font-semibold hover:text-[#011936] transition-all group"
         >
-          <i className="fas fa-arrow-left text-sm group-hover:-translate-x-1 transition-transform"></i>
           Back to Blogs
         </motion.button>
 
-        {/* Blog Card */}
+        {/* Blog Article */}
         <motion.article
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -111,10 +134,20 @@ const BlogDetail = () => {
                 src={blog.image}
                 alt={blog.title}
                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.src = "";
+                  e.currentTarget.parentElement.innerHTML = `
+                    <div class="h-full bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                      <i class="fas fa-image text-6xl text-gray-400"></i>
+                    </div>
+                  `;
+                }}
               />
               <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"></div>
               <div className="absolute bottom-6 left-6 right-6 text-white">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">{blog.title}</h1>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight drop-shadow-lg">
+                  {blog.title}
+                </h1>
               </div>
             </div>
           ) : (
@@ -131,17 +164,16 @@ const BlogDetail = () => {
               transition={{ delay: 0.3 }}
               className="text-sm text-[#2e6171] font-medium flex items-center gap-2 mb-6"
             >
-              <i className="fas fa-calendar-alt"></i>
-              {publishedDate}
+              Published on {publishedDate}
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              className="blog-content prose prose-lg max-w-none"
+              className="blog-content prose prose-lg max-w-none text-gray-700 leading-relaxed"
             >
-              {parse(blog.content || '')}
+              {parse(blog.content || '<p>No content available.</p>')}
             </motion.div>
           </div>
         </motion.article>
@@ -157,7 +189,6 @@ const BlogDetail = () => {
             onClick={() => navigate('/blog')}
             className="inline-flex items-center gap-2 text-[#2e6171] font-semibold hover:text-[#011936] transition-colors"
           >
-            <i className="fas fa-book-open"></i>
             Explore More Blogs
           </button>
         </motion.div>

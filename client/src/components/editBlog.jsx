@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
+import API_BASE_URL from './config.js'; // Properly imported
 
 const EditBlog = () => {
   const { quill, quillRef } = useQuill({
@@ -56,7 +57,8 @@ const EditBlog = () => {
           navigate('/login');
           throw new Error('No token found. Please log in.');
         }
-        const response = await fetch(`http://localhost:5000/api/blogs/${id}`, {
+
+        const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -65,7 +67,7 @@ const EditBlog = () => {
             navigate('/login');
             throw new Error('Unauthorized. Please log in again.');
           }
-          throw new Error('Failed to fetch blog or unauthorized');
+          throw new Error('Failed to fetch blog');
         }
 
         const data = await response.json();
@@ -138,9 +140,14 @@ const EditBlog = () => {
         navigate('/login');
         throw new Error('No token found. Please log in.');
       }
-      const response = await fetch(`http://localhost:5000/api/blogs/${id}`, {
+
+      const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Note: Do NOT set Content-Type here when using FormData
+          // The browser will automatically set it with the correct boundary
+        },
         body: formData,
       });
 
@@ -168,6 +175,7 @@ const EditBlog = () => {
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 text-center mb-8">
           Edit Blog
         </h2>
+
         {error && (
           <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
             {error}
@@ -178,6 +186,7 @@ const EditBlog = () => {
             {success}
           </div>
         )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -189,10 +198,12 @@ const EditBlog = () => {
               required
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-            <div ref={quillRef} className="bg-white" />
+            <div ref={quillRef} className="bg-white h-96" />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Image (Max 10MB)</label>
             <input
@@ -203,17 +214,18 @@ const EditBlog = () => {
             />
             {previewUrl && (
               <div className="mt-4">
-                <img src={previewUrl} alt="Blog Image Preview" className="w-full h-48 object-contain rounded-md" />
+                <img src={previewUrl} alt="Blog Image Preview" className="w-full h-48 object-contain rounded-md border" />
               </div>
             )}
           </div>
-          <div className="flex justify-end">
+
+          <div className="flex justify-center">
             <button
               type="submit"
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition duration-200 font-medium disabled:bg-gray-400 mx-auto"
               disabled={isSubmitting}
+              className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Submitting...' : 'Update Blog'}
+              {isSubmitting ? 'Updating...' : 'Update Blog'}
             </button>
           </div>
         </form>

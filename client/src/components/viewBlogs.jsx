@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
+import API_BASE_URL from './config.js';
 const ViewBlogs = () => {
   const [blogs, setBlogs] = useState([]);
   const [error, setError] = useState('');
@@ -13,7 +13,7 @@ const ViewBlogs = () => {
         if (!token) {
           throw new Error('No token found. Please log in.');
         }
-        const response = await fetch('http://localhost:5000/api/blogs', {
+        const response = await fetch(`${API_BASE_URL}/api/blogs`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -43,7 +43,7 @@ const ViewBlogs = () => {
       if (!token) {
         throw new Error('No token found. Please log in.');
       }
-      const response = await fetch(`http://localhost:5000/api/blogs/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

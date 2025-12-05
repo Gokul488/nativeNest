@@ -9,7 +9,13 @@ const userRoutes = require('./routes/userRoutes');
 const blogRoutes = require('./routes/blogRoutes'); 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://nativenest-frontend.onrender.com/",  // your actual frontend URL
+    "http://localhost:5173"                 // for local dev
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Add routes

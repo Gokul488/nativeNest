@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import Header from "./header";
 import Footer from "./footer";
 import { motion } from "framer-motion";
-
+import API_BASE_URL from './config.js';
 const PropertyDetails = () => {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
@@ -22,7 +22,7 @@ const PropertyDetails = () => {
 
   const fetchPropertyDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/properties/${id}`);
+      const response = await fetch(`${API_BASE_URL}/api/properties/${id}`);
       if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
       const data = await response.json();
       setProperty(data.property);

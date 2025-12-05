@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import API_BASE_URL from './config.js';
 const ViewProperties = () => {
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
@@ -12,7 +12,7 @@ const ViewProperties = () => {
     const fetchProperties = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/api/viewproperties", {
+        const response = await axios.get(`${API_BASE_URL}/api/viewproperties`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -28,7 +28,7 @@ const ViewProperties = () => {
     if (window.confirm("Are you sure you want to delete this property?")) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`http://localhost:5000/api/viewproperties/${id}`, {
+        await axios.delete(`${API_BASE_URL}/api/viewproperties/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProperties(properties.filter((prop) => prop.id !== id));

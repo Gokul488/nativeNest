@@ -3,6 +3,7 @@ import Header from "./header";
 import Footer from "./footer";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import API_BASE_URL from './config.js'; // ← Correctly imported once
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -11,7 +12,6 @@ const ContactUs = () => {
     message: "",
   });
   const [status, setStatus] = useState(null);
-  const API_BASE_URL = "http://localhost:5000";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

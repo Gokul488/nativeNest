@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
+import API_BASE_URL from './config.js';
 const ProfileSettings = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -14,7 +14,7 @@ const ProfileSettings = () => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/api/user", {
+        const response = await axios.get(`${API_BASE_URL}/api/user`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const user = response.data;
@@ -37,7 +37,7 @@ const ProfileSettings = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        "http://localhost:5000/api/user",
+        `${API_BASE_URL}/api/user`,
         { name, email, mobile_number: mobileNumber, password, account_type: accountType },
         {
           headers: { Authorization: `Bearer ${token}` },
