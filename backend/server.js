@@ -26,6 +26,19 @@ app.use('/api/contact', contactRoutes);
 app.use('/api', userRoutes); 
 app.use('/api/blogs', blogRoutes); 
 
+// add below your other routes in server.js
+app.get('/health-db', async (req, res) => {
+  try {
+    const pool = require('./db');
+    const [rows] = await pool.query('SELECT 1 AS ok');
+    res.json({ ok: rows[0].ok });
+  } catch (err) {
+    console.error('health-db error', err);
+    res.status(500).json({ error: 'DB connection failed', detail: err.message });
+  }
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
