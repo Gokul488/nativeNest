@@ -4,8 +4,8 @@ import PostProperty from './postProperty';
 import ViewProperties from "./viewProperties";
 import EditProperty from "./editProperty";
 import ProfileSettings from "./profileSettings";
-import AddBlog from "./AddBlog";
-import ViewBlogs from "./ViewBlogs";
+import AddBlog from "./addBlog";
+import ViewBlogs from "./viewBlogs";
 import EditBlog from "./editBlog";
 import { FaBars, FaUser, FaHome, FaPlus, FaList, FaCog } from 'react-icons/fa';
 
