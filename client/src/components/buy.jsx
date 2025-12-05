@@ -38,43 +38,16 @@ const Buy = () => {
   };
 
   // Memoized fetch functions
-// replace existing fetchPropertyTypes with this
-const fetchPropertyTypes = useCallback(async () => {
-  try {
-    // debug: what base URL client is using
-    console.log('fetchPropertyTypes -> API_BASE_URL =', API_BASE_URL);
-
-    const url = `${API_BASE_URL}/api/properties/types`;
-    console.log('fetchPropertyTypes -> fetching', url);
-
-    const response = await fetch(url);
-    console.log('fetchPropertyTypes -> status', response.status, response.statusText);
-
-    if (!response.ok) {
-      const bodyText = await response.text().catch(() => '<no-body>');
-      console.error('fetchPropertyTypes -> non-ok response body:', bodyText);
-      throw new Error(`Failed to fetch property types: ${response.status}`);
+  const fetchPropertyTypes = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/properties/types`);
+      if (!response.ok) throw new Error(`Failed to fetch property types`);
+      const data = await response.json();
+      setPropertyTypes(['All', ...(data.propertyTypes || [])]);
+    } catch (err) {
+      console.error('Property types fetch error:', err.message);
     }
-
-    const data = await response.json();
-    console.log('fetchPropertyTypes -> response JSON:', data);
-
-    // Defensive parsing: backend returns { propertyTypes: [...] }
-    // but handle the case it returns a plain array as well
-    let types = [];
-    if (Array.isArray(data.propertyTypes)) types = data.propertyTypes;
-    else if (Array.isArray(data)) types = data;
-    else if (Array.isArray(data.property_types)) types = data.property_types; // tolerant key
-
-    // ensure 'All' is present as first option
-    setPropertyTypes(['All', ...types]);
-  } catch (err) {
-    console.error('Property types fetch error:', err);
-    // keep at least the 'All' option so UI doesn't look broken
-    setPropertyTypes(['All']);
-  }
-}, []);
-
+  }, []);
 
   const fetchBuilders = useCallback(async () => {
     try {
