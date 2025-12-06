@@ -11,7 +11,7 @@ const app = express();
 
 app.use(cors({
   origin: [
-    "https://nativenest-frontend.onrender.com/",  // your actual frontend URL
+    "https://nativenest-frontend.onrender.com",  // your actual frontend URL
     "http://localhost:5173"                 // for local dev
   ],
   credentials: true
