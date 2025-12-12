@@ -1,6 +1,7 @@
 // src/components/WhatsappChatWidget.jsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import whatsappBg from '../assets/whatsapp-doodle-bg.jpg'; // Your uploaded doodle image
 
 const WhatsappChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,68 +26,75 @@ const WhatsappChatWidget = () => {
 
   return (
     <>
-      {/* Stylish Floating WhatsApp Button - White with Green Icon */}
+      {/* Floating Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-5 right-5 z-50 flex items-center justify-center w-14 h-14 bg-white rounded-full shadow-xl border border-gray-200 hover:shadow-2xl transition-all duration-300 group"
+        className="fixed bottom-5 right-5 z-50 flex items-center justify-center w-14 h-14 bg-white rounded-full shadow-2xl border border-gray-200 hover:shadow-2xl transition-all group"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         animate={{
           boxShadow: [
-            "0 8px 25px rgba(37, 211, 102, 0.15)",
-            "0 8px 35px rgba(37, 211, 102, 0.25)",
-            "0 8px 25px rgba(37, 211, 102, 0.15)",
+            "0 8px 30px rgba(37,211,102,0.25)",
+            "0 12px 40px rgba(37,211,102,0.35)",
+            "0 8px 30px rgba(37,211,102,0.25)",
           ],
         }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 4, repeat: Infinity }}
         aria-label="Chat on WhatsApp"
       >
-        {/* Green WhatsApp Icon */}
-        <i className="fab fa-whatsapp text-3xl text-[#25D366] group-hover:text-[#1DA851] transition-colors"></i>
-
-        {/* Subtle pulse ring */}
-        <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-20 animate-ping"></span>
+        <i className="fab fa-whatsapp text-3xl text-[#25D366]"></i>
+        <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-25 animate-ping"></span>
       </motion.button>
 
-      {/* Chat Bubble - Only when open */}
+      {/* Compact WhatsApp Popup */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.85, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: 20 }}
-            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            className="fixed bottom-24 right-5 z-50 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200"
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed bottom-24 right-5 z-50 w-80 max-w-[92vw] bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200"
           >
             {/* Header */}
-            <div className="bg-[#075E54] text-white p-4 relative">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="absolute top-3 right-3 text-white/80 hover:text-white transition"
-                aria-label="Close chat"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+            <div className="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                  <i className="fab fa-whatsapp text-2xl"></i>
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <i className="fab fa-whatsapp text-xl"></i>
                 </div>
                 <div>
-                  <h4 className="font-semibold">Gokul</h4>
+                  <h4 className="font-semibold text-sm">Gokul</h4>
                   <p className="text-xs opacity-90">Typically replies in minutes</p>
                 </div>
               </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-white/80 hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            {/* Chat Body */}
-            <div className="p-5 bg-linear-to-b from-gray-50 to-white">
-              <div className="space-y-3">
-                <div className="bg-white rounded-2xl rounded-tl-none p-4 shadow-sm inline-block max-w-[85%]">
-                  <p className="text-gray-800 text-sm">Hi there</p>
-                  <p className="text-gray-800 text-sm mt-1">வணக்கம்</p>
-                  <p className="text-xs text-gray-500 text-right mt-2">
+            {/* Compact Chat Area with Real WhatsApp Background */}
+            <div
+              className="h-32 relative" // Reduced height dramatically
+              style={{
+                backgroundImage: `url(${whatsappBg})`,
+                backgroundColor: '#0b141a',
+                backgroundSize: 'auto',
+                backgroundRepeat: 'repeat',
+              }}
+            >
+              <div className="absolute inset-0 bg-black opacity-5"></div>
+
+              {/* Single Message Bubble - Positioned near bottom */}
+              <div className="absolute bottom-3 left-4 right-4">
+                <div className="bg-white rounded-2xl rounded-tl-none px-4 py-3 shadow-md inline-block max-w-[80%]">
+                  <p className="text-sm text-gray-800">Hi there</p>
+                  <p className="text-sm text-gray-800">வணக்கம்</p>
+                  <p className="text-xs text-gray-500 text-right mt-1">
                     {formatTime(currentTime)}
                   </p>
                 </div>
@@ -94,12 +102,12 @@ const WhatsappChatWidget = () => {
             </div>
 
             {/* Start Chat Button */}
-            <div className="p-4 bg-gray-50 border-t border-gray-200">
+            <div className="p-3 bg-white border-t border-gray-100">
               <a
                 href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full bg-[#25D366] hover:bg-[#1DA851] text-white font-medium text-center py-3.5 rounded-full transition shadow-md hover:shadow-lg"
+                className="block w-full bg-[#25D366] hover:bg-[#1DA851] text-white text-center py-3 rounded-full font-medium text-sm shadow-md hover:shadow-lg transition transform active:scale-98"
                 onClick={() => setIsOpen(false)}
               >
                 Start Chat
