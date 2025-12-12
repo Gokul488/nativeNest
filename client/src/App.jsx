@@ -12,6 +12,7 @@ import BlogDetail from "./components/blogDetail";
 import Blog from "./components/blog";
 import PropertyDetails from "./components/propertyDetails";
 import Buy from "./components/buy";
+import WhatsappChatWidget from './components/WhatsappChatWidget';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/property/:id" element={<PropertyDetails />} />
         <Route path="/buy" element={<Buy />} />
       </Routes>
+      <WhatsappChatWidget />
     </Router>
   );
 }
