@@ -4,21 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const WhatsappChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
-
-  // State to hold current time
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update time every minute (60000 ms)
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000); // Updates every minute
-
-    // Cleanup on unmount
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  // Format time like WhatsApp: 15:05 or 3:05 PM
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -28,31 +20,43 @@ const WhatsappChatWidget = () => {
   };
 
   const phoneNumber = "9442714693";
-  const defaultMessage = "Hi there\nI'm interested in your properties on NativeNest.com";
+  const defaultMessage = "Hi there\nI'm interested in your properties on NativeNest.in";
   const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
 
   return (
     <>
-      {/* Floating WhatsApp Icon */}
+      {/* Stylish Floating WhatsApp Button - White with Green Icon */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#1DA851] text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110"
+        className="fixed bottom-5 right-5 z-50 flex items-center justify-center w-14 h-14 bg-white rounded-full shadow-xl border border-gray-200 hover:shadow-2xl transition-all duration-300 group"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
+        animate={{
+          boxShadow: [
+            "0 8px 25px rgba(37, 211, 102, 0.15)",
+            "0 8px 35px rgba(37, 211, 102, 0.25)",
+            "0 8px 25px rgba(37, 211, 102, 0.15)",
+          ],
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         aria-label="Chat on WhatsApp"
       >
-        <i className="fab fa-whatsapp text-3xl"></i>
+        {/* Green WhatsApp Icon */}
+        <i className="fab fa-whatsapp text-3xl text-[#25D366] group-hover:text-[#1DA851] transition-colors"></i>
+
+        {/* Subtle pulse ring */}
+        <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-20 animate-ping"></span>
       </motion.button>
 
-      {/* Chat Bubble */}
+      {/* Chat Bubble - Only when open */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            initial={{ opacity: 0, scale: 0.85, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed bottom-24 right-6 z-50 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200"
+            exit={{ opacity: 0, scale: 0.85, y: 20 }}
+            transition={{ type: "spring", stiffness: 350, damping: 30 }}
+            className="fixed bottom-24 right-5 z-50 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200"
           >
             {/* Header */}
             <div className="bg-[#075E54] text-white p-4 relative">
@@ -82,10 +86,9 @@ const WhatsappChatWidget = () => {
                 <div className="bg-white rounded-2xl rounded-tl-none p-4 shadow-sm inline-block max-w-[85%]">
                   <p className="text-gray-800 text-sm">Hi there</p>
                   <p className="text-gray-800 text-sm mt-1">வணக்கம்</p>
-                  {/* Dynamic Time */}
-                <p className="text-xs text-gray-500 text-right mt-2">
-  Today, {currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).replace('AM', 'am').replace('PM', 'pm')}
-</p>
+                  <p className="text-xs text-gray-500 text-right mt-2">
+                    {formatTime(currentTime)}
+                  </p>
                 </div>
               </div>
             </div>
