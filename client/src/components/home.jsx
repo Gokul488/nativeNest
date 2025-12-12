@@ -260,19 +260,23 @@ const PropertyCard = ({ property, index, onClick }) => (
         <i className="fas fa-location-dot"></i>
         {property.city}
       </p>
-      <p className="text-2xl font-bold text-[#011936] my-2">
+      <p className="text-lg font-bold text-[#011936] my-2">
         {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(property.price)}
       </p>
-      {property.builderName && (
-        <p className="text-sm text-gray-600 flex items-center gap-2">
+        {property.builderName && (
+      <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+        <div className="flex items-center gap-2">
           <i className="fas fa-building"></i>
           {property.builderName}
-        </p>
-      )}
-      <div className="mt-4 flex items-center gap-2 text-[#2e6171] font-semibold hover:text-[#011936] transition">
-        View Details
-        <i className="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform" />
+        </div>
+
+        <div className="flex items-center gap-2 text-[#2e6171] font-semibold hover:text-[#011936] transition">
+          <i className="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform" />
+        </div>
       </div>
+    )}
+
+   
     </div>
   </motion.div>
 );

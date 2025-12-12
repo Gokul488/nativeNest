@@ -599,26 +599,28 @@ const Buy = () => {
                 </div>
 
                 <div className="p-6">
-                  <h3 className="text-xl sm:text-2xl font-bold text-[#011936] mb-2 tracking-tight line-clamp-2">
+                  <h3 className="text-xl sm:text-xl font-bold text-[#011936] mb-2 tracking-tight line-clamp-2">
                     {listing.title}
                   </h3>
                   <p className="text-sm text-[#2e6171] font-medium mb-2 flex items-center gap-2">
                     <i className="fas fa-location-dot"></i>
                     {listing.city}
                   </p>
-                  <p className="text-2xl font-bold text-[#011936] mb-3">
+                  <p className="text-lg font-bold text-[#011936] mb-3">
                     {formatCurrency(listing.price)}
                   </p>
-                  {listing.builderName && (
-                    <p className="text-sm text-gray-600 flex items-center gap-2">
-                      <i className="fas fa-building"></i>
-                      Builder: {listing.builderName}
-                    </p>
+                 {listing.builderName && (
+                    <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <i className="fas fa-building"></i>
+                        Builder: {listing.builderName}
+                      </div>
+
+                      <div className="flex items-center text-[#2e6171] font-semibold hover:text-[#011936] transition-colors duration-300">
+                        <i className="fas fa-arrow-right text-sm transform group-hover:translate-x-1 transition-transform"></i>
+                      </div>
+                    </div>
                   )}
-                  <div className="mt-4 inline-flex items-center gap-2 text-[#2e6171] font-semibold hover:text-[#011936] transition-colors duration-300">
-                    View Details
-                    <i className="fas fa-arrow-right text-sm transform group-hover:translate-x-1 transition-transform"></i>
-                  </div>
                 </div>
 
                 <div className="absolute inset-0 bg-linear-to-t from-[#2e6171]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
