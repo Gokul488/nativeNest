@@ -34,7 +34,7 @@ const Login = () => {
 
       if (data.user.account_type === "seller") navigate('/seller-dashboard');
       else if (data.user.account_type === "buyer") navigate('/buyer-dashboard');
-      else if (data.user.account_type === "agent") navigate('/agent-dashboard');
+      else if (data.user.account_type === "admin") navigate('/admin-dashboard');
       else navigate('/');
     } catch (err) {
       setError(err.message);

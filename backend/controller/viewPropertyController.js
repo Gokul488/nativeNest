@@ -1,4 +1,4 @@
-// Modified viewPropertyController.js
+// Modified viewPropertyController.js (Optimized for fast listing)
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 
@@ -12,37 +12,29 @@ const getProperties = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
+    // Optimized query: Only fetch essential text fields + image count (no BLOBs)
     const [properties] = await pool.query(`
       SELECT 
         p.property_id AS id, 
-        p.user_id, 
+        p.admin_id, 
         p.title, 
-        p.description, 
         p.price, 
-        p.address, 
-        p.city, 
-        p.state, 
-        p.country, 
-        p.pincode, 
-        p.property_type, 
-        p.video,
-        p.cover_image, 
-        p.created_at
+        p.city,
+        p.property_type,
+        p.created_at,
+        COALESCE(pi.image_count, 0) AS image_count
       FROM properties p
-      WHERE p.user_id = ?
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS image_count
+        FROM property_images
+        GROUP BY property_id
+      ) pi ON p.property_id = pi.property_id
+      WHERE p.admin_id = ?
+      ORDER BY p.created_at DESC
     `, [userId]);
 
-    const propertiesWithImages = await Promise.all(
-      properties.map(async (property) => {
-        const [images] = await pool.query(
-          'SELECT image_id AS id, image FROM property_images WHERE property_id = ?',
-          [property.id]
-        );
-        return { ...property, images };
-      })
-    );
-
-    res.json({ properties: propertiesWithImages });
+    // No need for Promise.all loop — we return lightweight data only
+    res.json({ properties });
   } catch (error) {
     console.error('Error fetching properties:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -55,7 +47,7 @@ const getPropertyById = async (req, res) => {
     const [properties] = await pool.query(
       `SELECT 
           p.property_id AS id, 
-          p.user_id, 
+          p.admin_id, 
           p.title, 
           p.description, 
           p.price, 
@@ -107,8 +99,6 @@ const getPropertyById = async (req, res) => {
   }
 };
 
-// In updateProperty (viewPropertyController.js)
-
 const updateProperty = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -120,8 +110,8 @@ const updateProperty = async (req, res) => {
 
     const {
       title, description, price, address, city, state, country, pincode, property_type,
-      amenities, // New
-      other_amenity // New: custom amenity
+      amenities,
+      other_amenity
     } = req.body;
 
     if (!title || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
@@ -137,9 +127,9 @@ const updateProperty = async (req, res) => {
       return res.status(400).json({ error: 'Price must be a positive number' });
     }
 
-    const [properties] = await pool.query('SELECT user_id FROM properties WHERE property_id = ?', [id]);
+    const [properties] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
     if (properties.length === 0) return res.status(404).json({ error: 'Property not found' });
-    if (properties[0].user_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    if (properties[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
 
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
     const video = req.files?.['video']?.[0]?.buffer || null;
@@ -189,7 +179,6 @@ const updateProperty = async (req, res) => {
       if (other_amenity && other_amenity.trim()) {
         const customName = other_amenity.trim();
 
-        // Check if custom amenity already exists (case-insensitive)
         const [existing] = await connection.query(
           'SELECT amenity_id FROM amenities WHERE LOWER(name) = LOWER(?)',
           [customName]
@@ -206,7 +195,6 @@ const updateProperty = async (req, res) => {
           customAmenityId = insertResult.insertId;
         }
 
-        // Link custom amenity to property
         await connection.query(
           'INSERT INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
           [id, customAmenityId]
@@ -227,7 +215,6 @@ const updateProperty = async (req, res) => {
   }
 };
 
-
 const deleteProperty = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -240,13 +227,13 @@ const deleteProperty = async (req, res) => {
     const { id } = req.params;
 
     const [properties] = await pool.query(
-      'SELECT user_id FROM properties WHERE property_id = ?',
+      'SELECT admin_id FROM properties WHERE property_id = ?',
       [id]
     );
     if (properties.length === 0) {
       return res.status(404).json({ error: 'Property not found' });
     }
-    if (properties[0].user_id !== userId) {
+    if (properties[0].admin_id !== userId) {
       return res.status(403).json({ error: 'Unauthorized to delete this property' });
     }
 
@@ -255,6 +242,7 @@ const deleteProperty = async (req, res) => {
       await connection.beginTransaction();
 
       await connection.query('DELETE FROM property_images WHERE property_id = ?', [id]);
+      await connection.query('DELETE FROM property_amenities WHERE property_id = ?', [id]);
       await connection.query('DELETE FROM properties WHERE property_id = ?', [id]);
 
       await connection.commit();

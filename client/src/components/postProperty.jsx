@@ -211,7 +211,7 @@ const PostProperty = () => {
         },
       });
       setSuccess("Property posted successfully!");
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/admin-dashboard/manage-properties"), 1500);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to post property");
     } finally {

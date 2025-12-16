@@ -56,7 +56,7 @@ const createProperty = async (req, res) => {
       await connection.beginTransaction();
 
       const [propertyResult] = await connection.query(
-        `INSERT INTO properties (user_id, title, description, price, address, city, state, country, pincode, property_type, cover_image, video, created_at)
+        `INSERT INTO properties (admin_id, title, description, price, address, city, state, country, pincode, property_type, cover_image, video, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [userId, title, description, price, address, city, state, country, pincode, property_type, coverImage, video?.buffer || null]
       );
@@ -181,8 +181,8 @@ const getBuilders = async (req, res) => {
   try {
     const [result] = await pool.query(
       `SELECT DISTINCT u.name AS builderName 
-       FROM userdetails u
-       JOIN properties p ON u.id = p.user_id
+       FROM sellers u
+       JOIN properties p ON u.id = p.admin_id
        WHERE u.account_type = 'seller'`
     );
     const builders = result.map(row => row.builderName);
@@ -212,7 +212,7 @@ const getFeaturedProperties = async (req, res) => {
     let query = `
       SELECT p.property_id AS id, p.title, p.price, p.pincode, p.property_type, p.city, p.created_at, p.cover_image AS cover_image, u.name AS builderName 
       FROM properties p
-      JOIN userdetails u ON p.user_id = u.id
+      JOIN sellers u ON p.admin_id = u.id
     `;
     const params = [];
     const conditions = [];
@@ -304,7 +304,7 @@ const getPropertyById = async (req, res) => {
     const [properties] = await connection.query(
       `SELECT p.property_id AS id, p.title, p.description, p.price, p.address, p.city, p.state, p.country, p.pincode, p.property_type, p.created_at, p.cover_image, p.video, u.name AS builderName, u.mobile_number, u.email 
        FROM properties p 
-       JOIN userdetails u ON p.user_id = u.id
+       JOIN sellers u ON p.admin_id = u.id
        WHERE p.property_id = ?`,
       [id]
     );

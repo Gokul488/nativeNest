@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
 import { motion } from "framer-motion";
-import API_BASE_URL from '../config.js';   // ← one level up  // ← This is now the ONLY place we get the URL
+import API_BASE_URL from '../config.js';
 
 const Register = () => {
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -25,7 +25,7 @@ const Register = () => {
       }
     };
     fetchAccountTypes();
-  }, []);   // ← No dependency on API_BASE_URL (it's a constant)
+  }, []);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -52,9 +52,19 @@ const Register = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Registration failed');
 
+      // Store token and user info
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/post-property');
+
+      // Navigate based on account_type
+      if (data.user.account_type === "seller") {
+        navigate('/seller-dashboard');
+      } else if (data.user.account_type === "admin") {
+        navigate('/admin-dashboard'); // Change this if your admin route is different
+      } else {
+        navigate('/buyer-dashboard'); // For buyer (or fallback)
+      }
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -93,7 +103,6 @@ const Register = () => {
           )}
 
           <form onSubmit={handleRegister} className="space-y-5">
-            {/* All your input fields stay exactly the same */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
                 <FiType className="text-[#2e6171]" />
@@ -129,7 +138,6 @@ const Register = () => {
               />
             </div>
 
-            {/* Password fields */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
                 <FiLock className="text-[#2e6171]" />

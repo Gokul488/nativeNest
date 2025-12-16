@@ -211,7 +211,7 @@ const EditProperty = () => {
         },
       });
       setSuccess("Property updated successfully!");
-      setTimeout(() => navigate("/seller-dashboard/view-properties"), 2000);
+      setTimeout(() => navigate("/admin-dashboard/manage-properties"), 2000);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to update property");
     } finally {

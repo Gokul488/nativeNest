@@ -1,3 +1,4 @@
+// authController.js
 const pool = require('../db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -15,15 +16,8 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'Passwords do not match' });
         }
 
-        // Fetch valid account types from the database
-        const [enumResult] = await pool.query(
-            "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'userdetails' AND COLUMN_NAME = 'account_type'"
-        );
-        const enumValues = enumResult[0].COLUMN_TYPE
-            .match(/'([^']+)'/g)
-            .map(val => val.replace(/'/g, ''));
-
-        if (!enumValues.includes(account_type)) {
+        const validTypes = ['seller', 'buyer', 'admin'];
+        if (!validTypes.includes(account_type)) {
             return res.status(400).json({ error: 'Invalid account type' });
         }
 
@@ -31,29 +25,66 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'Mobile number must be 10 digits' });
         }
 
-        // Check if user already exists
-        const [existingUsers] = await pool.query(
-            'SELECT * FROM userdetails WHERE mobile_number = ? OR email = ?',
-            [mobile_number, email || null]
-        );
+        let insertId, userData;
 
-        if (existingUsers.length > 0) {
-            return res.status(400).json({ error: 'User already exists with this mobile number or email' });
+        if (account_type === 'seller') {
+            // Check if seller already exists
+            const [existing] = await pool.query(
+                'SELECT * FROM sellers WHERE mobile_number = ? OR email = ?',
+                [mobile_number, email || null]
+            );
+
+            if (existing.length > 0) {
+                return res.status(400).json({ error: 'Seller already exists with this mobile/email' });
+            }
+
+            // Hash password
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+
+            // Insert into sellers
+            const [result] = await pool.query(
+                'INSERT INTO sellers (name, mobile_number, email, password, created_at) VALUES (?, ?, ?, ?, NOW())',
+                [name, mobile_number, email || null, hashedPassword]
+            );
+
+            insertId = result.insertId;
+            userData = { id: insertId, name, mobile_number, email, account_type: 'seller' };
+
+        } else if (account_type === 'admin') {
+            // Check if admin already exists
+            const [existing] = await pool.query(
+                'SELECT * FROM admins WHERE mobile_number = ? OR email = ?',
+                [mobile_number, email || null]
+            );
+
+            if (existing.length > 0) {
+                return res.status(400).json({ error: 'Admin already exists with this mobile/email' });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+
+            const [result] = await pool.query(
+                'INSERT INTO admins (name, mobile_number, email, password, created_at) VALUES (?, ?, ?, ?, NOW())',
+                [name, mobile_number, email || null, hashedPassword]
+            );
+
+            insertId = result.insertId;
+            userData = { id: insertId, name, mobile_number, email, account_type: 'admin' };
+
+        } else {
+            // Buyer: no persistent storage, just return token
+            userData = { name, mobile_number, email, account_type: 'buyer' };
+            insertId = null; // no DB id
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Insert new user
-        const [result] = await pool.query(
-            'INSERT INTO userdetails (name, mobile_number, email, password, account_type, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
-            [name, mobile_number, email || null, hashedPassword, account_type]
-        );
-
-        // Generate JWT
+        // Generate JWT (include account_type)
         const token = jwt.sign(
-            { userId: result.insertId, account_type },
+            { 
+                userId: insertId || `buyer_${mobile_number}`, // unique identifier even for buyer
+                account_type 
+            },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -61,7 +92,7 @@ const register = async (req, res) => {
         res.status(201).json({
             message: 'Registration successful',
             token,
-            user: { id: result.insertId, name, mobile_number, email, account_type }
+            user: userData
         });
 
     } catch (error) {
@@ -74,32 +105,46 @@ const login = async (req, res) => {
     try {
         const { identifier, password } = req.body;
 
-        // Validation
         if (!identifier || !password) {
             return res.status(400).json({ error: 'Mobile number/email and password are required' });
         }
 
-        // Find user by mobile or email
-        const [users] = await pool.query(
-            'SELECT * FROM userdetails WHERE mobile_number = ? OR email = ?',
+        let user = null;
+        let account_type = null;
+
+        // Try sellers table
+        let [rows] = await pool.query(
+            'SELECT id, name, mobile_number, email, password, "seller" as account_type FROM sellers WHERE mobile_number = ? OR email = ?',
             [identifier, identifier]
         );
 
-        if (users.length === 0) {
+        if (rows.length > 0) {
+            user = rows[0];
+            account_type = 'seller';
+        } else {
+            // Try admins table
+            [rows] = await pool.query(
+                'SELECT id, name, mobile_number, email, password, "admin" as account_type FROM admins WHERE mobile_number = ? OR email = ?',
+                [identifier, identifier]
+            );
+
+            if (rows.length > 0) {
+                user = rows[0];
+                account_type = 'admin';
+            }
+        }
+
+        if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const user = users[0];
-
-        // Verify password
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Generate JWT
         const token = jwt.sign(
-            { userId: user.id, account_type: user.account_type },
+            { userId: user.id, account_type },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -112,7 +157,7 @@ const login = async (req, res) => {
                 name: user.name,
                 mobile_number: user.mobile_number,
                 email: user.email,
-                account_type: user.account_type
+                account_type
             }
         });
 
@@ -122,25 +167,9 @@ const login = async (req, res) => {
     }
 };
 
+// Remove getAccountTypes or keep for frontend
 const getAccountTypes = async (req, res) => {
-    try {
-        const [result] = await pool.query(
-            "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'userdetails' AND COLUMN_NAME = 'account_type'"
-        );
-
-        if (!result.length) {
-            return res.status(404).json({ error: 'Account type information not found' });
-        }
-
-        const accountTypes = result[0].COLUMN_TYPE
-            .match(/'([^']+)'/g)
-            .map(val => val.replace(/'/g, ''));
-
-        res.json({ accountTypes });
-    } catch (error) {
-        console.error('Error fetching account types:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    res.json({ accountTypes: ['seller', 'buyer', 'admin'] });
 };
 
 module.exports = { register, login, getAccountTypes };

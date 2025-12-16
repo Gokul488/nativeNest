@@ -7,6 +7,7 @@ const contactRoutes = require('./routes/contactRoutes');
 const viewPropertyRoutes = require('./routes/viewPropertyRoutes');
 const userRoutes = require('./routes/userRoutes'); 
 const blogRoutes = require('./routes/blogRoutes'); 
+const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 
 app.use(cors({
@@ -25,7 +26,7 @@ app.use('/api/viewproperties', viewPropertyRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api', userRoutes); 
 app.use('/api/blogs', blogRoutes); 
-
+app.use('/api', adminRoutes);
 
 app.get('/health-db', async (req, res) => {
   try {

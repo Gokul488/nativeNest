@@ -1,10 +1,10 @@
+// controller/blogController.js
 const pool = require('../db');
-const jwt = require('jsonwebtoken');
 
 const createBlog = async (req, res) => {
   try {
     const { title, content } = req.body;
-    const userId = req.user.userId;
+    const adminId = req.user.userId; // from JWT (admin)
 
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' });
@@ -13,8 +13,8 @@ const createBlog = async (req, res) => {
     const image = req.files?.['image']?.[0]?.buffer || null;
 
     const [result] = await pool.query(
-      'INSERT INTO blogs (title, image, content, user_id, created_at) VALUES (?, ?, ?, ?, NOW())',
-      [title, image, content, userId]
+      'INSERT INTO blogs (title, image, content, admin_id, created_at) VALUES (?, ?, ?, ?, NOW())',
+      [title, image, content, adminId]
     );
 
     res.status(201).json({ message: 'Blog created successfully', id: result.insertId });
@@ -26,11 +26,11 @@ const createBlog = async (req, res) => {
 
 const getBlogs = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const adminId = req.user.userId;
 
     const [blogs] = await pool.query(
-      'SELECT id, title, created_at FROM blogs WHERE user_id = ? ORDER BY created_at DESC',
-      [userId]
+      'SELECT id, title, created_at FROM blogs WHERE admin_id = ? ORDER BY created_at DESC',
+      [adminId]
     );
 
     res.json({ blogs });
@@ -83,7 +83,7 @@ const getBlogById = async (req, res) => {
 
 const updateBlog = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const adminId = req.user.userId;
     const { id } = req.params;
     const { title, content } = req.body;
 
@@ -93,22 +93,20 @@ const updateBlog = async (req, res) => {
 
     const image = req.files?.['image']?.[0]?.buffer || null;
 
-    const [blogs] = await pool.query(
-      'SELECT id FROM blogs WHERE id = ? AND user_id = ?',
-      [id, userId]
+    const [existing] = await pool.query(
+      'SELECT id FROM blogs WHERE id = ? AND admin_id = ?',
+      [id, adminId]
     );
-    if (blogs.length === 0) {
+    if (existing.length === 0) {
       return res.status(404).json({ error: 'Blog not found or unauthorized' });
     }
 
-    const updateFields = image
-      ? 'title = ?, content = ?, image = ?'
-      : 'title = ?, content = ?';
-    const updateValues = image ? [title, content, image, id, userId] : [title, content, id, userId];
+    const updateFields = image ? 'title = ?, content = ?, image = ?' : 'title = ?, content = ?';
+    const updateValues = image ? [title, content, image, id] : [title, content, id];
 
     await pool.query(
-      `UPDATE blogs SET ${updateFields} WHERE id = ? AND user_id = ?`,
-      updateValues
+      `UPDATE blogs SET ${updateFields} WHERE id = ? AND admin_id = ?`,
+      [...updateValues, adminId]
     );
 
     res.status(200).json({ message: 'Blog updated successfully' });
@@ -120,18 +118,18 @@ const updateBlog = async (req, res) => {
 
 const deleteBlog = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const adminId = req.user.userId;
     const { id } = req.params;
 
-    const [blogs] = await pool.query(
-      'SELECT id FROM blogs WHERE id = ? AND user_id = ?',
-      [id, userId]
+    const [existing] = await pool.query(
+      'SELECT id FROM blogs WHERE id = ? AND admin_id = ?',
+      [id, adminId]
     );
-    if (blogs.length === 0) {
+    if (existing.length === 0) {
       return res.status(404).json({ error: 'Blog not found or unauthorized' });
     }
 
-    await pool.query('DELETE FROM blogs WHERE id = ? AND user_id = ?', [id, userId]);
+    await pool.query('DELETE FROM blogs WHERE id = ? AND admin_id = ?', [id, adminId]);
 
     res.status(200).json({ message: 'Blog deleted successfully' });
   } catch (error) {

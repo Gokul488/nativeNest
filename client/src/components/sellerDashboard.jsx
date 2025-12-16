@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, Routes, Route, useLocation } from "react-router-dom";
-import PostProperty from './postProperty';
-import ViewProperties from "./viewProperties";
-import EditProperty from "./editProperty";
 import ProfileSettings from "./profileSettings";
-import AddBlog from "./addBlog";
-import ViewBlogs from "./viewBlogs";
-import EditBlog from "./editBlog";
 import { FaBars, FaUser, FaHome, FaPlus, FaList, FaCog } from 'react-icons/fa';
 
 const SellerDashboard = () => {
@@ -51,46 +45,7 @@ const SellerDashboard = () => {
             <FaHome className="w-5 h-5" />
             <span>Dashboard</span>
           </Link>
-          <Link
-            to="/seller-dashboard/post-property"
-            onClick={closeSidebar}
-            className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
-              location.pathname === '/seller-dashboard/post-property' ? 'bg-teal-700' : ''
-            }`}
-          >
-            <FaPlus className="w-5 h-5" />
-            <span>Post a New Property</span>
-          </Link>
-          <Link
-            to="/seller-dashboard/view-properties"
-            onClick={closeSidebar}
-            className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
-              location.pathname === '/seller-dashboard/view-properties' ? 'bg-teal-700' : ''
-            }`}
-          >
-            <FaList className="w-5 h-5" />
-            <span>My Properties</span>
-          </Link>
-          <Link
-            to="/seller-dashboard/add-blog"
-            onClick={closeSidebar}
-            className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
-              location.pathname === '/seller-dashboard/add-blog' ? 'bg-teal-700' : ''
-            }`}
-          >
-            <FaPlus className="w-5 h-5" />
-            <span>Add Blog</span>
-          </Link>
-          <Link
-            to="/seller-dashboard/view-blogs"
-            onClick={closeSidebar}
-            className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
-              location.pathname === '/seller-dashboard/view-blogs' ? 'bg-teal-700' : ''
-            }`}
-          >
-            <FaList className="w-5 h-5" />
-            <span>My Blogs</span>
-          </Link>
+
           <Link
             to="/seller-dashboard/profile-settings"
             onClick={closeSidebar}
@@ -147,12 +102,6 @@ const SellerDashboard = () => {
                 </div>
               }
             />
-            <Route path="/post-property" element={<PostProperty />} />
-            <Route path="/view-properties" element={<ViewProperties />} />
-            <Route path="/edit-property/:id" element={<EditProperty />} />
-            <Route path="/add-blog" element={<AddBlog />} />
-            <Route path="/view-blogs" element={<ViewBlogs />} />
-            <Route path="/edit-blog/:id" element={<EditBlog />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
           </Routes>
         </main>

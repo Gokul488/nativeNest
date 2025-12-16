@@ -1,41 +1,41 @@
-// userController.js (now handles sellers)
+// adminController.js
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 
-const getUserDetails = async (req, res) => {
+const getAdminDetails = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.account_type !== 'seller') {
-      return res.status(403).json({ error: 'Access denied: Seller only' });
+    if (decoded.account_type !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
-    const [users] = await pool.query(
-      'SELECT id, name, mobile_number, email FROM sellers WHERE id = ?',
+    const [admins] = await pool.query(
+      'SELECT id, name, mobile_number, email FROM admins WHERE id = ?',
       [decoded.userId]
     );
 
-    if (users.length === 0) {
-      return res.status(404).json({ error: 'Seller not found' });
+    if (admins.length === 0) {
+      return res.status(404).json({ error: 'Admin not found' });
     }
 
-    res.json({ ...users[0], account_type: 'seller' });
+    res.json({ ...admins[0], account_type: 'admin' });
   } catch (error) {
-    console.error('Error fetching seller details:', error);
+    console.error('Error fetching admin details:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-const updateUserDetails = async (req, res) => {
+const updateAdminDetails = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.account_type !== 'seller') {
-      return res.status(403).json({ error: 'Access denied: Seller only' });
+    if (decoded.account_type !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     const { name, mobile_number, email } = req.body;
@@ -49,7 +49,7 @@ const updateUserDetails = async (req, res) => {
     }
 
     const [existing] = await pool.query(
-      'SELECT * FROM sellers WHERE (mobile_number = ? OR email = ?) AND id != ?',
+      'SELECT * FROM admins WHERE (mobile_number = ? OR email = ?) AND id != ?',
       [mobile_number, email, decoded.userId]
     );
 
@@ -58,20 +58,20 @@ const updateUserDetails = async (req, res) => {
     }
 
     await pool.query(
-      'UPDATE sellers SET name = ?, mobile_number = ?, email = ? WHERE id = ?',
+      'UPDATE admins SET name = ?, mobile_number = ?, email = ? WHERE id = ?',
       [name, mobile_number, email, decoded.userId]
     );
 
     const [updated] = await pool.query(
-      'SELECT id, name, mobile_number, email FROM sellers WHERE id = ?',
+      'SELECT id, name, mobile_number, email FROM admins WHERE id = ?',
       [decoded.userId]
     );
 
-    res.json({ ...updated[0], account_type: 'seller' });
+    res.json({ ...updated[0], account_type: 'admin' });
   } catch (error) {
-    console.error('Error updating seller details:', error);
+    console.error('Error updating admin details:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-module.exports = { getUserDetails, updateUserDetails };
+module.exports = { getAdminDetails, updateAdminDetails };
