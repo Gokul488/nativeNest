@@ -2,9 +2,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate, Routes, Route, useLocation } from "react-router-dom";
 import AdminProfileSettings from "./adminProfileSettings";
-import AddBlog from "./AddBlog";
-import ViewBlogs from "./ViewBlogs";
-import EditBlog from "./EditBlog";
+import AddBlog from "./addBlog";
+import ViewBlogs from "./viewBlogs";
+import EditBlog from "./editBlog";
 import PostProperty from "./postProperty";
 import ViewProperties from "./viewProperties";
 import EditProperty from "./editProperty";
