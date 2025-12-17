@@ -115,7 +115,6 @@ const ProfileSettings = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
               required
             >
-              <option value="seller">Seller</option>
               <option value="buyer">Buyer</option>
               <option value="agent">Agent</option>
             </select>

@@ -3,7 +3,7 @@ import { Link, useNavigate, Routes, Route, useLocation } from "react-router-dom"
 import ProfileSettings from "./profileSettings";
 import { FaBars, FaUser, FaHome, FaPlus, FaList, FaCog } from 'react-icons/fa';
 
-const SellerDashboard = () => {
+const BuyerDashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -32,14 +32,14 @@ const SellerDashboard = () => {
         } bg-linear-to-b from-teal-600 to-teal-500 shadow-lg z-50`}
       >
         <div className="p-6 border-b border-teal-400/50">
-          <h1 className="text-2xl font-bold text-white tracking-tight text-balance">NativeNest Seller</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight text-balance">NativeNest Buyer</h1>
         </div>
         <nav className="flex-1 p-4 space-y-2">
           <Link
-            to="/seller-dashboard/"
+            to="/buyer-dashboard/"
             onClick={closeSidebar}
             className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
-              location.pathname === '/seller-dashboard/' ? 'bg-teal-700' : ''
+              location.pathname === '/buyer-dashboard/' ? 'bg-teal-700' : ''
             }`}
           >
             <FaHome className="w-5 h-5" />
@@ -47,10 +47,10 @@ const SellerDashboard = () => {
           </Link>
 
           <Link
-            to="/seller-dashboard/profile-settings"
+            to="/buyer-dashboard/profile-settings"
             onClick={closeSidebar}
             className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
-              location.pathname === '/seller-dashboard/profile-settings' ? 'bg-teal-700' : ''
+              location.pathname === '/buyer-dashboard/profile-settings' ? 'bg-teal-700' : ''
             }`}
           >
             <FaCog className="w-5 h-5" />
@@ -83,11 +83,11 @@ const SellerDashboard = () => {
             <button onClick={toggleSidebar} className="text-teal-600 focus:outline-none md:hidden">
               <FaBars className="w-6 h-6" />
             </button>
-            <h2 className="text-2xl font-bold tracking-tight text-gray-800">Seller Dashboard</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-gray-800">Buyer Dashboard</h2>
           </div>
           <div className="flex items-center space-x-3 bg-teal-100/50 py-2 px-4 rounded-full">
             <FaUser className="text-teal-600 w-5 h-5" />
-            <span className="text-teal-800 font-medium">Welcome, {user.name || "Seller"}</span>
+            <span className="text-teal-800 font-medium">Welcome, {user.name || "Buyer"}</span>
           </div>
         </header>
 
@@ -110,4 +110,4 @@ const SellerDashboard = () => {
   );
 };
 
-export default SellerDashboard;
+export default BuyerDashboard;

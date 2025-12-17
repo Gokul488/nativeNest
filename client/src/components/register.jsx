@@ -1,31 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
+import {FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
 import { motion } from "framer-motion";
-import API_BASE_URL from '../config.js';
+import API_BASE_URL from "../config.js";
 
 const Register = () => {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [accountTypes, setAccountTypes] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch account types on mount
-  useEffect(() => {
-    const fetchAccountTypes = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/account-types`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Failed to fetch account types');
-        setAccountTypes(data.accountTypes || []);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-    fetchAccountTypes();
-  }, []);
+  // ✅ HARD CODED account types
+  const accountTypes = ["buyer", "admin"];
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -34,37 +21,32 @@ const Register = () => {
 
     const formData = new FormData(e.target);
     const payload = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      mobile_number: formData.get('mobile_number'),
-      password: formData.get('password'),
-      confirm_password: formData.get('confirm_password'),
-      account_type: formData.get('account_type')
+      name: formData.get("name"),
+      email: formData.get("email"),
+      mobile_number: formData.get("mobile_number"),
+      password: formData.get("password"),
+      confirm_password: formData.get("confirm_password"),
+      account_type: formData.get("account_type"),
     };
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Registration failed');
+      if (!response.ok) throw new Error(data.error || "Registration failed");
 
-      // Store token and user info
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Navigate based on account_type
-      if (data.user.account_type === "seller") {
-        navigate('/seller-dashboard');
-      } else if (data.user.account_type === "admin") {
-        navigate('/admin-dashboard'); // Change this if your admin route is different
+      if (data.user.account_type === "admin") {
+        navigate("/admin-dashboard");
       } else {
-        navigate('/buyer-dashboard'); // For buyer (or fallback)
+        navigate("/buyer-dashboard");
       }
-
     } catch (err) {
       setError(err.message);
     } finally {
@@ -74,7 +56,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white overflow-hidden relative flex items-center justify-center p-4">
-      {/* Animated Background Orbs */}
+      {/* Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-linear-to-br from-[#2e6171] to-[#011936] rounded-full blur-3xl opacity-10 animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-linear-to-tr from-[#2e6171]/70 to-[#011936]/70 rounded-full blur-3xl opacity-10 animate-pulse animation-delay-2000"></div>
@@ -103,87 +85,106 @@ const Register = () => {
           )}
 
           <form onSubmit={handleRegister} className="space-y-5">
+            {/* Name */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiType className="text-[#2e6171]" />
-                Full Name <span className="text-red-500">*</span>
+                <FiType className="text-[#2e6171]" /> Full Name *
               </label>
-              <input type="text" name="name" placeholder="Enter your name" required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition" />
+              <input
+                type="text"
+                name="name"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-[#2e6171]"
+              />
             </div>
 
+            {/* Email */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiMail className="text-[#2e6171]" />
-                Email (Optional)
+                <FiMail className="text-[#2e6171]" /> Email (Optional)
               </label>
-              <input type="email" name="email" placeholder="Enter email"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition" />
+              <input
+                type="email"
+                name="email"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-[#2e6171]"
+              />
             </div>
 
+            {/* Mobile */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiPhone className="text-[#2e6171]" />
-                Mobile Number <span className="text-red-500">*</span>
+                <FiPhone className="text-[#2e6171]" /> Mobile Number *
               </label>
               <input
                 type="tel"
                 name="mobile_number"
-                placeholder="Enter 10-digit mobile"
+                required
                 maxLength="10"
                 pattern="\d{10}"
-                required
-                onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 transition"
+                onInput={(e) =>
+                  (e.target.value = e.target.value.replace(/\D/g, ""))
+                }
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-[#2e6171]"
               />
             </div>
 
+            {/* Password */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiLock className="text-[#2e6171]" />
-                Password <span className="text-red-500">*</span>
+                <FiLock className="text-[#2e6171]" /> Password *
               </label>
               <div className="relative">
                 <input
                   type={showRegPassword ? "text" : "password"}
                   name="password"
-                  placeholder="Create password"
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 pr-12 transition"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 pr-12"
                 />
-                <button type="button" onClick={() => setShowRegPassword(!showRegPassword)}
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-[#2e6171]">
+                <button
+                  type="button"
+                  onClick={() => setShowRegPassword(!showRegPassword)}
+                  className="absolute inset-y-0 right-4 flex items-center text-gray-500"
+                >
                   {showRegPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
             </div>
 
+            {/* Confirm */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiLock className="text-[#2e6171]" />
-                Confirm Password <span className="text-red-500">*</span>
+                <FiLock className="text-[#2e6171]" /> Confirm Password *
               </label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirm_password"
-                  placeholder="Confirm password"
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 placeholder-gray-400 pr-12 transition"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 pr-12"
                 />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-[#2e6171]">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowConfirmPassword(!showConfirmPassword)
+                  }
+                  className="absolute inset-y-0 right-4 flex items-center text-gray-500"
+                >
                   {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
             </div>
 
+            {/* Account Type */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiUser className="text-[#2e6171]" />
-                Account Type <span className="text-red-500">*</span>
+                <FiUser className="text-[#2e6171]" /> Account Type *
               </label>
-              <select name="account_type" required defaultValue="" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2e6171] text-gray-700 transition">
+              <select
+                name="account_type"
+                required
+                defaultValue=""
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-[#2e6171]"
+              >
                 <option value="" disabled>Select account type</option>
                 {accountTypes.map((type) => (
                   <option key={type} value={type}>
@@ -193,21 +194,12 @@ const Register = () => {
               </select>
             </div>
 
-            <div className="flex items-start gap-2 text-sm text-gray-600">
-              <input type="checkbox" required className="mt-1" />
-              <span>
-                I accept the <Link to="/terms-and-conditions" className="text-[#2e6171] font-medium hover:underline">Terms & Conditions</Link> and{" "}
-                <Link to="/privacy-policy" className="text-[#2e6171] font-medium hover:underline">Privacy Policy</Link>
-              </span>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-linear-to-r from-[#2e6171] to-[#011936] text-white py-3.5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition flex-center gap-2 disabled:opacity-70"
+              className="w-full bg-linear-to-r from-[#2e6171] to-[#011936] text-white py-3.5 rounded-xl font-bold"
             >
               {loading ? "Creating Account..." : "Register"}
-              {!loading && <i className="fas fa-user-plus"></i>}
             </button>
           </form>
 

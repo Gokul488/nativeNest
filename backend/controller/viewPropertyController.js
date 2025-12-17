@@ -109,12 +109,12 @@ const updateProperty = async (req, res) => {
     const { id } = req.params;
 
     const {
-      title, description, price, address, city, state, country, pincode, property_type,
+      title, builder_name, description, price, address, city, state, country, pincode, property_type,
       amenities,
       other_amenity
     } = req.body;
 
-    if (!title || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
+    if (!title || !builder_name || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
       return res.status(400).json({ error: 'All required fields must be filled' });
     }
 
@@ -145,12 +145,12 @@ const updateProperty = async (req, res) => {
 
       await connection.query(
         `UPDATE properties SET 
-          title = ?, description = ?, price = ?, address = ?, city = ?, state = ?, country = ?, 
+          title = ?, builder_name = ?, description = ?, price = ?, address = ?, city = ?, state = ?, country = ?, 
           pincode = ?, property_type = ?, 
           cover_image = COALESCE(?, cover_image),
           video = COALESCE(?, video)
          WHERE property_id = ?`,
-        [title, description, price, address, city, state, country, pincode, property_type, coverImage, video, id]
+        [title, builder_name, description, price, address, city, state, country, pincode, property_type, coverImage, video, id]
       );
 
       if (images.length > 0) {
@@ -258,5 +258,6 @@ const deleteProperty = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 module.exports = { getProperties, getPropertyById, updateProperty, deleteProperty };

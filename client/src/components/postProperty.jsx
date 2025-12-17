@@ -287,6 +287,19 @@ const PostProperty = () => {
             />
           </div>
 
+
+          <div>
+            <label className="block text-sm font-medium">Builder Name</label>
+            <input
+              type="text"
+              name="builder_name"
+              value={formData.builder_name || ""}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 border rounded-lg"
+            />
+          </div>
+
           {/* ----- Description (Quill) ----- */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

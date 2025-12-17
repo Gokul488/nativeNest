@@ -33,6 +33,7 @@ const EditProperty = () => {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [propertyTypes, setPropertyTypes] = useState([]);
+  const [builderName, setBuilderName] = useState("");
 
   // Initialize Quill editor
   const { quill, quillRef } = useQuill({
@@ -107,6 +108,7 @@ const EditProperty = () => {
         setState(prop.state || "");
         setCountry(prop.country || "");
         setPincode(prop.pincode || "");
+        setBuilderName(prop.builderName || "");
         setPropertyType(prop.property_type || "");
         if (quill && prop.description) {
           quill.clipboard.dangerouslyPasteHTML(prop.description);
@@ -185,6 +187,7 @@ const EditProperty = () => {
 
     const formData = new FormData();
     formData.append("title", title);
+    formData.append("builder_name", builderName);
     formData.append("description", description);
     formData.append("price", price);
     formData.append("address", address);
@@ -291,6 +294,19 @@ const EditProperty = () => {
             />
           </div>
 
+          {/* Builder Name - NEW FIELD */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Builder Name</label>
+            <input
+              type="text"
+              value={builderName}
+              onChange={(e) => setBuilderName(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              placeholder="e.g., Prestige Group, DLF"
+            />
+          </div>
+          
           {/* Description (Quill) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

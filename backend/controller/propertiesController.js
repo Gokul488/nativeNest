@@ -23,11 +23,12 @@ const createProperty = async (req, res) => {
       country,
       pincode,
       property_type,
+      builder_name,
       amenities = [],
       other_amenity
     } = req.body;
 
-    if (!title || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
+    if (!title || !description || !price || !address || !city || !state || !country || !pincode || !property_type || !builder_name) {
       return res.status(400).json({ error: 'All required fields must be filled' });
     }
 
@@ -56,9 +57,9 @@ const createProperty = async (req, res) => {
       await connection.beginTransaction();
 
       const [propertyResult] = await connection.query(
-        `INSERT INTO properties (admin_id, title, description, price, address, city, state, country, pincode, property_type, cover_image, video, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-        [userId, title, description, price, address, city, state, country, pincode, property_type, coverImage, video?.buffer || null]
+        `INSERT INTO properties (admin_id, builder_name, title, description, price, address, city, state, country, pincode, property_type, cover_image, video, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        [userId, builder_name, title, description, price, address, city, state, country, pincode, property_type, coverImage, video?.buffer || null]
       );
 
       const propertyId = propertyResult.insertId;
@@ -178,19 +179,10 @@ const getAmenities = async (req, res) => {
 };
 
 const getBuilders = async (req, res) => {
-  try {
-    const [result] = await pool.query(
-      `SELECT DISTINCT u.name AS builderName 
-       FROM sellers u
-       JOIN properties p ON u.id = p.admin_id
-       WHERE u.account_type = 'seller'`
-    );
-    const builders = result.map(row => row.builderName);
-    res.status(200).json({ builders });
-  } catch (error) {
-    console.error('Error fetching builders:', error.message, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  const [rows] = await pool.query(
+    `SELECT DISTINCT builder_name FROM properties WHERE builder_name IS NOT NULL`
+  );
+  res.json({ builders: rows.map(r => r.builder_name) });
 };
 
 const getMaxPrice = async (req, res) => {
@@ -210,9 +202,18 @@ const getFeaturedProperties = async (req, res) => {
     const { location, priceRange, propertyType, builder } = req.query;
 
     let query = `
-      SELECT p.property_id AS id, p.title, p.price, p.pincode, p.property_type, p.city, p.created_at, p.cover_image AS cover_image, u.name AS builderName 
-      FROM properties p
-      JOIN sellers u ON p.admin_id = u.id
+      SELECT
+  p.property_id AS id,
+  p.title,
+  p.price,
+  p.city,
+  p.pincode,
+  p.property_type,
+  p.created_at,
+  p.cover_image,
+  p.builder_name AS builderName
+FROM properties p
+
     `;
     const params = [];
     const conditions = [];
@@ -302,10 +303,24 @@ const getPropertyById = async (req, res) => {
   const connection = await pool.getConnection();
   try {
     const [properties] = await connection.query(
-      `SELECT p.property_id AS id, p.title, p.description, p.price, p.address, p.city, p.state, p.country, p.pincode, p.property_type, p.created_at, p.cover_image, p.video, u.name AS builderName, u.mobile_number, u.email 
-       FROM properties p 
-       JOIN sellers u ON p.admin_id = u.id
-       WHERE p.property_id = ?`,
+      `SELECT
+  p.property_id AS id,
+  p.title,
+  p.description,
+  p.price,
+  p.address,
+  p.city,
+  p.state,
+  p.country,
+  p.pincode,
+  p.property_type,
+  p.builder_name AS builderName,
+  p.created_at,
+  p.cover_image,
+  p.video
+FROM properties p
+WHERE p.property_id = ?
+`,
       [id]
     );
 

@@ -7,7 +7,7 @@ import FAQ from "./components/faq's";
 import ContactUs from "./components/contactUs";
 import TermsAndConditions from "./components/termsAndConditions";
 import PrivacyPolicy from "./components/privacyPolicy";
-import SellerDashboard from "./components/sellerDashboard";
+import BuyerDashboard from "./components/buyerDashboard";
 import BlogDetail from "./components/blogDetail";
 import Blog from "./components/blog";
 import PropertyDetails from "./components/propertyDetails";
@@ -27,7 +27,7 @@ function App() {
         <Route path="/contactUs" element={<ContactUs />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/seller-dashboard/*" element={<SellerDashboard />} />
+        <Route path="/buyer-dashboard/*" element={<BuyerDashboard />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/property/:id" element={<PropertyDetails />} />
