@@ -8,7 +8,7 @@ import EditBlog from "./editBlog";
 import PostProperty from "./postProperty";
 import ViewProperties from "./viewProperties";
 import EditProperty from "./editProperty";
-import CreatePropertyEvent from "./createPropertyEvent";
+import CreatePropertyEvent from "./CreatePropertyEvent";
 
 import { FaBars, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog, FaCalendarAlt } from 'react-icons/fa';
 
