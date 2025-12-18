@@ -8,8 +8,9 @@ import EditBlog from "./editBlog";
 import PostProperty from "./postProperty";
 import ViewProperties from "./viewProperties";
 import EditProperty from "./editProperty";
+import CreatePropertyEvent from "./createPropertyEvent";
 
-import { FaBars, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog } from 'react-icons/fa';
+import { FaBars, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog, FaCalendarAlt } from 'react-icons/fa';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -81,6 +82,18 @@ const AdminDashboard = () => {
           >
             <FaBlog className="w-5 h-5" />
             <span>Manage Blogs</span>
+          </Link>
+          
+
+          <Link
+            to="/admin-dashboard/create-property-event"
+            onClick={closeSidebar}
+            className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
+              location.pathname === '/admin-dashboard/create-property-event' ? 'bg-teal-700' : ''
+            }`}
+          >
+            <FaCalendarAlt className="w-5 h-5" />
+            <span>Event Creation</span>
           </Link>
 
           <Link
@@ -193,6 +206,10 @@ const AdminDashboard = () => {
               <Route path="add" element={<AddBlog />} />
               <Route path="edit/:id" element={<EditBlog />} />
             </Route>
+
+
+            {/* Create Property Event */}
+            <Route path="/create-property-event" element={<CreatePropertyEvent />} />
 
             {/* Profile Settings */}
             <Route path="/profile-settings" element={<AdminProfileSettings />} />
