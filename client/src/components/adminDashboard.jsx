@@ -9,6 +9,8 @@ import PostProperty from "./postProperty";
 import ViewProperties from "./viewProperties";
 import EditProperty from "./editProperty";
 import CreatePropertyEvent from "./CreatePropertyEvent";
+import ViewEvents from "./ViewEvents";                // New
+import EditPropertyEvent from "./EditPropertyEvent";  // New
 
 import { FaBars, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog, FaCalendarAlt } from 'react-icons/fa';
 
@@ -83,17 +85,17 @@ const AdminDashboard = () => {
             <FaBlog className="w-5 h-5" />
             <span>Manage Blogs</span>
           </Link>
-          
 
+          {/* New: Manage Events */}
           <Link
-            to="/admin-dashboard/create-property-event"
+            to="/admin-dashboard/manage-events"
             onClick={closeSidebar}
             className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
-              location.pathname === '/admin-dashboard/create-property-event' ? 'bg-teal-700' : ''
+              location.pathname.startsWith('/admin-dashboard/manage-events') ? 'bg-teal-700' : ''
             }`}
           >
             <FaCalendarAlt className="w-5 h-5" />
-            <span>Event Creation</span>
+            <span>Manage Events</span>
           </Link>
 
           <Link
@@ -149,11 +151,10 @@ const AdminDashboard = () => {
                 <div className="bg-white p-8 rounded-lg shadow-md">
                   <h3 className="text-2xl font-semibold text-gray-800 mb-6">Welcome, Admin!</h3>
                   <p className="text-gray-600 leading-7 mb-8">
-                    You have full control over NativeNest. Manage users, properties, blogs, and monitor platform activity.
+                    You have full control over NativeNest. Manage users, properties, blogs, events, and monitor platform activity.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Manage Users Card */}
                     <Link
                       to="/admin-dashboard/manage-users"
                       className="bg-teal-50 p-6 rounded-lg text-center hover:bg-teal-100 transition transform hover:scale-105 cursor-pointer"
@@ -163,7 +164,6 @@ const AdminDashboard = () => {
                       <p className="text-sm text-gray-600 mt-2">View and manage all registered users</p>
                     </Link>
 
-                    {/* Manage Properties Card - Now Clickable */}
                     <Link
                       to="/admin-dashboard/manage-properties"
                       className="bg-teal-50 p-6 rounded-lg text-center hover:bg-teal-100 transition transform hover:scale-105 cursor-pointer"
@@ -173,7 +173,6 @@ const AdminDashboard = () => {
                       <p className="text-sm text-gray-600 mt-2">Add, edit, or remove property listings</p>
                     </Link>
 
-                    {/* Manage Blogs Card - Now Clickable */}
                     <Link
                       to="/admin-dashboard/manage-blogs"
                       className="bg-teal-50 p-6 rounded-lg text-center hover:bg-teal-100 transition transform hover:scale-105 cursor-pointer"
@@ -182,6 +181,8 @@ const AdminDashboard = () => {
                       <h4 className="text-lg font-medium text-gray-800">Manage Blogs</h4>
                       <p className="text-sm text-gray-600 mt-2">Create and manage blog posts</p>
                     </Link>
+
+                    {/* Optional: Add Events card here if desired */}
                   </div>
                 </div>
               }
@@ -207,6 +208,11 @@ const AdminDashboard = () => {
               <Route path="edit/:id" element={<EditBlog />} />
             </Route>
 
+            {/* Event Management Routes - NEW */}
+            <Route path="/manage-events">
+              <Route index element={<ViewEvents />} />
+              <Route path="edit/:id" element={<EditPropertyEvent />} />
+            </Route>
 
             {/* Create Property Event */}
             <Route path="/create-property-event" element={<CreatePropertyEvent />} />

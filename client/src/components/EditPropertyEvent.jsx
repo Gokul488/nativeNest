@@ -1,10 +1,11 @@
-// src/components/CreatePropertyEvent.jsx
-import React, { useState } from "react";
+// src/components/EditPropertyEvent.jsx
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-const CreatePropertyEvent = () => {
+const EditPropertyEvent = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -25,6 +26,40 @@ const CreatePropertyEvent = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Authentication missing. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(
+          `${API_BASE_URL}/api/admin/events/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Format dates for input[type="date"]
+        const event = response.data;
+        setFormData({
+          ...event,
+          start_date: event.start_date ? event.start_date.split('T')[0] : "",
+          end_date: event.end_date ? event.end_date.split('T')[0] : "",
+        });
+      } catch (err) {
+        setError(err.response?.data?.error || "Failed to load event data.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,38 +74,31 @@ const CreatePropertyEvent = () => {
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Authentication token missing. Please log in again.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      await axios.post(
-        `${API_BASE_URL}/api/admin/events`,
+      await axios.put(
+        `${API_BASE_URL}/api/admin/events/${id}`,
         formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setSuccess("Event created successfully!");
+      setSuccess("Event updated successfully!");
       setTimeout(() => {
-        navigate("/admin-dashboard");
+        navigate("/admin-dashboard/manage-events");
       }, 1500);
     } catch (err) {
-      console.error(err);
-      setError(
-        err.response?.data?.error || "Failed to create event. Please try again."
-      );
+      setError(err.response?.data?.error || "Failed to update event. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (loading) {
+    return <div className="text-center py-12 text-gray-600">Loading event details...</div>;
+  }
+
   return (
     <div className="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-md mt-8">
       <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-        Create Property Exhibition Event
+        Edit Property Exhibition Event
       </h2>
 
       {error && (
@@ -210,7 +238,7 @@ const CreatePropertyEvent = () => {
             <input
               type="time"
               name="start_time"
-              value={formData.start_time}
+              value={formData.start_time || ""}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
@@ -223,7 +251,7 @@ const CreatePropertyEvent = () => {
             <input
               type="time"
               name="end_time"
-              value={formData.end_time}
+              value={formData.end_time || ""}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
@@ -240,7 +268,7 @@ const CreatePropertyEvent = () => {
               type="text"
               name="contact_name"
               placeholder="e.g., John Doe"
-              value={formData.contact_name}
+              value={formData.contact_name || ""}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
@@ -254,7 +282,7 @@ const CreatePropertyEvent = () => {
               type="text"
               name="contact_phone"
               placeholder="e.g., +91 98765 43210"
-              value={formData.contact_phone}
+              value={formData.contact_phone || ""}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
@@ -269,7 +297,7 @@ const CreatePropertyEvent = () => {
           <textarea
             name="description"
             placeholder="Provide details about the event, highlights, participating builders, etc."
-            value={formData.description}
+            value={formData.description || ""}
             onChange={handleChange}
             rows="5"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
@@ -283,7 +311,7 @@ const CreatePropertyEvent = () => {
             disabled={isSubmitting}
             className="bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 text-white font-medium px-8 py-4 rounded-lg transition transform hover:scale-105 disabled:scale-100 shadow-lg"
           >
-            {isSubmitting ? "Creating Event..." : "Create Event"}
+            {isSubmitting ? "Updating Event..." : "Update Event"}
           </button>
         </div>
       </form>
@@ -291,4 +319,4 @@ const CreatePropertyEvent = () => {
   );
 };
 
-export default CreatePropertyEvent;
+export default EditPropertyEvent;
