@@ -25,37 +25,41 @@ const BuyerEvents = () => {
     fetchEvents();
   }, []);
 
-  const handleParticipate = async () => {
-    if (!selectedEvent) return;
+const handleParticipate = async () => {
+  if (!selectedEvent) return;
 
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${API_BASE_URL}/api/buyer/events/participate`,
-        {
-          eventId: selectedEvent.id,
-          name: user.name,
-          phone: user.mobile_number,
-          email: user.email,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      `${API_BASE_URL}/api/buyer/events/participate`,
+      {
+        eventId: selectedEvent.id,
+        name: user.name || "Guest",
+        phone: user.mobile_number,
+        email: user.email || null,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-      alert(response.data.message);
-
-      // Open WhatsApp
-      const whatsappUrl = `https://wa.me/91${user.mobile_number}?text=${encodeURIComponent(
-        response.data.whatsappMessage
-      )}`;
-      window.open(whatsappUrl, "_blank");
-
-      setSelectedEvent(null);
-    } catch (err) {
-      alert(err.response?.data?.error || "Registration failed. Please try again.");
+    // Success alert with email note
+    let successMessage = response.data.message;
+    if (response.data.emailSent) {
+      successMessage += "\n\n✅ A confirmation email has been sent to your registered email address.";
+    } else {
+      successMessage += "\n\nℹ️ No email provided — confirmation sent via registration only.";
     }
-  };
+
+    alert(successMessage);
+
+    setSelectedEvent(null);
+    // Optional: refresh events list if needed
+  } catch (err) {
+    const errorMsg = err.response?.data?.error || "Registration failed. Please try again.";
+    alert(errorMsg);
+  }
+};
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden">

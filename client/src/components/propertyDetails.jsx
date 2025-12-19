@@ -314,6 +314,7 @@ const PropertyDetails = () => {
                 </div>
                 <p className="text-gray-700 text-sm">{property.builderName || 'N/A'}</p>
               </motion.div>
+
               <motion.div whileHover={{ y: -4 }} className="p-5 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:border-[#2e6171]/30 hover:shadow-lg transition-all">
                 <div className="flex items-center text-gray-700 mb-2">
                   <i className="fas fa-phone-alt mr-3 text-lg text-[#2e6171]"></i>
@@ -327,6 +328,7 @@ const PropertyDetails = () => {
                   ) : 'N/A'}
                 </p>
               </motion.div>
+
               <motion.div whileHover={{ y: -4 }} className="p-5 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:border-[#2e6171]/30 hover:shadow-lg transition-all">
                 <div className="flex items-center text-gray-700 mb-2">
                   <i className="fas fa-envelope mr-3 text-lg text-[#2e6171]"></i>

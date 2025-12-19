@@ -304,28 +304,29 @@ const getPropertyById = async (req, res) => {
   try {
     const [properties] = await connection.query(
       `SELECT
-  p.property_id AS id,
-  p.title,
-  p.description,
-  p.price,
-  p.address,
-  p.city,
-  p.state,
-  p.country,
-  p.pincode,
-  p.property_type,
-  p.builder_name AS builderName,
-  p.created_at,
-  p.cover_image,
-  p.video
-FROM properties p
-WHERE p.property_id = ?
-`,
+        p.property_id AS id,
+        p.title,
+        p.description,
+        p.price,
+        p.address,
+        p.city,
+        p.state,
+        p.country,
+        p.pincode,
+        p.property_type,
+        p.builder_name AS builderName,
+        p.created_at,
+        p.cover_image,
+        p.video,
+        a.mobile_number,
+        a.email
+      FROM properties p
+      LEFT JOIN admins a ON p.admin_id = a.id
+      WHERE p.property_id = ?`,
       [id]
     );
 
     if (properties.length === 0) {
-      connection.release();
       return res.status(404).json({ error: 'Property not found' });
     }
 
@@ -387,8 +388,8 @@ WHERE p.property_id = ?
         icon: a.icon 
       })),
       builderName: property.builderName,
-      mobile_number: property.mobile_number,
-      email: property.email
+      mobile_number: property.mobile_number || null,
+      email: property.email || null
     };
 
     res.status(200).json({ property: formattedProperty });

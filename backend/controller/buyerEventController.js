@@ -1,6 +1,7 @@
 // controller/buyerEventController.js
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/sendEmail'); // ← Adjust path if needed
 
 /* ================= BUYER: GET ALL EVENTS ================= */
 const getPublicEvents = async (req, res) => {
@@ -38,6 +39,19 @@ const participateEvent = async (req, res) => {
       return res.status(400).json({ error: 'Required fields missing' });
     }
 
+    // Fetch event details for email
+    const [eventRows] = await pool.query(
+      `SELECT event_name, event_location, city, state, start_date, end_date, start_time, end_time
+       FROM property_events WHERE id = ?`,
+      [eventId]
+    );
+
+    if (eventRows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    const event = eventRows[0];
+
     /* ================= INSERT PARTICIPATION ================= */
     await pool.query(
       `INSERT INTO event_participants (event_id, buyer_id, name, phone, email)
@@ -45,29 +59,64 @@ const participateEvent = async (req, res) => {
       [eventId, decoded.userId, name, phone, email || null]
     );
 
-    /* ================= WHATSAPP MESSAGE ================= */
-    const whatsappMessage =
-      `✅ Registration Confirmed!\n\n` +
-      `Event ID: ${eventId}\n` +
-      `Name: ${name}\n\n` +
-      `Thank you for registering with NativeNest.`;
+    /* ================= SEND CONFIRMATION EMAIL ================= */
+    const subject = `Registration Confirmed: ${event.event_name}`;
+
+    const formatDate = (date) => new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    const formatTime = (time) => time ? time.slice(0, 5) : 'N/A';
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <h2 style="color: #2e6171; text-align: center;">🎉 Registration Confirmed!</h2>
+        <p style="font-size: 16px;">Dear <strong>${name}</strong>,</p>
+        <p>Thank you for registering for the event with <strong>NativeNest</strong>. Here are your registration details:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr><td style="padding: 8px 0; font-weight: bold;">Event Name:</td><td>${event.event_name}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event.event_location || ''} ${event.city}, ${event.state}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: bold;">Date:</td><td>${formatDate(event.start_date)} ${event.end_date && event.start_date !== event.end_date ? ' to ' + formatDate(event.end_date) : ''}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: bold;">Time:</td><td>${formatTime(event.start_time)} - ${formatTime(event.end_time)}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: bold;">Phone:</td><td>${phone}</td></tr>
+        </table>
+
+        <p style="background: #f0f9ff; padding: 15px; border-radius: 8px; text-align: center; font-size: 15px;">
+          We look forward to seeing you at the event!
+        </p>
+
+        <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
+          Regards,<br><strong>NativeNest Team</strong>
+        </p>
+      </div>
+    `;
+
+    // Send email (only if email is provided)
+    if (email) {
+      try {
+        await sendEmail({
+          to: email,
+          subject,
+          html,
+        });
+      } catch (emailErr) {
+        console.error('Failed to send confirmation email:', emailErr);
+        // Don't fail the registration if email fails
+      }
+    }
 
     /* ================= RESPONSE ================= */
     res.status(201).json({
       message: 'Successfully registered for the event',
-      whatsappMessage
+      emailSent: !!email, // true if email was provided and attempted
     });
 
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'Already registered for this event' });
+      return res.status(400).json({ error: 'You are already registered for this event' });
     }
-    console.error(err);
-    res.status(500).json({ error: 'Failed to participate in event' });
+    console.error('Error in participateEvent:', err);
+    res.status(500).json({ error: 'Failed to register for event' });
   }
 };
-
-
 
 /* ================= BUYER: MY REGISTERED EVENTS ================= */
 const getMyRegisteredEvents = async (req, res) => {
