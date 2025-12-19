@@ -2,11 +2,41 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import whatsappBg from '../assets/whatsapp-doodle-bg.jpg'; // Your uploaded doodle image
+import axios from 'axios'; // Add axios for API call
+import API_BASE_URL from '../config'; // Assuming you have this config file
 
 const WhatsappChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [adminData, setAdminData] = useState({
+    name: 'Support',        // Fallback name
+    mobile_number: '9442714693'  // Fallback number
+  });
+  const [loading, setLoading] = useState(true);
 
+  // Fetch admin WhatsApp details on mount
+  useEffect(() => {
+    const fetchAdminWhatsapp = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/public/admin-whatsapp`);
+        if (response.data && response.data.name && response.data.mobile_number) {
+          setAdminData({
+            name: response.data.name,
+            mobile_number: response.data.mobile_number
+          });
+        }
+      } catch (error) {
+        console.warn('Failed to fetch admin WhatsApp details, using fallback values.');
+        // Silently fall back to default values if API fails
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAdminWhatsapp();
+  }, []);
+
+  // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
@@ -20,7 +50,7 @@ const WhatsappChatWidget = () => {
     }).replace('AM', 'am').replace('PM', 'pm');
   };
 
-  const phoneNumber = "9442714693";
+  const phoneNumber = adminData.mobile_number.replace(/\D/g, ''); // Remove any non-digits
   const defaultMessage = "Hi there\nI'm interested in your properties on NativeNest.in";
   const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
 
@@ -63,7 +93,9 @@ const WhatsappChatWidget = () => {
                   <i className="fab fa-whatsapp text-xl"></i>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">Gokul</h4>
+                  <h4 className="font-semibold text-sm">
+                    {loading ? 'Loading...' : adminData.name}
+                  </h4>
                   <p className="text-xs opacity-90">Typically replies in minutes</p>
                 </div>
               </div>
@@ -79,7 +111,7 @@ const WhatsappChatWidget = () => {
 
             {/* Compact Chat Area with Real WhatsApp Background */}
             <div
-              className="h-32 relative" // Reduced height dramatically
+              className="h-32 relative"
               style={{
                 backgroundImage: `url(${whatsappBg})`,
                 backgroundColor: '#0b141a',

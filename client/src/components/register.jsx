@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
 import { motion } from "framer-motion";
 import API_BASE_URL from "../config.js";
 
@@ -11,7 +11,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ HARD CODED account types
   const accountTypes = ["buyer", "admin"];
 
   const handleRegister = async (e) => {
@@ -55,158 +54,195 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white overflow-hidden relative flex items-center justify-center p-4">
-      {/* Background */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-linear-to-br from-[#2e6171] to-[#011936] rounded-full blur-3xl opacity-10 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-linear-to-tr from-[#2e6171]/70 to-[#011936]/70 rounded-full blur-3xl opacity-10 animate-pulse animation-delay-2000"></div>
+    <div className="min-h-screen w-full relative flex items-center justify-center p-4 bg-[#f0f7f9] overflow-x-hidden">
+      
+      {/* Shared Background Graphic Pattern */}
+      <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
+        <svg 
+          viewBox="0 0 1440 800" 
+          preserveAspectRatio="none" 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="w-full h-full object-cover"
+        >
+          <path fill="#a0c4ff" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,250.7C960,235,1056,181,1152,165.3C1248,149,1344,171,1392,181.3L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
+          <path fill="#bde0fe" d="M0,320L48,314.7C96,309,192,299,288,272C384,245,480,203,576,202.7C672,203,768,245,864,250.7C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" opacity="0.5"></path>
+        </svg>
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className="w-full max-w-lg"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-2xl z-10"
       >
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-100">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#011936]">Create Account</h1>
-            <p className="text-gray-600 mt-2">Join NativeNest today</p>
+        <div className="bg-white/80 backdrop-blur-md rounded-4xl p-6 md:p-10 shadow-2xl border border-white/50 text-center">
+          
+          <div className="mb-6">
+            <h1 className="text-3xl font-extrabold text-[#0a2540] mb-1 tracking-tight">Create Account</h1>
+            <p className="text-slate-500 text-sm">Join the NativeNest community</p>
           </div>
 
           {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-lg mb-6 text-sm font-medium bg-red-50 text-red-700 border border-red-200"
-            >
+            <div className="p-3 rounded-lg mb-6 text-xs bg-red-50 text-red-600 border border-red-100 text-center">
               {error}
-            </motion.div>
+            </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-5">
-            {/* Name */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiType className="text-[#2e6171]" /> Full Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-[#2e6171]"
-              />
-            </div>
+          <form onSubmit={handleRegister} className="space-y-4 text-left">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Full Name */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                  Full Name *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                    <FiType size={16} />
+                  </span>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="John Doe"
+                    required
+                    className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                  />
+                </div>
+              </div>
 
-            {/* Email */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiMail className="text-[#2e6171]" /> Email (Optional)
-              </label>
-              <input
-                type="email"
-                name="email"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-[#2e6171]"
-              />
-            </div>
+              {/* Email */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                  Email (Optional)
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                    <FiMail size={16} />
+                  </span>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="alex@example.com"
+                    className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                  />
+                </div>
+              </div>
 
-            {/* Mobile */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiPhone className="text-[#2e6171]" /> Mobile Number *
-              </label>
-              <input
-                type="tel"
-                name="mobile_number"
-                required
-                maxLength="10"
-                pattern="\d{10}"
-                onInput={(e) =>
-                  (e.target.value = e.target.value.replace(/\D/g, ""))
-                }
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-[#2e6171]"
-              />
-            </div>
+              {/* Mobile Number */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                  Mobile Number *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                    <FiPhone size={16} />
+                  </span>
+                  <input
+                    type="tel"
+                    name="mobile_number"
+                    required
+                    maxLength="10"
+                    placeholder="9876543210"
+                    pattern="\d{10}"
+                    onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
+                    className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                  />
+                </div>
+              </div>
 
-            {/* Password */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiLock className="text-[#2e6171]" /> Password *
-              </label>
-              <div className="relative">
-                <input
-                  type={showRegPassword ? "text" : "password"}
-                  name="password"
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowRegPassword(!showRegPassword)}
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-500"
-                >
-                  {showRegPassword ? <FiEyeOff /> : <FiEye />}
-                </button>
+              {/* Account Type */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                  Account Type *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                    <FiUser size={16} />
+                  </span>
+                  <select
+                    name="account_type"
+                    required
+                    defaultValue=""
+                    className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all appearance-none"
+                  >
+                    <option value="" disabled>Select type</option>
+                    {accountTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                  Password *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                    <FiLock size={16} />
+                  </span>
+                  <input
+                    type={showRegPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="••••••••"
+                    required
+                    className="w-full pl-11 pr-11 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+                  >
+                    {showRegPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                  Confirm Password *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                    <FiLock size={16} />
+                  </span>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirm_password"
+                    placeholder="••••••••"
+                    required
+                    className="w-full pl-11 pr-11 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+                  >
+                    {showConfirmPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Confirm */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiLock className="text-[#2e6171]" /> Confirm Password *
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirm_password"
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowConfirmPassword(!showConfirmPassword)
-                  }
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-500"
-                >
-                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-                </button>
-              </div>
-            </div>
-
-            {/* Account Type */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-[#011936] mb-2">
-                <FiUser className="text-[#2e6171]" /> Account Type *
-              </label>
-              <select
-                name="account_type"
-                required
-                defaultValue=""
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-[#2e6171]"
+            {/* Centered and Smaller Register Button */}
+            <div className="pt-6 flex justify-center">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full max-w-xs bg-[#0a2540] hover:bg-[#0d2e50] text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all disabled:opacity-70"
               >
-                <option value="" disabled>Select account type</option>
-                {accountTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </option>
-                ))}
-              </select>
+                {loading ? "Creating Account..." : "Register Now"}
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-linear-to-r from-[#2e6171] to-[#011936] text-white py-3.5 rounded-xl font-bold"
-            >
-              {loading ? "Creating Account..." : "Register"}
-            </button>
           </form>
 
-          <div className="mt-6 text-center text-gray-600">
+          <div className="mt-6 text-sm text-slate-500">
             Already have an account?{" "}
             <Link to="/login" className="font-bold text-[#2e6171] hover:underline">
-              Login
+              Sign In
             </Link>
           </div>
         </div>

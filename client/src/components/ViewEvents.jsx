@@ -63,7 +63,7 @@ const ViewEvents = () => {
         <h2 className="text-2xl font-bold text-gray-800">All Property Events</h2>
         <Link
           to="/admin-dashboard/create-property-event"
-          className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-medium flex items-center gap-2"
+          className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition font-medium flex items-center gap-2"
         >
           <FaCalendarAlt />
           Create New Event
@@ -123,7 +123,7 @@ const ViewEvents = () => {
                   <td className="px-6 py-4 text-sm">
                     <Link
                       to={`/admin-dashboard/manage-events/edit/${event.id}`}
-                      className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium"
+                      className="text-teal-600 hover:text-teal-800 hover:underline font-medium"
                     >
                       {event.event_name}
                     </Link>

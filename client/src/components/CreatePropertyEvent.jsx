@@ -288,7 +288,7 @@ const CreatePropertyEvent = () => {
         </div>
       </form>
     </div>
-  );
+  ); 
 };
 
 export default CreatePropertyEvent;

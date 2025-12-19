@@ -9,6 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const blogRoutes = require('./routes/blogRoutes'); 
 const adminRoutes = require('./routes/adminRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const buyerEventRoutes = require('./routes/buyerEventRoutes');
 const app = express();
 
 app.use(cors({
@@ -29,6 +30,7 @@ app.use('/api', userRoutes);
 app.use('/api/blogs', blogRoutes); 
 app.use('/api', adminRoutes);
 app.use('/api', eventRoutes);
+app.use('/api', buyerEventRoutes);
 
 // Health check endpoint
 app.get('/health-db', async (req, res) => {

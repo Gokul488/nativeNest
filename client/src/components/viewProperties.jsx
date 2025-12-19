@@ -63,7 +63,7 @@ const ViewProperties = () => {
         <h2 className="text-2xl font-bold text-gray-800">Manage Properties</h2>
         <Link
           to="/admin-dashboard/manage-properties/add"
-          className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-medium"
+          className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition font-medium"
         >
           + Add New Property
         </Link>
@@ -110,7 +110,7 @@ const ViewProperties = () => {
                   <td className="px-6 py-4 text-sm">
                     <Link
                       to={`/admin-dashboard/manage-properties/edit/${property.id}`}
-                      className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium"
+                      className="text-teal-600 hover:text-teal-800 hover:underline font-medium"
                     >
                       {property.title}
                     </Link>
@@ -122,7 +122,7 @@ const ViewProperties = () => {
                   <td className="px-6 py-4 text-sm">
                     <button
                       onClick={() => handleDelete(property.id)}
-                      className="text-red-600 hover:text-red-800 transition"
+                      className="text-red-600 hover:text-red-800 transition" 
                       title="Delete"
                     >
                       <span className="material-symbols-outlined text-xl">delete</span>

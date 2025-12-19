@@ -174,11 +174,11 @@ const EditBlog = () => {
           )}
         </div>
 
-        <div className="pt-4">
+        <div className="flex justify-center pt-4">
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition font-medium disabled:opacity-70"
+            className="bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 text-white font-medium px-8 py-4 rounded-lg transition transform hover:scale-105 disabled:scale-100 shadow-lg"
           >
             {isSubmitting ? 'Updating...' : 'Update Blog'}
           </button>

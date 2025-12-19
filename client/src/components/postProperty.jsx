@@ -492,7 +492,7 @@ const PostProperty = () => {
               <button
                 type="button"
                 onClick={addExtraImageInput}
-                className="mt-3 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
+                className="mt-3 bg-teal-700 text-white px-4 py-2 rounded-lg hover:bg-teal-800 transition text-sm"
               >
                 + Add More Images
               </button>
@@ -504,7 +504,7 @@ const PostProperty = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition font-medium disabled:bg-gray-400"
+              className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition font-medium disabled:bg-gray-400"
             >
               {isSubmitting ? "Submitting…" : "Post Property"}
             </button>
