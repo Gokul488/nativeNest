@@ -24,12 +24,18 @@ const createProperty = async (req, res) => {
       pincode,
       property_type,
       builder_name,
+      sqft,
       amenities = [],
       other_amenity
     } = req.body;
 
     if (!title || !description || !price || !address || !city || !state || !country || !pincode || !property_type || !builder_name) {
       return res.status(400).json({ error: 'All required fields must be filled' });
+    }
+
+    // Optional: make sqft required or validate
+    if (sqft && (isNaN(sqft) || sqft <= 0)) {
+      return res.status(400).json({ error: 'Sqft must be a positive number' });
     }
 
     const validPropertyTypes = ['Villas', 'Apartment', 'Plots', 'Commercial'];
@@ -57,9 +63,9 @@ const createProperty = async (req, res) => {
       await connection.beginTransaction();
 
       const [propertyResult] = await connection.query(
-        `INSERT INTO properties (admin_id, builder_name, title, description, price, address, city, state, country, pincode, property_type, cover_image, video, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-        [userId, builder_name, title, description, price, address, city, state, country, pincode, property_type, coverImage, video?.buffer || null]
+        `INSERT INTO properties (admin_id, builder_name, title, description, price, address, city, state, country, pincode, property_type, sqft, cover_image, video, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        [userId, builder_name, title, description, price, address, city, state, country, pincode, property_type, sqft || null, coverImage, video?.buffer || null]
       );
 
       const propertyId = propertyResult.insertId;
@@ -209,6 +215,7 @@ const getFeaturedProperties = async (req, res) => {
   p.city,
   p.pincode,
   p.property_type,
+  p.sqft,
   p.created_at,
   p.cover_image,
   p.builder_name AS builderName
@@ -244,7 +251,7 @@ FROM properties p
     }
 
     if (builder && builder !== 'All') {
-      conditions.push(`u.name = ?`);
+      conditions.push(`p.builder_name = ?`);  // Fixed: was joining admins incorrectly
       params.push(builder);
     }
 
@@ -282,6 +289,7 @@ FROM properties p
           price: parseFloat(property.price),
           pincode: property.pincode,
           property_type: property.property_type,
+          sqft: property.sqft || null,
           created_at: property.created_at,
           img: imageBase64,
           builderName: property.builderName,
@@ -315,6 +323,7 @@ const getPropertyById = async (req, res) => {
         p.pincode,
         p.property_type,
         p.builder_name AS builderName,
+        p.sqft,
         p.created_at,
         p.cover_image,
         p.video,
@@ -378,6 +387,7 @@ const getPropertyById = async (req, res) => {
       country: property.country,
       pincode: property.pincode,
       property_type: property.property_type,
+      sqft: property.sqft || null,
       created_at: property.created_at,
       cover_image: coverImage,
       images: imageBase64s,

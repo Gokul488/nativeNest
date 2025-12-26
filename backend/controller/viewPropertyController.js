@@ -21,6 +21,7 @@ const getProperties = async (req, res) => {
         p.price, 
         p.city,
         p.property_type,
+        p.sqft,
         p.created_at,
         COALESCE(pi.image_count, 0) AS image_count
       FROM properties p
@@ -56,7 +57,8 @@ const getPropertyById = async (req, res) => {
           p.state, 
           p.country, 
           p.pincode, 
-          p.property_type, 
+          p.property_type,
+          p.sqft, 
           p.video,
           p.cover_image, 
           p.created_at
@@ -86,6 +88,7 @@ const getPropertyById = async (req, res) => {
     const property = { 
       ...properties[0], 
       images,
+      sqft: properties[0].sqft || null,
       amenities: amenitiesResult.map(a => ({ 
         id: a.amenity_id, 
         name: a.name, 
@@ -109,13 +112,17 @@ const updateProperty = async (req, res) => {
     const { id } = req.params;
 
     const {
-      title, builder_name, description, price, address, city, state, country, pincode, property_type,
+      title, builder_name, description, price, address, city, state, country, pincode, property_type, sqft,
       amenities,
       other_amenity
     } = req.body;
 
     if (!title || !builder_name || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
       return res.status(400).json({ error: 'All required fields must be filled' });
+    }
+
+    if (sqft && (isNaN(sqft) || sqft <= 0)) {
+      return res.status(400).json({ error: 'Sqft must be a positive number' });
     }
 
     const validPropertyTypes = ['Villas', 'Plots', 'Apartment', 'Commercial'];
@@ -146,11 +153,11 @@ const updateProperty = async (req, res) => {
       await connection.query(
         `UPDATE properties SET 
           title = ?, builder_name = ?, description = ?, price = ?, address = ?, city = ?, state = ?, country = ?, 
-          pincode = ?, property_type = ?, 
+          pincode = ?, property_type = ?, sqft = ?,
           cover_image = COALESCE(?, cover_image),
           video = COALESCE(?, video)
          WHERE property_id = ?`,
-        [title, builder_name, description, price, address, city, state, country, pincode, property_type, coverImage, video, id]
+        [title, builder_name, description, price, address, city, state, country, pincode, property_type, sqft || null, coverImage, video, id]
       );
 
       if (images.length > 0) {

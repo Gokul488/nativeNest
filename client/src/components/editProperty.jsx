@@ -33,6 +33,7 @@ const EditProperty = () => {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [propertyTypes, setPropertyTypes] = useState([]);
+  const [sqft, setSqft] = useState("");
   const [builderName, setBuilderName] = useState("");
 
   // Initialize Quill editor
@@ -109,6 +110,7 @@ const EditProperty = () => {
         setCountry(prop.country || "");
         setPincode(prop.pincode || "");
         setBuilderName(prop.builderName || "");
+        setSqft(prop.sqft || "");
         setPropertyType(prop.property_type || "");
         if (quill && prop.description) {
           quill.clipboard.dangerouslyPasteHTML(prop.description);
@@ -196,7 +198,8 @@ const EditProperty = () => {
     formData.append("country", country);
     formData.append("pincode", pincode);
     formData.append("property_type", propertyType);
-
+    formData.append("sqft", sqft);
+    
     if (coverImage) formData.append("cover_image", coverImage);
     if (video) formData.append("video", video);
     images.forEach((image) => formData.append("images[]", image));
@@ -380,6 +383,21 @@ const EditProperty = () => {
               value={pincode}
               onChange={(e) => setPincode(e.target.value)}
               required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          {/* NEW: Sqft */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Area (sqft)
+            </label>
+            <input
+              type="number"
+              value={sqft}
+              onChange={(e) => setSqft(e.target.value)}
+              min="1"
+              placeholder="e.g., 2500"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
           </div>

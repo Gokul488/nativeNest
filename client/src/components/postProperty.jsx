@@ -22,6 +22,7 @@ const PostProperty = () => {
     country: "",
     pincode: "",
     property_type: "",
+    sqft: "",
   });
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [amenityOptions, setAmenityOptions] = useState([]);
@@ -289,14 +290,14 @@ const PostProperty = () => {
 
 
           <div>
-            <label className="block text-sm font-medium">Builder Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Builder Name</label>
             <input
               type="text"
               name="builder_name"
               value={formData.builder_name || ""}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border rounded-lg"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -379,6 +380,22 @@ const PostProperty = () => {
               value={formData.pincode}
               onChange={handleInputChange}
               required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          {/* ----- Sqft ----- */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Area (sqft)
+            </label>
+            <input
+              type="number"
+              name="sqft"
+              value={formData.sqft}
+              onChange={handleInputChange}
+              min="1"
+              placeholder="e.g., 2500"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
           </div>

@@ -4,6 +4,7 @@ import Header from "./header";
 import Footer from "./footer";
 import { motion } from "framer-motion";
 import API_BASE_URL from '../config.js';   // ← one level up
+
 const PropertyDetails = () => {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
@@ -18,6 +19,15 @@ const PropertyDetails = () => {
     if (!price) return 'N/A';
     const num = Number(price);
     return isNaN(num) ? price : num.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  };
+
+  // Calculate and format rate per sq. ft.
+  const getRatePerSqFt = () => {
+    if (!property?.sqft || !property?.price || property.sqft <= 0) {
+      return 'N/A';
+    }
+    const rate = property.price / property.sqft;
+    return formatPriceInINR(Math.round(rate));
   };
 
   const fetchPropertyDetails = async () => {
@@ -207,6 +217,8 @@ const PropertyDetails = () => {
                 { label: 'Country', value: property.country, icon: 'fas fa-flag' },
                 { label: 'Pincode', value: property.pincode, icon: 'fas fa-mail-bulk' },
                 { label: 'Property Type', value: property.property_type, icon: 'fas fa-home' },
+                { label: 'Area', value: property.sqft ? `${formatPriceInINR(property.sqft)} sq. ft.` : 'N/A', icon: 'fas fa-ruler-combined' },
+                { label: 'Rate per Sq. Ft.', value: `₹${getRatePerSqFt()}`, icon: 'fas fa-calculator' },
               ].map((item, i) => (
                 <motion.div
                   key={i}

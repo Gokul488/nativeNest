@@ -1,17 +1,55 @@
-// controller/buyerEventController.js
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/sendEmail'); // ← Adjust path if needed
+const sendEmail = require('../utils/sendEmail');
 
 /* ================= BUYER: GET ALL EVENTS ================= */
 const getPublicEvents = async (req, res) => {
   try {
-    const [events] = await pool.query(
-      `SELECT id, event_name, event_type, event_location, city, state,
-              start_date, end_date, start_time, end_time, description
-       FROM property_events
-       ORDER BY start_date DESC`
-    );
+    let buyerId = null;
+
+    // Token is optional here
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.account_type === 'buyer') {
+          buyerId = decoded.userId;
+        }
+      } catch (err) {
+        // ignore invalid token
+      }
+    }
+
+    let query = `
+      SELECT 
+        pe.id,
+        pe.event_name,
+        pe.event_type,
+        pe.event_location,
+        pe.city,
+        pe.state,
+        pe.start_date,
+        pe.end_date,
+        pe.start_time,
+        pe.end_time,
+        pe.description,
+        ${
+          buyerId
+            ? 'CASE WHEN ep.id IS NULL THEN 0 ELSE 1 END AS isRegistered'
+            : '0 AS isRegistered'
+        }
+      FROM property_events pe
+      ${
+        buyerId
+          ? 'LEFT JOIN event_participants ep ON ep.event_id = pe.id AND ep.buyer_id = ?'
+          : ''
+      }
+      ORDER BY pe.start_date DESC
+    `;
+
+    const [events] = buyerId
+      ? await pool.query(query, [buyerId])
+      : await pool.query(query);
 
     res.json(events);
   } catch (err) {
@@ -19,6 +57,7 @@ const getPublicEvents = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch events' });
   }
 };
+
 
 /* ================= BUYER: PARTICIPATE EVENT ================= */
 const participateEvent = async (req, res) => {
@@ -106,7 +145,7 @@ const participateEvent = async (req, res) => {
     /* ================= RESPONSE ================= */
     res.status(201).json({
       message: 'Successfully registered for the event',
-      emailSent: !!email, // true if email was provided and attempted
+      emailSent: !!email, 
     });
 
   } catch (err) {
