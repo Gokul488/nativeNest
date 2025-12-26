@@ -2,3 +2,7 @@
 .env
 node_modules/
 *.log
+
+# environment files
+.env
+backend/.env
