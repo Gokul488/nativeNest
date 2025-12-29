@@ -7,11 +7,12 @@ import {
   Route,
   useLocation
 } from "react-router-dom";
-import { FaBars, FaUser, FaHome, FaCog, FaCalendarAlt, FaCalendarCheck } from "react-icons/fa";
+import { FaBars, FaUser, FaHome, FaCog, FaCalendarAlt, FaCalendarCheck, FaBookmark } from "react-icons/fa";
 
 import ProfileSettings from "./profileSettings";
 import BuyerEvents from "./buyerEvents";
 import MyRegisteredEvents from "./MyRegisteredEvents";
+import BookmarkedProperties from "./BookmarkedProperties";
 
 const BuyerDashboard = () => {
   const navigate = useNavigate();
@@ -81,6 +82,13 @@ const BuyerDashboard = () => {
           >
             <FaCalendarAlt className="w-5 h-5" />
             <span>Explore Events</span>
+          </Link>
+
+            {/* NEW: Bookmarked Properties */}
+          <Link to="/buyer-dashboard/bookmarks" onClick={closeSidebar}
+            className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-white hover:bg-teal-400/50 ${isActive("/buyer-dashboard/bookmarks")}`}>
+            <FaBookmark className="w-5 h-5" />
+            <span>Bookmarked Properties</span>
           </Link>
 
           {/* Profile Settings */}
@@ -199,6 +207,7 @@ const BuyerDashboard = () => {
             {/* Routes */}
             <Route path="/my-events" element={<MyRegisteredEvents />} />
             <Route path="/events" element={<BuyerEvents />} />
+            <Route path="/bookmarks" element={<BookmarkedProperties />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
           </Routes>
         </main>

@@ -9,6 +9,7 @@ const Buy = () => {
   const [properties, setProperties] = useState([]);
   const [propertyError, setPropertyError] = useState('');
   const [propertyTypes, setPropertyTypes] = useState([]);
+  const [bookmarks, setBookmarks] = useState(new Set());
   const [maxPrice, setMaxPrice] = useState(0);
   const [selectedMinPrice, setSelectedMinPrice] = useState(0);
   const [selectedMaxPrice, setSelectedMaxPrice] = useState(0);
@@ -25,6 +26,10 @@ const Buy = () => {
   const location = useLocation();
   const isInitialLoad = useRef(true);
 
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isLoggedIn = !!token && user.account_type === 'buyer';
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -35,6 +40,62 @@ const Buy = () => {
 
   const parseCurrency = (value) => {
     return Number(value.toString().replace(/[^0-9.-]+/g, '')) || 0;
+  };
+
+  // Fetch user's bookmarks
+  const fetchBookmarks = useCallback(async () => {
+    if (!isLoggedIn) {
+      setBookmarks(new Set());
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bookmarks`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBookmarks(new Set(data.bookmarks.map(b => b.property_id)));
+      }
+    } catch (err) {
+      console.error('Error fetching bookmarks:', err);
+    }
+  }, [isLoggedIn, token]);
+
+  // Toggle bookmark
+  const toggleBookmark = async (e, propertyId) => {
+    e.stopPropagation();
+
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: location.pathname + location.search } });
+      return;
+    }
+
+    const isBookmarked = bookmarks.has(propertyId);
+    const method = isBookmarked ? 'DELETE' : 'POST';
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bookmarks/${propertyId}`, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setBookmarks(prev => {
+          const newSet = new Set(prev);
+          if (isBookmarked) newSet.delete(propertyId);
+          else newSet.add(propertyId);
+          return newSet;
+        });
+      } else {
+        const error = await response.json();
+        console.error('Bookmark error:', error);
+      }
+    } catch (err) {
+      console.error('Network error on bookmark:', err);
+    }
   };
 
   // Memoized fetch functions
@@ -105,7 +166,8 @@ const Buy = () => {
     fetchPropertyTypes();
     fetchMaxPrice();
     fetchBuilders();
-  }, [fetchPropertyTypes, fetchMaxPrice, fetchBuilders]);
+    fetchBookmarks();
+  }, [fetchPropertyTypes, fetchMaxPrice, fetchBuilders, fetchBookmarks]);
 
   // Handle URL params and initial load
   useEffect(() => {
@@ -571,7 +633,7 @@ const Buy = () => {
         )}
 
         {/* Property Grid - Matches Home Page Style */}
-        <motion.div
+              <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, staggerChildren: 0.1 }}
@@ -589,17 +651,35 @@ const Buy = () => {
                 onClick={() => handlePropertyClick(listing.id)}
                 className="group relative bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-gray-100 cursor-pointer"
               >
+                {/* Image Container */}
                 <div className="relative h-56 sm:h-64 overflow-hidden">
                   <img
                     src={listing.img}
                     alt={listing.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                  {/* Dark overlay on hover */}
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                  {/* Bookmark Icon - Bottom Right of Image */}
+                  <button
+                    onClick={(e) => toggleBookmark(e, listing.id)}
+                    className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:scale-110 transition-all z-10"
+                    title={bookmarks.has(listing.id) ? "Remove from bookmarks" : "Add to bookmarks"}
+                    aria-label={bookmarks.has(listing.id) ? "Remove bookmark" : "Bookmark property"}
+                  >
+                    {bookmarks.has(listing.id) ? (
+                      <i className="fa-solid fa-bookmark text-red-500 text-xl"></i>
+                    ) : (
+                      <i className="fa-regular fa-bookmark text-gray-700 text-xl"></i>
+                    )}
+                  </button>
                 </div>
 
+                {/* Property Details */}
                 <div className="p-6">
-                  <h3 className="text-xl sm:text-xl font-bold text-[#011936] mb-2 tracking-tight line-clamp-2">
+                  <h3 className="text-xl font-bold text-[#011936] mb-2 tracking-tight line-clamp-2">
                     {listing.title}
                   </h3>
                   <p className="text-sm text-[#2e6171] font-medium mb-2 flex items-center gap-2">
@@ -609,20 +689,21 @@ const Buy = () => {
                   <p className="text-lg font-bold text-[#011936] mb-3">
                     {formatCurrency(listing.price)}
                   </p>
-                 {listing.builderName && (
-                    <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+
+                  {listing.builderName && (
+                    <div className="flex items-center justify-between text-sm text-gray-600">
                       <div className="flex items-center gap-2">
                         <i className="fas fa-building"></i>
                         Builder: {listing.builderName}
                       </div>
-
-                      <div className="flex items-center text-[#2e6171] font-semibold hover:text-[#011936] transition-colors duration-300">
-                        <i className="fas fa-arrow-right text-sm transform group-hover:translate-x-1 transition-transform"></i>
+                      <div className="flex items-center text-[#2e6171] font-semibold">
+                        <i className="fas fa-arrow-right text-sm transform group-hover:translate-x-2 transition-transform duration-300"></i>
                       </div>
                     </div>
                   )}
                 </div>
 
+                {/* Full card hover overlay */}
                 <div className="absolute inset-0 bg-linear-to-t from-[#2e6171]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
               </motion.div>
             ))
