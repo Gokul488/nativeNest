@@ -65,8 +65,8 @@ const BookmarkedProperties = () => {
   return (
     <div className="min-h-screen bg-cream-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-screen-2xl mx-auto"> {/* Wider container */}
-        <h2 className="text-4xl font-bold text-gray-800 mb-10 flex items-center gap-4">
-          <FaBookmark className="text-red-500 text-5xl" />
+        <h2 className="text-3xl font-bold text-gray-800 mb-10 flex items-center gap-4">
+          <FaBookmark className="text-red-500 text-4xl" />
           My Bookmarked Properties
         </h2>
 

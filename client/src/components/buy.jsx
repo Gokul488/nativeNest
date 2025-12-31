@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from "./header";
 import Footer from "./footer";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence} from "framer-motion";
 import "./buy.css"; // Reuse home styles if needed
 import API_BASE_URL from '../config.js';   // ← one level up
 const Buy = () => {
@@ -17,6 +17,8 @@ const Buy = () => {
   const [selectedPropertyType, setSelectedPropertyType] = useState('All');
   const [builders, setBuilders] = useState([]);
   const [selectedBuilder, setSelectedBuilder] = useState('All');
+
+  const [toast, setToast] = useState(null);
 
   // Mobile sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -42,6 +44,12 @@ const Buy = () => {
     return Number(value.toString().replace(/[^0-9.-]+/g, '')) || 0;
   };
 
+  // Toast Notification Function
+  const showToast = (message, type = 'success', action = null) => {
+    setToast({ message, type, action });
+    setTimeout(() => setToast(null), 4000); // Auto hide after 4s
+  };
+
   // Fetch user's bookmarks
   const fetchBookmarks = useCallback(async () => {
     if (!isLoggedIn) {
@@ -62,7 +70,7 @@ const Buy = () => {
   }, [isLoggedIn, token]);
 
   // Toggle bookmark
-  const toggleBookmark = async (e, propertyId) => {
+const toggleBookmark = async (e, propertyId, propertyTitle) => {
     e.stopPropagation();
 
     if (!isLoggedIn) {
@@ -70,8 +78,8 @@ const Buy = () => {
       return;
     }
 
-    const isBookmarked = bookmarks.has(propertyId);
-    const method = isBookmarked ? 'DELETE' : 'POST';
+    const wasBookmarked = bookmarks.has(propertyId);
+    const method = wasBookmarked ? 'DELETE' : 'POST';
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/bookmarks/${propertyId}`, {
@@ -85,16 +93,29 @@ const Buy = () => {
       if (response.ok) {
         setBookmarks(prev => {
           const newSet = new Set(prev);
-          if (isBookmarked) newSet.delete(propertyId);
+          if (wasBookmarked) newSet.delete(propertyId);
           else newSet.add(propertyId);
           return newSet;
         });
+
+        // Show appropriate toast
+        if (!wasBookmarked) {
+          showToast(
+            `The property has been bookmarked!`,
+            'success',
+            () => navigate('/buyer-dashboard/bookmarks')
+          );
+        } else {
+          showToast(`"${propertyTitle}" removed from bookmarks.`, 'info');
+        }
       } else {
         const error = await response.json();
         console.error('Bookmark error:', error);
+        showToast('Failed to update bookmark. Try again.', 'error');
       }
     } catch (err) {
       console.error('Network error on bookmark:', err);
+      showToast('Network error. Please check your connection.', 'error');
     }
   };
 
@@ -723,6 +744,50 @@ const Buy = () => {
 
       <Footer />
 
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed bottom-6 right-6 z-50 max-w-sm"
+          >
+            <div className={`p-5 rounded-xl shadow-xxl border backdrop-blur-lg text-white flex items-start gap-4 ${
+              toast.type === 'success' ? 'bg-linear-to-r from-teal-600 to-emerald-600 border-teal-400' :
+              toast.type === 'error' ? 'bg-linear-to-r from-red-600 to-pink-600 border-red-400' :
+              'bg-linear-to-r from-blue-600 to-indigo-600 border-blue-400'
+            }`}>
+              <div className="text-2xl">
+                {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✗' : 'ℹ'}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-lg">{toast.message}</p>
+                {toast.action && (
+                  <button
+                    onClick={() => {
+                      toast.action();
+                      setToast(null);
+                    }}
+                    className="mt-2 text-sm underline hover:no-underline font-medium"
+                  >
+                    View Bookmarked Properties →
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => setToast(null)}
+                className="text-white/70 hover:text-white text-xl"
+              >
+                ×
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Custom Line Clamp Styles */}
       <style jsx>{`
         .line-clamp-2 {

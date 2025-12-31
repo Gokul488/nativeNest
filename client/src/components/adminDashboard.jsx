@@ -11,8 +11,10 @@ import EditProperty from "./editProperty";
 import CreatePropertyEvent from "./CreatePropertyEvent";
 import ViewEvents from "./ViewEvents";                // New
 import EditPropertyEvent from "./EditPropertyEvent";  // New
+import MostViewedProperties from "./MostViewedProperties";
+import PropertyViewers from "./PropertyViewers";  
 
-import { FaBars, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog, FaCalendarAlt } from 'react-icons/fa';
+import { FaBars, FaChartBar, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog, FaCalendarAlt } from 'react-icons/fa';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -97,6 +99,17 @@ const AdminDashboard = () => {
             <FaCalendarAlt className="w-5 h-5" />
             <span>Manage Events</span>
           </Link>
+
+            <Link
+              to="/admin-dashboard/analytics/most-viewed"
+              onClick={closeSidebar}
+              className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
+                location.pathname.startsWith('/admin-dashboard/analytics/most-viewed') ? 'bg-teal-700' : ''
+              }`}
+            >
+              <FaChartBar className="w-5 h-5" />
+              <span>Most Viewed Properties</span>
+            </Link>
 
           <Link
             to="/admin-dashboard/profile-settings"
@@ -217,6 +230,9 @@ const AdminDashboard = () => {
             {/* Create Property Event */}
             <Route path="/create-property-event" element={<CreatePropertyEvent />} />
 
+          <Route path="/analytics/most-viewed" element={<MostViewedProperties />} />
+          {/* Property Viewers Route */}
+          <Route path="/property/:propertyId/viewers" element={<PropertyViewers />} />
             {/* Profile Settings */}
             <Route path="/profile-settings" element={<AdminProfileSettings />} />
           </Routes>

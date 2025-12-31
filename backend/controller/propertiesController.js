@@ -308,10 +308,95 @@ FROM properties p
 
 const getPropertyById = async (req, res) => {
   const { id } = req.params;
+
+  // Validate property ID
+  const propertyId = parseInt(id, 10);
+  if (isNaN(propertyId) || propertyId <= 0) {
+    return res.status(400).json({ error: "Invalid property ID" });
+  }
+
+  /* =========================
+     IDENTIFY USER TYPE
+  ========================= */
+  const token = req.headers.authorization?.split(" ")[1];
+  const guestId = req.query.guestId || null;
+
+  let buyerId = null;
+  let isAdmin = false;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      if (decoded.account_type === "buyer") {
+        buyerId = decoded.userId;
+      }
+
+      if (decoded.account_type === "admin") {
+        isAdmin = true; // 🚫 Admin views should NOT be tracked
+      }
+    } catch (err) {
+      console.log("Invalid token, treating as guest");
+    }
+  }
+
+  const ipAddress =
+    req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  const userAgent = req.headers["user-agent"];
+
   const connection = await pool.getConnection();
+
   try {
+    await connection.beginTransaction();
+
+    /* =========================
+       TRACK VIEW (BUYER / GUEST ONLY)
+    ========================= */
+    if (!isAdmin) {
+      const [existingView] = await connection.query(
+        `
+        SELECT id FROM property_views
+        WHERE property_id = ?
+          AND (
+            (buyer_id IS NOT NULL AND buyer_id = ?)
+            OR
+            (buyer_id IS NULL AND guest_id = ?)
+          )
+          AND viewed_at >= NOW() - INTERVAL 1 DAY
+        LIMIT 1
+        `,
+        [propertyId, buyerId, guestId]
+      );
+
+      if (existingView.length === 0) {
+        await connection.query(
+          `
+          INSERT INTO property_views
+          (property_id, buyer_id, guest_id, ip_address, user_agent)
+          VALUES (?, ?, ?, ?, ?)
+          `,
+          [
+            propertyId,
+            buyerId,
+            buyerId ? null : guestId,
+            ipAddress,
+            userAgent
+          ]
+        );
+
+        await connection.query(
+          "UPDATE properties SET views = views + 1 WHERE property_id = ?",
+          [propertyId]
+        );
+      }
+    }
+
+    /* =========================
+       FETCH PROPERTY DETAILS
+    ========================= */
     const [properties] = await connection.query(
-      `SELECT
+      `
+      SELECT
         p.property_id AS id,
         p.title,
         p.description,
@@ -327,89 +412,204 @@ const getPropertyById = async (req, res) => {
         p.created_at,
         p.cover_image,
         p.video,
+        p.views,
         a.mobile_number,
         a.email
       FROM properties p
       LEFT JOIN admins a ON p.admin_id = a.id
-      WHERE p.property_id = ?`,
-      [id]
+      WHERE p.property_id = ?
+      `,
+      [propertyId]
     );
 
     if (properties.length === 0) {
-      return res.status(404).json({ error: 'Property not found' });
+      await connection.rollback();
+      return res.status(404).json({ error: "Property not found" });
     }
 
     const property = properties[0];
-    
-    // Fetch images
+
+    /* =========================
+       FETCH PROPERTY IMAGES
+    ========================= */
     const [images] = await connection.query(
-      `SELECT image 
-       FROM property_images 
-       WHERE property_id = ?`,
-      [id]
+      `SELECT image FROM property_images WHERE property_id = ?`,
+      [propertyId]
     );
 
-    // Fetch amenities
+    /* =========================
+       FETCH AMENITIES
+    ========================= */
     const [amenitiesResult] = await connection.query(
-      `SELECT a.amenity_id, a.name, a.icon 
-       FROM amenities a
-       JOIN property_amenities pa ON a.amenity_id = pa.amenity_id
-       WHERE pa.property_id = ?`,
-      [id]
+      `
+      SELECT a.amenity_id, a.name, a.icon
+      FROM amenities a
+      JOIN property_amenities pa ON a.amenity_id = pa.amenity_id
+      WHERE pa.property_id = ?
+      `,
+      [propertyId]
     );
 
-    let coverImage = null;
-    if (property.cover_image) {
-      coverImage = `data:image/jpeg;base64,${Buffer.from(property.cover_image).toString('base64')}`;
-    }
+    await connection.commit();
+
+    /* =========================
+       FORMAT MEDIA
+    ========================= */
+    const coverImage = property.cover_image
+      ? `data:image/jpeg;base64,${Buffer.from(
+          property.cover_image
+        ).toString("base64")}`
+      : null;
+
+    const imageBase64s = images.map(img =>
+      `data:image/jpeg;base64,${Buffer.from(img.image).toString("base64")}`
+    );
 
     let video = null;
     if (property.video && Buffer.isBuffer(property.video)) {
-      const mimeType = 'video/mp4';
       video = {
-        url: `data:${mimeType};base64,${Buffer.from(property.video).toString('base64')}`,
-        mimeType
+        url: `data:video/mp4;base64,${Buffer.from(property.video).toString(
+          "base64"
+        )}`,
+        mimeType: "video/mp4"
       };
     }
 
-    const imageBase64s = images.map(image => 
-      `data:image/jpeg;base64,${Buffer.from(image.image).toString('base64')}`
-    );
-
-    const formattedProperty = {
-      id: property.id,
-      title: property.title,
-      description: property.description,
-      price: parseFloat(property.price),
-      address: property.address,
-      city: property.city,
-      state: property.state,
-      country: property.country,
-      pincode: property.pincode,
-      property_type: property.property_type,
-      sqft: property.sqft || null,
-      created_at: property.created_at,
-      cover_image: coverImage,
-      images: imageBase64s,
-      video,
-      amenities: amenitiesResult.map(a => ({ 
-        id: a.amenity_id, 
-        name: a.name, 
-        icon: a.icon 
-      })),
-      builderName: property.builderName,
-      mobile_number: property.mobile_number || null,
-      email: property.email || null
-    };
-
-    res.status(200).json({ property: formattedProperty });
+    /* =========================
+       FINAL RESPONSE
+    ========================= */
+    res.json({
+      property: {
+        id: property.id,
+        title: property.title,
+        description: property.description,
+        price: parseFloat(property.price),
+        address: property.address,
+        city: property.city,
+        state: property.state,
+        country: property.country,
+        pincode: property.pincode,
+        property_type: property.property_type,
+        sqft: property.sqft,
+        created_at: property.created_at,
+        cover_image: coverImage,
+        images: imageBase64s,
+        video,
+        views: property.views,
+        amenities: amenitiesResult.map(a => ({
+          id: a.amenity_id,
+          name: a.name,
+          icon: a.icon
+        })),
+        builderName: property.builderName,
+        mobile_number: property.mobile_number,
+        email: property.email
+      }
+    });
   } catch (error) {
-    console.error('Error fetching property:', error.message, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
+    await connection.rollback();
+    console.error("View tracking error:", error);
+    res.status(500).json({ error: "Internal server error" });
   } finally {
     connection.release();
   }
 };
+
+const getMostViewedProperties = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    let isAdmin = false;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.account_type === 'admin') {
+          isAdmin = true;
+        }
+      } catch (jwtErr) {
+        // Invalid or expired token — just deny access silently
+        console.log('Invalid token in most-viewed');
+      }
+    }
+
+    if (!isAdmin) {
+      return res.status(401).json({ error: 'Unauthorized: Admin access required' });
+    }
+
+    const [rows] = await pool.query(`
+      SELECT 
+        property_id AS id,
+        title,
+        city,
+        price,
+        property_type,
+        views,
+        created_at,
+        cover_image
+      FROM properties
+      WHERE views > 0
+      ORDER BY views DESC
+      LIMIT 50
+    `);
+
+    const properties = rows.map(p => ({
+      ...p,
+      cover_image: p.cover_image 
+        ? `data:image/jpeg;base64,${Buffer.from(p.cover_image).toString('base64')}`
+        : null
+    }));
+
+    res.json({ properties });
+  } catch (error) {
+    console.error('Error fetching most viewed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+const getPropertyViewers = async (req, res) => {
+  const propertyId = parseInt(req.params.propertyId, 10);
+  if (isNaN(propertyId)) {
+    return res.status(400).json({ error: "Invalid property ID" });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      `
+      SELECT
+        pv.id,
+        pv.viewed_at,
+        pv.ip_address,
+        pv.guest_id,
+        b.id AS buyer_id,
+        b.name AS buyer_name,
+        b.email AS buyer_email,
+        b.mobile_number
+      FROM property_views pv
+      LEFT JOIN buyers b ON pv.buyer_id = b.id
+      INNER JOIN (
+        SELECT
+          MAX(id) AS latest_id
+        FROM property_views
+        WHERE property_id = ?
+        GROUP BY
+          CASE
+            WHEN buyer_id IS NOT NULL THEN buyer_id
+            ELSE guest_id
+          END
+      ) latest ON pv.id = latest.latest_id
+      ORDER BY pv.viewed_at DESC
+      `,
+      [propertyId]
+    );
+
+    res.json({ viewers: rows });
+  } catch (error) {
+    console.error("Error fetching property viewers:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 module.exports = { 
   createProperty, 
@@ -418,5 +618,7 @@ module.exports = {
   getPropertyById, 
   getMaxPrice, 
   getBuilders,
-  getAmenities
+  getAmenities,
+  getMostViewedProperties,
+  getPropertyViewers
 };

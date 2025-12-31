@@ -108,7 +108,13 @@
 }
 
 .location-search-container {
-  overflow: hidden; 
+  width: 100%;
+}
+
+.location-search-container input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 input[type="text"] {

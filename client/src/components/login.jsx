@@ -35,7 +35,7 @@ const Login = () => {
       if (data.user.account_type === "admin") {
         navigate("/admin-dashboard");
       } else {
-        navigate("/buyer-dashboard");
+        navigate("/buy");
       }
     } catch (err) {
       setError(err.message);

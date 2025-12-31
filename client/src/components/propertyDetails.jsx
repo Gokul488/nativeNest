@@ -14,6 +14,15 @@ const PropertyDetails = () => {
   const [allImages, setAllImages] = useState([]);
   const [videoError, setVideoError] = useState('');
 
+  const getGuestId = () => {
+  let guestId = localStorage.getItem("guest_id");
+  if (!guestId) {
+    guestId = "guest_" + crypto.randomUUID();
+    localStorage.setItem("guest_id", guestId);
+  }
+  return guestId;
+};
+
   // Format price in Indian Rupees
   const formatPriceInINR = (price) => {
     if (!price) return 'N/A';
@@ -30,20 +39,35 @@ const PropertyDetails = () => {
     return formatPriceInINR(Math.round(rate));
   };
 
-  const fetchPropertyDetails = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/properties/${id}`);
-      if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
-      const data = await response.json();
-      setProperty(data.property);
-      setError('');
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError('Unable to load property details. Please try again later.');
-    } finally {
-      setLoading(false);
+const fetchPropertyDetails = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const guestId = getGuestId();
+
+    const headers = {
+      "Content-Type": "application/json"
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
-  };
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/properties/${id}?guestId=${guestId}`,
+      { headers }
+    );
+
+    if (!response.ok) throw new Error("Failed to fetch property");
+
+    const data = await response.json();
+    setProperty(data.property);
+  } catch (err) {
+    setError("Unable to load property details");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchPropertyDetails();

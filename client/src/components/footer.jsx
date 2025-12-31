@@ -108,16 +108,6 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-
-            <div className="mt-8">
-              <h4 className="text-xl font-bold mb-4">Account</h4>
-              <Link
-                to="/login"
-                className="text-gray-300 hover:text-white transition-colors duration-300 text-sm inline-flex items-center gap-2"
-              >
-                <i className="fas fa-user-lock"></i> Builder Login
-              </Link>
-            </div>
           </motion.nav>
 
           {/* Contact & Social */}
