@@ -56,21 +56,17 @@ const PostProperty = () => {
         [{ color: [] }, { background: [] }],
         ["table"],
       ],
-      "better-table": {
-        operationMenu: {
-          items: {
-            insertColumnRight: { text: "Insert Column Right" },
-            insertColumnLeft: { text: "Insert Column Left" },
-            insertRowUp: { text: "Insert Row Above" },
-            insertRowDown: { text: "Insert Row Below" },
-            mergeCells: { text: "Merge Cells" },
-            unmergeCells: { text: "Unmerge Cells" },
-            deleteColumn: { text: "Delete Column" },
-            deleteRow: { text: "Delete Row" },
-            deleteTable: { text: "Delete Table" },
-          },
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link"],
+            [{ align: [] }],
+            ["clean"],
+            [{ color: [] }, { background: [] }]
+          ]
         },
-      },
     },
     formats: [
       "header", "bold", "italic", "underline",
@@ -82,9 +78,6 @@ const PostProperty = () => {
   /* ---------- Quill description sync ---------- */
   useEffect(() => {
     if (quill) {
-      quill.getModule("toolbar").addHandler("table", () => {
-        quill.getModule("better-table").insertTable(2, 2);
-      });
       quill.on("text-change", () => {
         setFormData((prev) => ({ ...prev, description: quill.root.innerHTML }));
       });

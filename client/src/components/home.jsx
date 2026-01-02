@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './header';
 import Footer from './footer';
-import API_BASE_URL from '../config.js';   // ← one level up
+import API_BASE_URL from '../config.js';  
 const Home = () => {
   const [blogs, setBlogs] = useState([]);
   const [featuredProperties, setFeaturedProperties] = useState([]);
@@ -84,9 +84,10 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
-        className="relative mt-16 h-[300px] sm:h-[400px] md:h-[500px] bg-cover bg-center flex items-center justify-center text-center overflow-hidden"
+        className="relative h-[300px] sm:h-[400px] md:h-[500px] bg-cover bg-center flex items-center justify-center text-center overflow-hidden"
         style={{
           backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&auto=format&fit=crop&q=80')`,
+          marginTop: '83px',
         }}
       >
         <motion.div
