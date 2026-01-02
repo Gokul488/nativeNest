@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import ReactQuill from "react-quill";                  // ← Official react-quill
-import "react-quill/dist/quill.snow.css";              // ← Correct CSS import
+import { useQuill } from "react-quilljs";
+import "quill/dist/quill.snow.css";
+import 'quill-table-better/dist/quill-table-better.css';  // Updated CSS import
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import API_BASE_URL from '../config.js';
+import Quill from 'quill';
+import QuillTableBetter from 'quill-table-better';
 
 const animatedComponents = makeAnimated();
 
 const PostProperty = () => {
+  Quill.register('modules/table-better', QuillTableBetter);
+
   const navigate = useNavigate();
 
   /* ---------- Form state ---------- */
@@ -24,9 +29,8 @@ const PostProperty = () => {
     pincode: "",
     property_type: "",
     sqft: "",
-    builder_name: "",  // Added from your form
+    builder_name: "",  // Added from your code
   });
-
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [amenityOptions, setAmenityOptions] = useState([]);
   const [propertyTypes, setPropertyTypes] = useState([]);
@@ -45,6 +49,57 @@ const PostProperty = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /* ---------- Quill editor ---------- */
+  const { quill, quillRef } = useQuill({
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["link"],
+        [{ align: [] }],
+        ["clean"],
+        [{ color: [] }, { background: [] }],
+        ["table"],
+      ],
+      'table-better': {
+        operationMenu: {
+          items: {
+            insertColumnRight: { text: "Insert Column Right" },
+            insertColumnLeft: { text: "Insert Column Left" },
+            insertRowUp: { text: "Insert Row Above" },
+            insertRowDown: { text: "Insert Row Below" },
+            mergeCells: { text: "Merge Cells" },
+            unmergeCells: { text: "Unmerge Cells" },
+            deleteColumn: { text: "Delete Column" },
+            deleteRow: { text: "Delete Row" },
+            deleteTable: { text: "Delete Table" },
+          },
+        },
+      },
+      keyboard: {
+        bindings: QuillTableBetter.keyboardBindings
+      },
+    },
+    formats: [
+      "header", "bold", "italic", "underline",
+      "list", "bullet", "link", "align",
+      "color", "background", "table",
+    ],
+  });
+
+  /* ---------- Quill description sync ---------- */
+  useEffect(() => {
+    if (quill) {
+      quill.getModule("toolbar").addHandler("table", () => {
+        quill.getModule("table-better").insertTable(2, 2);
+      });
+      quill.on("text-change", () => {
+        setFormData((prev) => ({ ...prev, description: quill.root.innerHTML }));
+      });
+    }
+  }, [quill]);
 
   /* ---------- Fetch property types + amenities ---------- */
   useEffect(() => {
@@ -69,7 +124,7 @@ const PostProperty = () => {
           isDb: true,
         }));
 
-        // Add "Other …" option
+        // Add "Other ..." option
         options.push({
           value: "OTHER",
           label: "Other …",
@@ -89,10 +144,6 @@ const PostProperty = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-
-  const handleDescriptionChange = (content) => {
-    setFormData((prev) => ({ ...prev, description: content }));
   };
 
   const handleCoverImageChange = (e) => setCoverImage(e.target.files[0]);
@@ -129,7 +180,6 @@ const PostProperty = () => {
     setSuccess("");
     setIsSubmitting(true);
 
-    // Check if description is empty (Quill returns "<p><br></p>" when empty)
     if (!formData.description || formData.description === "<p><br></p>") {
       setError("Description is required");
       setIsSubmitting(false);
@@ -213,32 +263,6 @@ const PostProperty = () => {
     </div>
   );
 
-  /* ---------- Quill Modules & Formats (without better-table) ---------- */
-  const quillModules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link"],
-      [{ align: [] }],
-      ["clean"],
-      [{ color: [] }, { background: [] }],
-    ],
-  };
-
-  const quillFormats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "list",
-    "bullet",
-    "link",
-    "align",
-    "color",
-    "background",
-  ];
-
   /* ---------- Render ---------- */
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -260,6 +284,7 @@ const PostProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
           {/* ----- Title ----- */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -273,31 +298,23 @@ const PostProperty = () => {
             />
           </div>
 
-          {/* ----- Builder Name ----- */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Builder Name</label>
             <input
               type="text"
               name="builder_name"
-              value={formData.builder_name}
+              value={formData.builder_name || ""}
               onChange={handleInputChange}
+              required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
-          {/* ----- Description (ReactQuill) ----- */}
+          {/* ----- Description (Quill) ----- */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <ReactQuill
-              theme="snow"
-              value={formData.description}
-              onChange={handleDescriptionChange}
-              modules={quillModules}
-              formats={quillFormats}
-              placeholder="Write a detailed description of the property..."
-              className="bg-white"
-              style={{ minHeight: "200px" }}
-            />
+            <div ref={quillRef} className="bg-white" style={{ minHeight: "150px" }} />
           </div>
 
           {/* ----- Price ----- */}
@@ -377,7 +394,7 @@ const PostProperty = () => {
             />
           </div>
 
-          {/* ----- Area (sqft) ----- */}
+          {/* ----- Sqft ----- */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Area (sqft)
@@ -415,7 +432,7 @@ const PostProperty = () => {
             </select>
           </div>
 
-          {/* ----- Amenities ----- */}
+          {/* ----- AMENITIES: Searchable Multi-Select Dropdown ----- */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Amenities
@@ -435,6 +452,7 @@ const PostProperty = () => {
               classNamePrefix="select"
             />
 
+            {/* Custom "Other" Input */}
             {showOtherInput && (
               <div className="mt-3">
                 <input
@@ -449,13 +467,13 @@ const PostProperty = () => {
             )}
 
             {selectedAmenities.length > 0 && (
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-gray-600 leading-7">
                 Selected: {selectedAmenities.length} amenities
               </p>
             )}
           </div>
 
-          {/* ----- Media Uploads ----- */}
+          {/* ----- Media ----- */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
             <input
@@ -478,7 +496,7 @@ const PostProperty = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Additional Images (max 10 total)
+              Additional Images (max 10)
             </label>
             <input
               type="file"
@@ -497,7 +515,7 @@ const PostProperty = () => {
                 />
               </div>
             ))}
-            {images.length + extraImageInputs.filter(i => i.file).length < 10 && (
+            {images.length + extraImageInputs.length < 10 && (
               <button
                 type="button"
                 onClick={addExtraImageInput}
@@ -508,7 +526,7 @@ const PostProperty = () => {
             )}
           </div>
 
-          {/* ----- Submit Button ----- */}
+          {/* ----- Submit ----- */}
           <div className="flex justify-center">
             <button
               type="submit"
