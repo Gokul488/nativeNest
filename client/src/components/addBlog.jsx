@@ -1,47 +1,11 @@
 // src/components/AddBlog.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Quill from 'quill';
-import QuillBetterTable from 'quill-better-table';
-import { useQuill } from 'react-quilljs';
-import 'quill/dist/quill.snow.css';
-import 'quill-better-table/dist/quill-better-table.css';
+import ReactQuill from 'react-quill';                    // ← Official react-quill
+import 'react-quill/dist/quill.snow.css';                // ← Correct CSS
 import API_BASE_URL from '../config.js';
 
 const AddBlog = () => {
-  Quill.register('modules/better-table', QuillBetterTable, true);
-
-  const { quill, quillRef } = useQuill({
-    modules: {
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline'],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        ['link'],
-        [{ align: [] }],
-        ['clean'],
-        [{ color: [] }, { background: [] }],
-        ['table'],
-      ],
-      'better-table': {
-        operationMenu: {
-          items: {
-            insertColumnRight: { text: 'Insert Column Right' },
-            insertColumnLeft: { text: 'Insert Column Left' },
-            insertRowUp: { text: 'Insert Row Above' },
-            insertRowDown: { text: 'Insert Row Below' },
-            mergeCells: { text: 'Merge Cells' },
-            unmergeCells: { text: 'Unmerge Cells' },
-            deleteColumn: { text: 'Delete Column' },
-            deleteRow: { text: 'Delete Row' },
-            deleteTable: { text: 'Delete Table' },
-          },
-        },
-      },
-    },
-    formats: ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'align', 'color', 'background', 'table'],
-  });
-
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [image, setImage] = useState(null);
@@ -50,18 +14,6 @@ const AddBlog = () => {
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (quill) {
-      quill.getModule('toolbar').addHandler('table', () => {
-        quill.getModule('better-table').insertTable(2, 2);
-      });
-
-      quill.on('text-change', () => {
-        setContent(quill.root.innerHTML);
-      });
-    }
-  }, [quill]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -123,6 +75,33 @@ const AddBlog = () => {
     }
   };
 
+  // Quill toolbar configuration (without problematic table module)
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link'],
+      [{ align: [] }],
+      ['clean'],
+      [{ color: [] }, { background: [] }],
+      // Removed 'table' button to avoid quill-better-table dependency
+    ],
+  };
+
+  const formats = [
+    'header',
+    'bold',
+    'italic',
+    'underline',
+    'list',
+    'bullet',
+    'link',
+    'align',
+    'color',
+    'background',
+  ];
+
   return (
     <div className="bg-white rounded-xl shadow-md p-8">
       <div className="mb-6 flex justify-between items-center">
@@ -132,8 +111,16 @@ const AddBlog = () => {
         </Link>
       </div>
 
-      {error && <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">{error}</div>}
-      {success && <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 border border-green-200">{success}</div>}
+      {error && (
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 border border-green-200">
+          {success}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
@@ -150,11 +137,21 @@ const AddBlog = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-          <div ref={quillRef} className="min-h-[400px] border border-gray-300 rounded-lg overflow-hidden" />
+          <ReactQuill
+            theme="snow"
+            value={content}
+            onChange={setContent}
+            modules={modules}
+            formats={formats}
+            placeholder="Write your blog content here..."
+            className="min-h-[400px] bg-white"
+          />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image (Max 5MB)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Featured Image (Max 5MB)
+          </label>
           <input
             type="file"
             accept="image/*"
@@ -163,7 +160,11 @@ const AddBlog = () => {
           />
           {previewUrl && (
             <div className="mt-4">
-              <img src={previewUrl} alt="Preview" className="w-full max-h-96 object-contain rounded-lg shadow-md" />
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="w-full max-h-96 object-contain rounded-lg shadow-md border border-gray-200"
+              />
             </div>
           )}
         </div>
