@@ -29,7 +29,7 @@ const PostProperty = () => {
     pincode: "",
     property_type: "",
     sqft: "",
-    builder_name: "",  // Added from your code
+    builder_name: "", 
   });
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [amenityOptions, setAmenityOptions] = useState([]);

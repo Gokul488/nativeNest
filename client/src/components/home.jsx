@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './header';
 import Footer from './footer';
+import OngoingEventsMarquee from "./OngoingEventsMarquee";
 import API_BASE_URL from '../config.js';  
 const Home = () => {
   const [blogs, setBlogs] = useState([]);
@@ -10,7 +11,7 @@ const Home = () => {
   const [blogError, setBlogError] = useState('');
   const [propertyError, setPropertyError] = useState('');
   const [propertyTypes, setPropertyTypes] = useState([]);
-
+  const HEADER_HEIGHT = 72;
   const navigate = useNavigate();
 
   // Format price in INR
@@ -72,7 +73,8 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
       <Header />
-
+      <main style={{ paddingTop: HEADER_HEIGHT }}>
+      <OngoingEventsMarquee />
       {/* Animated Background Orbs */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-linear-to-br from-[#2e6171] to-[#011936] blur-3xl opacity-10 animate-pulse"></div>
@@ -86,8 +88,7 @@ const Home = () => {
         transition={{ duration: 1 }}
         className="relative h-[300px] sm:h-[400px] md:h-[500px] bg-cover bg-center flex items-center justify-center text-center overflow-hidden"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&auto=format&fit=crop&q=80')`,
-          marginTop: '83px',
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&auto=format&fit=crop&q=80')`
         }}
       >
         <motion.div
@@ -230,7 +231,7 @@ const Home = () => {
           ) : null}
         </motion.div>
       </section>
-
+</main>
       <Footer />
     </div>
   );

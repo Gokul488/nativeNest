@@ -184,4 +184,36 @@ const getMyRegisteredEvents = async (req, res) => {
   }
 };
 
-module.exports = { getPublicEvents, participateEvent, getMyRegisteredEvents };
+/* ================= HOME PAGE: GET ONGOING EVENTS (PUBLIC) ================= */
+const getOngoingEventsForHome = async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+
+    const [events] = await pool.query(
+      `
+      SELECT 
+        id,
+        event_name,
+        event_type,
+        event_location,
+        city,
+        state,
+        start_date,
+        end_date
+      FROM property_events
+      WHERE start_date <= ? 
+        AND end_date >= ?
+      ORDER BY start_date ASC
+      `,
+      [today, today]
+    );
+
+    res.json(events);
+  } catch (error) {
+    console.error("Ongoing events error:", error);
+    res.status(500).json({ error: "Failed to fetch ongoing events" });
+  }
+};
+
+
+module.exports = { getPublicEvents, participateEvent, getMyRegisteredEvents, getOngoingEventsForHome };
