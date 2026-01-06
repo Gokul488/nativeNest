@@ -46,7 +46,9 @@ const Header = () => {
   }, [isDropdownOpen]);
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 shadow-lg h-[72px]">
+    <header
+  className="fixed top-0 left-0 w-full z-50 shadow-lg h-[72px]"
+>
       <div className="absolute inset-0 bg-linear-to-r from-[#2e6171] to-[#011936] opacity-90"></div>
       <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
 
