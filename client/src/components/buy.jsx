@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from "./header";
 import Footer from "./footer";
+import OngoingEventsMarquee from "./OngoingEventsMarquee";
 import { motion, AnimatePresence} from "framer-motion";
 import "./buy.css"; // Reuse home styles if needed
 import API_BASE_URL from '../config.js';   // ← one level up
@@ -19,7 +20,7 @@ const Buy = () => {
   const [selectedBuilder, setSelectedBuilder] = useState('All');
 
   const [toast, setToast] = useState(null);
-
+  const HEADER_HEIGHT = 72;
   // Mobile sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
@@ -343,8 +344,9 @@ const toggleBookmark = async (e, propertyId, propertyTitle) => {
   return (
     <div className="w-full min-h-screen bg-linear-to-b from-blue-50 to-white overflow-hidden font-sans">
       <Header />
-
-      <section className="pt-28 pb-16 px-4 sm:px-6 md:px-12 lg:px-20 max-w-7xl mx-auto">
+      <main style={{ paddingTop: HEADER_HEIGHT }}>
+      <OngoingEventsMarquee />
+      <section className="pt-8 sm:pt-10 pb-16 px-4 sm:px-6 md:px-12 lg:px-20 max-w-7xl mx-auto">
         <div className="flex items-center justify-between md:justify-center mb-10">
           <div className="md:hidden">
             <button
@@ -741,7 +743,7 @@ const toggleBookmark = async (e, propertyId, propertyTitle) => {
           )}
         </motion.div>
       </section>
-
+      </main>
       <Footer />
 
 
