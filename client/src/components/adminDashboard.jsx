@@ -13,6 +13,8 @@ import ViewEvents from "./ViewEvents";                // New
 import EditPropertyEvent from "./EditPropertyEvent";  // New
 import MostViewedProperties from "./MostViewedProperties";
 import PropertyViewers from "./PropertyViewers";  
+import ManageUsers from "./ManageUsers";
+import EventParticipants from "./EventParticipants";
 
 import { FaBars, FaChartBar, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog, FaCalendarAlt } from 'react-icons/fa';
 
@@ -202,10 +204,9 @@ const AdminDashboard = () => {
             />
 
             {/* User Management Placeholder */}
-            <Route
-              path="/manage-users"
-              element={<div className="text-center py-12 text-gray-500 text-xl">User Management Coming Soon...</div>}
-            />
+           <Route path="/manage-users" element={<ManageUsers />} />
+           <Route path="/events/:eventId/participants" element={<EventParticipants />} />
+
 
             {/* Property Management Routes */}
             <Route path="/manage-properties">

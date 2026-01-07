@@ -136,8 +136,70 @@ const getWhatsappAdmin = async (req, res) => {
   }
 };
 
+/* =========================
+   ADMIN: GET ALL BUYERS (USERS)
+========================= */
+const getAllUsers = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const [buyers] = await pool.query(
+      `SELECT id, name, mobile_number, email, created_at
+       FROM buyers
+       ORDER BY created_at DESC`
+    );
+
+    res.json(buyers);
+  } catch (error) {
+    console.error("Get buyers error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+/* =========================
+   ADMIN: EVENT PARTICIPANTS
+========================= */
+const getEventParticipants = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { eventId } = req.params;
+
+    const [rows] = await pool.query(
+      `SELECT ep.id, ep.name, ep.phone, ep.email, ep.created_at,
+              b.name AS buyer_name
+       FROM event_participants ep
+       LEFT JOIN buyers b ON b.id = ep.buyer_id
+       WHERE ep.event_id = ?
+       ORDER BY ep.created_at DESC`,
+      [eventId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Event participants error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 module.exports = {
   getAdminDetails,
   updateAdminDetails,
   getWhatsappAdmin,
+  getAllUsers,
+  getEventParticipants,
 };
