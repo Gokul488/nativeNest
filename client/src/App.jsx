@@ -14,6 +14,7 @@ import PropertyDetails from "./components/propertyDetails";
 import Buy from "./components/buy";
 import AdminDashboard from "./components/adminDashboard";
 import WhatsappChatWidget from "./components/WhatsappChatWidget";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 /* 👇 Wrapper to access useLocation */
 function AppContent() {
@@ -34,12 +35,20 @@ function AppContent() {
         <Route path="/contactUs" element={<ContactUs />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/buyer-dashboard/*" element={<BuyerDashboard />} />
+
+        <Route element={<ProtectedRoute allowedRole="buyer" />}>
+              <Route path="/buyer-dashboard/*" element={<BuyerDashboard />} />
+        </Route>
+
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/property/:id" element={<PropertyDetails />} />
         <Route path="/buy" element={<Buy />} />
-        <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+
+        <Route element={<ProtectedRoute allowedRole="admin" />}>
+               <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+        </Route>
+
       </Routes>
 
       {/* ✅ Render WhatsApp widget only for non-admin pages */}

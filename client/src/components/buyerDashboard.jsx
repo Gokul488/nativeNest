@@ -27,7 +27,7 @@ const BuyerDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   const isActive = (path) =>
