@@ -15,8 +15,9 @@ import MostViewedProperties from "./MostViewedProperties";
 import PropertyViewers from "./PropertyViewers";  
 import ManageUsers from "./ManageUsers";
 import EventParticipants from "./EventParticipants";
+import ViewEnquiries from "./ViewEnquiries";
 
-import { FaBars, FaChartBar, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog, FaCalendarAlt } from 'react-icons/fa';
+import { FaBars, FaChartBar, FaUser, FaHome, FaUsers, FaBuilding, FaBlog, FaCog, FaCalendarAlt, FaEnvelope} from 'react-icons/fa';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -37,15 +38,24 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-cream-50 flex relative font-sans">
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } bg-linear-to-b from-teal-600 to-teal-500 shadow-lg z-50`}
+        className={`fixed top-0 left-0 h-screen w-72 flex flex-col
+        transition-transform duration-300 ease-in-out
+        md:translate-x-0
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        bg-linear-to-b from-teal-600 to-teal-500 shadow-xl z-50`}
       >
+
         <div className="p-6 border-b border-teal-400/50">
           <h1 className="text-2xl font-bold text-white tracking-tight">NativeNest Admin</h1>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav
+            className="
+              flex-1 px-4 py-6 space-y-1
+              overflow-y-auto
+              scrollbar-hide
+            "
+          >
           <Link
             to="/admin-dashboard/"
             onClick={closeSidebar}
@@ -114,6 +124,17 @@ const AdminDashboard = () => {
             </Link>
 
           <Link
+            to="/admin-dashboard/enquiries"
+            onClick={closeSidebar}
+            className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
+              location.pathname.startsWith('/admin-dashboard/enquiries') ? 'bg-teal-700' : ''
+            }`}
+          >
+            <FaEnvelope className="w-5 h-5" />
+            <span>Contact Enquiries</span>
+          </Link>
+
+          <Link
             to="/admin-dashboard/profile-settings"
             onClick={closeSidebar}
             className={`flex items-center space-x-3 py-3 px-4 rounded-lg text-base font-medium transition duration-200 text-white hover:bg-teal-400/50 ${
@@ -123,6 +144,7 @@ const AdminDashboard = () => {
             <FaCog className="w-5 h-5" />
             <span>Profile Settings</span>
           </Link>
+          
         </nav>
 
         {/* Logout Button */}
@@ -234,6 +256,8 @@ const AdminDashboard = () => {
           <Route path="/analytics/most-viewed" element={<MostViewedProperties />} />
           {/* Property Viewers Route */}
           <Route path="/property/:propertyId/viewers" element={<PropertyViewers />} />
+          <Route path="/enquiries" element={<ViewEnquiries />} />
+
             {/* Profile Settings */}
             <Route path="/profile-settings" element={<AdminProfileSettings />} />
           </Routes>

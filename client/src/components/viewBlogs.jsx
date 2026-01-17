@@ -117,7 +117,7 @@ const ViewBlogs = () => {
                     >
                       <span className="material-symbols-outlined text-xl">delete</span>
                     </button>
-                  </td>
+                  </td> 
                 </tr>
               ))
             )}

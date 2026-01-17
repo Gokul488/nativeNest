@@ -140,3 +140,10 @@
 .blog-content a:hover {
   color: #011936;
 }
+/* Hide scrollbar but keep scroll */
+.scrollbar-hide::-webkit-scrollbar {
+  width: 0px;
+}
+.scrollbar-hide {
+  scrollbar-width: none;
+}
