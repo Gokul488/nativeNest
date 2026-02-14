@@ -1,3 +1,4 @@
+// Modified eventController.js
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 
@@ -23,7 +24,8 @@ const createEvent = async (req, res) => {
       end_time,
       description,
       contact_name,
-      contact_phone
+      contact_phone,
+      stall_count
     } = req.body;
 
     if (!event_name || !event_location || !city || !state || !start_date || !end_date) {
@@ -34,8 +36,8 @@ const createEvent = async (req, res) => {
       `INSERT INTO property_events
       (admin_id, event_name, event_type, event_location, city, state,
        start_date, end_date, start_time, end_time, description,
-       contact_name, contact_phone)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       contact_name, contact_phone, stall_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         decoded.userId,
         event_name,
@@ -49,7 +51,8 @@ const createEvent = async (req, res) => {
         end_time,
         description,
         contact_name,
-        contact_phone
+        contact_phone,
+        stall_count || 0
       ]
     );
 
@@ -60,8 +63,6 @@ const createEvent = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-// ... existing imports and createEvent ...
 
 const getAllEvents = async (req, res) => {
   try {
@@ -76,7 +77,8 @@ const getAllEvents = async (req, res) => {
     const [rows] = await pool.query(
       `SELECT id, event_name, event_type, event_location, city, state,
               start_date, end_date, start_time, end_time, description,
-              contact_name, contact_phone
+              contact_name, contact_phone, stall_count,
+              (SELECT COUNT(*) FROM stall WHERE event_id = property_events.id AND builder_id IS NOT NULL) AS booked_count
        FROM property_events
        ORDER BY start_date DESC`
     );
@@ -129,7 +131,7 @@ const updateEvent = async (req, res) => {
     const {
       event_name, event_type, event_location, city, state,
       start_date, end_date, start_time, end_time, description,
-      contact_name, contact_phone
+      contact_name, contact_phone, stall_count
     } = req.body;
 
     if (!event_name || !event_location || !city || !state || !start_date || !end_date) {
@@ -140,12 +142,12 @@ const updateEvent = async (req, res) => {
       `UPDATE property_events
        SET event_name = ?, event_type = ?, event_location = ?, city = ?, state = ?,
            start_date = ?, end_date = ?, start_time = ?, end_time = ?, description = ?,
-           contact_name = ?, contact_phone = ?
+           contact_name = ?, contact_phone = ?, stall_count = ?
        WHERE id = ?`,
       [
         event_name, event_type, event_location, city, state,
         start_date, end_date, start_time, end_time, description,
-        contact_name, contact_phone, id
+        contact_name, contact_phone, stall_count || 0, id
       ]
     );
 

@@ -34,7 +34,11 @@ const Login = () => {
 
       if (data.user.account_type === "admin") {
         navigate("/admin-dashboard");
-      } else {
+      }
+       else if(data.user.account_type === "builder") {
+        navigate("/builder-dashboard");
+      }
+      else {
         navigate("/buy");
       }
     } catch (err) {

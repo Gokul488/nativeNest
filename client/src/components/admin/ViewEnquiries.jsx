@@ -1,7 +1,7 @@
 // src/components/ViewEnquiries.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios"; // ← added for delete (you can also use fetch)
-import API_BASE_URL from "../config";
+import API_BASE_URL from '../../config.js';
 
 const ITEMS_PER_PAGE = 10;
 

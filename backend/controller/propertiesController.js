@@ -3,6 +3,7 @@
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 
+// Modified part in propertiesController.js - createProperty function
 const createProperty = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -12,6 +13,7 @@ const createProperty = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
+    const accountType = decoded.account_type;
 
     const {
       title,
@@ -23,14 +25,29 @@ const createProperty = async (req, res) => {
       country,
       pincode,
       property_type,
-      builder_name,
+      builder_id,
       sqft,
       amenities = [],
       other_amenity
     } = req.body;
 
-    if (!title || !description || !price || !address || !city || !state || !country || !pincode || !property_type || !builder_name) {
+    if (!title || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
       return res.status(400).json({ error: 'All required fields must be filled' });
+    }
+
+    let adminId = null;
+    let builderId = null;
+
+    if (accountType === 'admin') {
+      adminId = userId;
+      builderId = builder_id;
+      if (!builderId) {
+        return res.status(400).json({ error: 'Builder ID is required for admins' });
+      }
+    } else if (accountType === 'builder') {
+      builderId = userId;
+    } else {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     // Optional: make sqft required or validate
@@ -52,6 +69,14 @@ const createProperty = async (req, res) => {
       return res.status(400).json({ error: 'Amenities must be an array' });
     }
 
+    const [builderCheck] = await pool.query(
+      'SELECT id FROM builders WHERE id = ?',
+      [builderId]
+    );
+    if (builderCheck.length === 0) {
+      return res.status(400).json({ error: 'Invalid builder' });
+    }
+
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
     const video = req.files?.['video']?.[0] || null;
     const images = req.files && req.files['images[]'] ? 
@@ -63,9 +88,9 @@ const createProperty = async (req, res) => {
       await connection.beginTransaction();
 
       const [propertyResult] = await connection.query(
-        `INSERT INTO properties (admin_id, builder_name, title, description, price, address, city, state, country, pincode, property_type, sqft, cover_image, video, created_at)
+        `INSERT INTO properties (admin_id, builder_id, title, description, price, address, city, state, country, pincode, property_type, sqft, cover_image, video, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-        [userId, builder_name, title, description, price, address, city, state, country, pincode, property_type, sqft || null, coverImage, video?.buffer || null]
+        [adminId, builderId, title, description, price, address, city, state, country, pincode, property_type, sqft || null, coverImage, video?.buffer || null]
       );
 
       const propertyId = propertyResult.insertId;
@@ -207,20 +232,20 @@ const getFeaturedProperties = async (req, res) => {
   try {
     const { location, priceRange, propertyType, builder } = req.query;
 
-    let query = `
+let query = `
       SELECT
-  p.property_id AS id,
-  p.title,
-  p.price,
-  p.city,
-  p.pincode,
-  p.property_type,
-  p.sqft,
-  p.created_at,
-  p.cover_image,
-  p.builder_name AS builderName
-FROM properties p
-
+        p.property_id AS id,
+        p.title,
+        p.price,
+        p.city,
+        p.pincode,
+        p.property_type,
+        p.sqft,
+        p.created_at,
+        p.cover_image,
+        b.name AS builderName
+      FROM properties p
+      LEFT JOIN builders b ON p.builder_id = b.id
     `;
     const params = [];
     const conditions = [];
@@ -251,9 +276,9 @@ FROM properties p
     }
 
     if (builder && builder !== 'All') {
-      conditions.push(`p.builder_name = ?`);  // Fixed: was joining admins incorrectly
-      params.push(builder);
-    }
+          conditions.push(`b.name = ?`);  
+          params.push(builder);
+        }
 
     if (conditions.length > 0) {
       query += ` WHERE ` + conditions.join(' AND ');
@@ -610,6 +635,19 @@ const getPropertyViewers = async (req, res) => {
   }
 };
 
+const getAllBuilders = async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, name, mobile_number, email 
+       FROM builders 
+       ORDER BY name ASC`
+    );
+    res.json({ builders: rows });
+  } catch (error) {
+    console.error('Error fetching builders list:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 module.exports = { 
   createProperty, 
@@ -620,5 +658,6 @@ module.exports = {
   getBuilders,
   getAmenities,
   getMostViewedProperties,
-  getPropertyViewers
+  getPropertyViewers,
+  getAllBuilders
 };

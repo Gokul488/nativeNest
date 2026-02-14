@@ -1,3 +1,4 @@
+// register.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
@@ -11,7 +12,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const accountTypes = ["buyer", "admin"];
+  const accountTypes = ["buyer", "admin", "builder"];
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -43,6 +44,8 @@ const Register = () => {
 
       if (data.user.account_type === "admin") {
         navigate("/admin-dashboard");
+      } else if (data.user.account_type === "builder") {
+        navigate("/builder-dashboard");
       } else {
         navigate("/buyer-dashboard");
       }
@@ -55,17 +58,23 @@ const Register = () => {
 
   return (
     <div className="min-h-screen w-full relative flex items-center justify-center p-4 bg-[#f0f7f9] overflow-x-hidden">
-      
-      {/* Shared Background Graphic Pattern */}
+      {/* Background Graphic Pattern */}
       <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
-        <svg 
-          viewBox="0 0 1440 800" 
-          preserveAspectRatio="none" 
-          xmlns="http://www.w3.org/2000/svg" 
+        <svg
+          viewBox="0 0 1440 800"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full object-cover"
         >
-          <path fill="#a0c4ff" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,250.7C960,235,1056,181,1152,165.3C1248,149,1344,171,1392,181.3L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
-          <path fill="#bde0fe" d="M0,320L48,314.7C96,309,192,299,288,272C384,245,480,203,576,202.7C672,203,768,245,864,250.7C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" opacity="0.5"></path>
+          <path
+            fill="#a0c4ff"
+            d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,250.7C960,235,1056,181,1152,165.3C1248,149,1344,171,1392,181.3L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
+          ></path>
+          <path
+            fill="#bde0fe"
+            d="M0,320L48,314.7C96,309,192,299,288,272C384,245,480,203,576,202.7C672,203,768,245,864,250.7C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
+            opacity="0.5"
+          ></path>
         </svg>
       </div>
 
@@ -75,11 +84,12 @@ const Register = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-2xl z-10"
       >
-        <div className="bg-white/80 backdrop-blur-md rounded-4xl p-6 md:p-10 shadow-2xl border border-white/50 text-center">
-          
-          <div className="mb-6">
-            <h1 className="text-3xl font-extrabold text-[#0a2540] mb-1 tracking-tight">Create Account</h1>
-            <p className="text-slate-500 text-sm">Join the NativeNest community</p>
+        <div className="bg-white/80 backdrop-blur-md rounded-4xl p-6 md:p-10 shadow-2xl border border-white/50">
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-extrabold text-[#0a2540] mb-1 tracking-tight">
+              Create Account
+            </h1>
+            <p className="text-slate-500 text-sm">Join the community and get started</p>
           </div>
 
           {error && (
@@ -97,7 +107,7 @@ const Register = () => {
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-                    <FiType size={16} />
+                    <FiUser size={16} />
                   </span>
                   <input
                     type="text"
@@ -112,7 +122,7 @@ const Register = () => {
               {/* Email */}
               <div>
                 <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
-                  Email (Optional)
+                  Email Address *
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
@@ -121,7 +131,8 @@ const Register = () => {
                   <input
                     type="email"
                     name="email"
-                    placeholder="alex@example.com"
+                    placeholder="you@example.com"
+                    required
                     className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
                   />
                 </div>
@@ -139,10 +150,10 @@ const Register = () => {
                   <input
                     type="tel"
                     name="mobile_number"
-                    required
-                    maxLength="10"
                     placeholder="9876543210"
+                    required
                     pattern="\d{10}"
+                    maxLength={10}
                     onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
                     className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
                   />
@@ -156,7 +167,7 @@ const Register = () => {
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-                    <FiUser size={16} />
+                    <FiType size={16} />
                   </span>
                   <select
                     name="account_type"
@@ -164,7 +175,9 @@ const Register = () => {
                     defaultValue=""
                     className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all appearance-none"
                   >
-                    <option value="" disabled>Select type</option>
+                    <option value="" disabled>
+                      Select type
+                    </option>
                     {accountTypes.map((type) => (
                       <option key={type} value={type}>
                         {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -227,7 +240,6 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Centered and Smaller Register Button */}
             <div className="pt-6 flex justify-center">
               <button
                 type="submit"
@@ -239,7 +251,7 @@ const Register = () => {
             </div>
           </form>
 
-          <div className="mt-6 text-sm text-slate-500">
+          <div className="mt-6 text-center text-sm text-slate-500">
             Already have an account?{" "}
             <Link to="/login" className="font-bold text-[#2e6171] hover:underline">
               Sign In

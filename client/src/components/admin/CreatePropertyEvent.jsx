@@ -1,8 +1,8 @@
-// src/components/CreatePropertyEvent.jsx
+// Modified CreatePropertyEvent.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import API_BASE_URL from "../config";
+import API_BASE_URL from '../../config.js';
 
 const CreatePropertyEvent = () => {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ const CreatePropertyEvent = () => {
     description: "",
     contact_name: "",
     contact_phone: "",
+    stall_count: 0,
   });
 
   const [error, setError] = useState("");
@@ -28,7 +29,7 @@ const CreatePropertyEvent = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: name === "stall_count" ? parseInt(value) || 0 : value }));
   };
 
   const handleSubmit = async (e) => {
@@ -111,26 +112,26 @@ const CreatePropertyEvent = () => {
               name="event_type"
               value={formData.event_type}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             >
-              <option>Property Sale Mela</option>
-              <option>Property Expo</option>
-              <option>Builder Meet</option>
-              <option>Open House</option>
+              <option value="Property Expo">Property Expo</option>
+              <option value="Property Sale Mela">Property Sale Mela</option>
+              <option value="Builder Meet">Builder Meet</option>
+              <option value="Open House">Open House</option>
             </select>
           </div>
         </div>
 
         {/* Location Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Venue / Location <span className="text-red-500">*</span>
+              Event Location <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name="event_location"
-              placeholder="e.g., Convention Center, MG Road"
+              placeholder="e.g., Convention Center"
               value={formData.event_location}
               onChange={handleChange}
               required
@@ -145,28 +146,28 @@ const CreatePropertyEvent = () => {
             <input
               type="text"
               name="city"
-              placeholder="e.g., Bangalore"
+              placeholder="e.g., Chennai"
               value={formData.city}
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            State <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="state"
-            placeholder="e.g., Karnataka"
-            value={formData.state}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              State <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="state"
+              placeholder="e.g., Tamil Nadu"
+              value={formData.state}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            />
+          </div>
         </div>
 
         {/* Dates */}
@@ -195,7 +196,6 @@ const CreatePropertyEvent = () => {
               value={formData.end_date}
               onChange={handleChange}
               required
-              min={formData.start_date}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
@@ -228,6 +228,22 @@ const CreatePropertyEvent = () => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
+        </div>
+
+        {/* Stall Count */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Number of Stalls
+          </label>
+          <input
+            type="number"
+            name="stall_count"
+            placeholder="e.g., 50"
+            value={formData.stall_count}
+            onChange={handleChange}
+            min="0"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          />
         </div>
 
         {/* Contact Info */}
@@ -288,7 +304,7 @@ const CreatePropertyEvent = () => {
         </div>
       </form>
     </div>
-  ); 
+  );
 };
 
 export default CreatePropertyEvent;

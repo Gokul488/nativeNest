@@ -7,15 +7,15 @@ import FAQ from "./components/faq's";
 import ContactUs from "./components/contactUs";
 import TermsAndConditions from "./components/termsAndConditions";
 import PrivacyPolicy from "./components/privacyPolicy";
-import BuyerDashboard from "./components/buyerDashboard";
+import BuyerDashboard from "./components/buyer/buyerDashboard";
 import BlogDetail from "./components/blogDetail";
 import Blog from "./components/blog";
 import PropertyDetails from "./components/propertyDetails";
 import Buy from "./components/buy";
-import AdminDashboard from "./components/adminDashboard";
+import AdminDashboard from "./components/admin/adminDashboard";
 import WhatsappChatWidget from "./components/WhatsappChatWidget";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import BuilderDashboard from "./components/builder/builderDashboard";
 /* 👇 Wrapper to access useLocation */
 function AppContent() {
   const location = useLocation();
@@ -49,6 +49,9 @@ function AppContent() {
                <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
         </Route>
 
+         <Route element={<ProtectedRoute allowedRole="builder" />}>
+               <Route path="/builder-dashboard/*" element={<BuilderDashboard />} />
+        </Route>
       </Routes>
 
       {/* ✅ Render WhatsApp widget only for non-admin pages */}

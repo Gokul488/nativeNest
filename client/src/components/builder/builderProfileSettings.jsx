@@ -1,9 +1,9 @@
-// src/components/profileSettings.jsx
+// src/components/builderProfileSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import API_BASE_URL from '../config.js';
+import API_BASE_URL from '../../config.js';
 
-const ProfileSettings = () => {
+const BuilderProfileSettings = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
@@ -12,23 +12,23 @@ const ProfileSettings = () => {
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchBuilder = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`${API_BASE_URL}/api/user`, {
+        const response = await axios.get(`${API_BASE_URL}/api/builder`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const user = response.data;
-        setName(user.name || "");
-        setEmail(user.email || "");
-        setMobileNumber(user.mobile_number || "");
-        // Update localStorage with fresh user data
-        localStorage.setItem("user", JSON.stringify(user));
+        const builder = response.data;
+        setName(builder.name || "");
+        setEmail(builder.email || "");
+        setMobileNumber(builder.mobile_number || "");
+        // Update localStorage with fresh builder data
+        localStorage.setItem("user", JSON.stringify(builder));
       } catch (err) {
-        setError(err.response?.data?.error || "Failed to fetch user details");
+        setError(err.response?.data?.error || "Failed to fetch builder details");
       }
     };
-    fetchUser();
+    fetchBuilder();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -39,7 +39,7 @@ const ProfileSettings = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        `${API_BASE_URL}/api/user`,
+        `${API_BASE_URL}/api/builder`,
         {
           name,
           email,
@@ -51,7 +51,7 @@ const ProfileSettings = () => {
         }
       );
 
-      // Update localStorage with new user data (if backend returns updated user)
+      // Update localStorage with new builder data (if backend returns updated builder)
       if (response.data) {
         localStorage.setItem("user", JSON.stringify(response.data));
       }
@@ -66,7 +66,7 @@ const ProfileSettings = () => {
   return (
     <div className="bg-white rounded-xl shadow-md p-8 max-w-2xl mx-auto">
       <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-        Profile Settings
+        Builder Profile Settings
       </h2>
 
       {error && (
@@ -149,4 +149,4 @@ const ProfileSettings = () => {
   );
 };
 
-export default ProfileSettings;
+export default BuilderProfileSettings;

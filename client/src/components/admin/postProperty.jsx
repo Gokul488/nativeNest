@@ -6,9 +6,10 @@ import "quill/dist/quill.snow.css";
 import 'quill-table-better/dist/quill-table-better.css';  // Updated CSS import
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
-import API_BASE_URL from '../config.js';
+import API_BASE_URL from '../../config.js';
 import Quill from 'quill';
 import QuillTableBetter from 'quill-table-better';
+import { jwtDecode } from 'jwt-decode';
 
 const animatedComponents = makeAnimated();
 
@@ -29,8 +30,11 @@ const PostProperty = () => {
     pincode: "",
     property_type: "",
     sqft: "",
-    builder_name: "", 
   });
+
+  const [accountType, setAccountType] = useState(null);
+  const [builderName, setBuilderName] = useState('');
+
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [amenityOptions, setAmenityOptions] = useState([]);
   const [propertyTypes, setPropertyTypes] = useState([]);
@@ -38,6 +42,9 @@ const PostProperty = () => {
   /* ---------- Custom "Other" Amenity ---------- */
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [otherAmenityName, setOtherAmenityName] = useState("");
+
+  const [builders, setBuilders] = useState([]);
+  const [selectedBuilderId, setSelectedBuilderId] = useState("");
 
   /* ---------- Media state ---------- */
   const [images, setImages] = useState([]);
@@ -102,43 +109,76 @@ const PostProperty = () => {
   }, [quill]);
 
   /* ---------- Fetch property types + amenities ---------- */
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [typesRes, amenitiesRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/properties/types`),
-          axios.get(`${API_BASE_URL}/api/properties/amenities`),
-        ]);
-
-        const types = typesRes.data.propertyTypes || [];
-        setPropertyTypes(types);
-        if (types.length) {
-          setFormData((prev) => ({ ...prev, property_type: types[0] }));
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const decoded = jwtDecode(token);
+        setAccountType(decoded.account_type);
+        if (decoded.account_type === 'builder') {
+          // Fetch builder details
+          const builderRes = await axios.get(`${API_BASE_URL}/api/builder`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const builder = builderRes.data;
+          setBuilders([builder]);
+          setSelectedBuilderId(builder.id);
+          setBuilderName(builder.name);
+          return; // Skip other fetches if builder
         }
-
-        // Transform DB amenities → react-select format
-        const options = (amenitiesRes.data.amenities || []).map((a) => ({
-          value: a.amenity_id,
-          label: a.name,
-          icon: a.icon,
-          isDb: true,
-        }));
-
-        // Add "Other ..." option
-        options.push({
-          value: "OTHER",
-          label: "Other …",
-          icon: null,
-          isDb: false,
-        });
-
-        setAmenityOptions(options);
-      } catch (err) {
-        setError(err.response?.data?.error || "Failed to load data");
       }
-    };
-    fetchData();
-  }, []);
+
+      const [typesRes, amenitiesRes, buildersRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/properties/types`),
+        axios.get(`${API_BASE_URL}/api/properties/amenities`),
+        axios.get(`${API_BASE_URL}/api/properties/builders-list`),
+      ]);
+
+      // 1. Property Types
+      const types = typesRes.data.propertyTypes || [];
+      setPropertyTypes(types);
+      if (types.length > 0) {
+        setFormData((prev) => ({ ...prev, property_type: types[0] }));
+      }
+
+      // 2. Amenities (for react-select)
+      const amenityOptions = (amenitiesRes.data.amenities || []).map((a) => ({
+        value: a.amenity_id,
+        label: a.name,
+        icon: a.icon,
+        isDb: true,
+      }));
+
+      // Add "Other" option at the end
+      amenityOptions.push({
+        value: "OTHER",
+        label: "Other …",
+        icon: null,
+        isDb: false,
+      });
+
+      setAmenityOptions(amenityOptions);
+
+      // 3. Builders (for dropdown)
+      const buildersList = buildersRes.data.builders || [];
+      setBuilders(buildersList);
+
+      // Set default value (first builder) if list is not empty
+      if (buildersList.length > 0) {
+        setSelectedBuilderId(buildersList[0].id);
+      } else {
+        setSelectedBuilderId(""); // or null — prevent submit if empty
+      }
+
+    } catch (err) {
+      console.error("Error fetching form data:", err);
+      setError(err.response?.data?.error || "Failed to load required data. Please try again.");
+    }
+  };
+
+  fetchData();
+}, []);
 
   /* ---------- Input handlers ---------- */
   const handleInputChange = (e) => {
@@ -174,62 +214,64 @@ const PostProperty = () => {
   };
 
   /* ---------- Form submit ---------- */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setIsSubmitting(true);
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setError("");
+      setSuccess("");
+      setIsSubmitting(true);
 
-    if (!formData.description || formData.description === "<p><br></p>") {
-      setError("Description is required");
-      setIsSubmitting(false);
-      return;
-    }
+      if (!formData.description || formData.description === "<p><br></p>") {
+        setError("Description is required");
+        setIsSubmitting(false);
+        return;
+      }
 
-    if (showOtherInput && !otherAmenityName.trim()) {
-      setError("Please enter the name of the custom amenity.");
-      setIsSubmitting(false);
-      return;
-    }
+      if (showOtherInput && !otherAmenityName.trim()) {
+        setError("Please enter the name of the custom amenity.");
+        setIsSubmitting(false);
+        return;
+      }
 
-    const data = new FormData();
+      const data = new FormData();
 
-    // Text fields
-    Object.entries(formData).forEach(([k, v]) => data.append(k, v));
+      // Text fields
+      Object.entries(formData).forEach(([k, v]) => data.append(k, v));
 
-    // Amenities: send array of DB IDs
-    selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
+      // Append builder_id
+      data.append('builder_id', selectedBuilderId);
 
-    // Custom "Other" amenity
-    if (showOtherInput && otherAmenityName.trim()) {
-      data.append("other_amenity", otherAmenityName.trim());
-    }
+      // Amenities: send array of DB IDs
+      selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
 
-    // Images
-    images.forEach((img) => data.append("images[]", img));
-    extraImageInputs.forEach((i) => i.file && data.append("images[]", i.file));
+      // Custom "Other" amenity
+      if (showOtherInput && otherAmenityName.trim()) {
+        data.append("other_amenity", otherAmenityName.trim());
+      }
 
-    // Cover & video
-    coverImage && data.append("cover_image", coverImage);
-    video && data.append("video", video);
+      // Images
+      images.forEach((img) => data.append("images[]", img));
+      extraImageInputs.forEach((i) => i.file && data.append("images[]", i.file));
 
-    try {
-      const token = localStorage.getItem("token");
-      await axios.post(`${API_BASE_URL}/api/properties`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      setSuccess("Property posted successfully!");
-      setTimeout(() => navigate("/admin-dashboard/manage-properties"), 1500);
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to post property");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      // Cover & video
+      coverImage && data.append("cover_image", coverImage);
+      video && data.append("video", video);
 
+      try {
+        const token = localStorage.getItem("token");
+        await axios.post(`${API_BASE_URL}/api/properties`, data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        setSuccess("Property posted successfully!");
+        setTimeout(() => navigate("/admin-dashboard/manage-properties"), 1500);
+      } catch (err) {
+        setError(err.response?.data?.error || "Failed to post property");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
   /* ---------- Custom React-Select Styles (with icons) ---------- */
   const customStyles = {
     control: (provided) => ({
@@ -299,17 +341,24 @@ const PostProperty = () => {
           </div>
 
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Builder Name</label>
-            <input
-              type="text"
-              name="builder_name"
-              value={formData.builder_name || ""}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Builder <span className="text-red-500">*</span>
+  </label>
+  <select
+    value={selectedBuilderId}
+    onChange={(e) => setSelectedBuilderId(e.target.value)}
+    required
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+  >
+    <option value="">Select Builder</option>
+    {builders.map((b) => (
+      <option key={b.id} value={b.id}>
+        {b.name}
+      </option>
+    ))}
+  </select>
+</div>
 
           {/* ----- Description (Quill) ----- */}
           <div>
@@ -431,6 +480,31 @@ const PostProperty = () => {
               )}
             </select>
           </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Builder</label>
+                {accountType === 'builder' ? (
+                  <input
+                    type="text"
+                    value={builderName}
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                  />
+                ) : (
+                  <select
+                    value={selectedBuilderId}
+                    onChange={(e) => setSelectedBuilderId(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {builders.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
 
           {/* ----- AMENITIES: Searchable Multi-Select Dropdown ----- */}
           <div>

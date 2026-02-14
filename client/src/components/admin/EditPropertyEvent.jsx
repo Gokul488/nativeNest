@@ -1,8 +1,8 @@
-// src/components/EditPropertyEvent.jsx
+// Modified EditPropertyEvent.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-import API_BASE_URL from "../config";
+import API_BASE_URL from '../../config.js';
 
 const EditPropertyEvent = () => {
   const { id } = useParams();
@@ -21,6 +21,7 @@ const EditPropertyEvent = () => {
     description: "",
     contact_name: "",
     contact_phone: "",
+    stall_count: 0,
   });
 
   const [error, setError] = useState("");
@@ -49,6 +50,7 @@ const EditPropertyEvent = () => {
           ...event,
           start_date: event.start_date ? event.start_date.split('T')[0] : "",
           end_date: event.end_date ? event.end_date.split('T')[0] : "",
+          stall_count: event.stall_count || 0,
         });
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load event data.");
@@ -63,7 +65,7 @@ const EditPropertyEvent = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: name === "stall_count" ? parseInt(value) || 0 : value }));
   };
 
   const handleSubmit = async (e) => {
@@ -74,10 +76,18 @@ const EditPropertyEvent = () => {
 
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token missing. Please log in again.");
+        setIsSubmitting(false);
+        return;
+      }
+
       await axios.put(
         `${API_BASE_URL}/api/admin/events/${id}`,
         formData,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       setSuccess("Event updated successfully!");
@@ -85,14 +95,21 @@ const EditPropertyEvent = () => {
         navigate("/admin-dashboard/manage-events");
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to update event. Please try again.");
+      console.error(err);
+      setError(
+        err.response?.data?.error || "Failed to update event. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-600">Loading event details...</div>;
+    return (
+      <div className="max-w-5xl mx-auto mt-12 p-8 text-center text-gray-600">
+        Loading event data...
+      </div>
+    );
   }
 
   return (
@@ -124,7 +141,7 @@ const EditPropertyEvent = () => {
               type="text"
               name="event_name"
               placeholder="e.g., Grand Property Expo 2026"
-              value={formData.event_name}
+              value={formData.event_name || ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
@@ -137,29 +154,29 @@ const EditPropertyEvent = () => {
             </label>
             <select
               name="event_type"
-              value={formData.event_type}
+              value={formData.event_type || ""}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             >
-              <option>Property Sale Mela</option>
-              <option>Property Expo</option>
-              <option>Builder Meet</option>
-              <option>Open House</option>
+              <option value="Property Expo">Property Expo</option>
+              <option value="Property Sale Mela">Property Sale Mela</option>
+              <option value="Builder Meet">Builder Meet</option>
+              <option value="Open House">Open House</option>
             </select>
           </div>
         </div>
 
         {/* Location Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Venue / Location <span className="text-red-500">*</span>
+              Event Location <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name="event_location"
-              placeholder="e.g., Convention Center, MG Road"
-              value={formData.event_location}
+              placeholder="e.g., Convention Center"
+              value={formData.event_location || ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -173,28 +190,28 @@ const EditPropertyEvent = () => {
             <input
               type="text"
               name="city"
-              placeholder="e.g., Bangalore"
-              value={formData.city}
+              placeholder="e.g., Chennai"
+              value={formData.city || ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            State <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="state"
-            placeholder="e.g., Karnataka"
-            value={formData.state}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              State <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="state"
+              placeholder="e.g., Tamil Nadu"
+              value={formData.state || ""}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            />
+          </div>
         </div>
 
         {/* Dates */}
@@ -206,7 +223,7 @@ const EditPropertyEvent = () => {
             <input
               type="date"
               name="start_date"
-              value={formData.start_date}
+              value={formData.start_date || ""}
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -220,10 +237,9 @@ const EditPropertyEvent = () => {
             <input
               type="date"
               name="end_date"
-              value={formData.end_date}
+              value={formData.end_date || ""}
               onChange={handleChange}
               required
-              min={formData.start_date}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
@@ -256,6 +272,22 @@ const EditPropertyEvent = () => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
+        </div>
+
+        {/* Stall Count */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Number of Stalls
+          </label>
+          <input
+            type="number"
+            name="stall_count"
+            placeholder="e.g., 50"
+            value={formData.stall_count}
+            onChange={handleChange}
+            min="0"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          />
         </div>
 
         {/* Contact Info */}

@@ -11,15 +11,15 @@ const {
   getBuilders,
   getAmenities,
   getMostViewedProperties,
-  getPropertyViewers
+  getPropertyViewers,
+  getAllBuilders
 } = require('../controller/propertiesController');
 
-// ✅ IMPORT AUTH MIDDLEWARE FROM CORRECT FILE
 const authMiddleware = require('../middleware/authMiddleware');
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, 
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'video/mp4', 'video/mpeg', 'video/webm'];
     if (allowedTypes.includes(file.mimetype)) {
@@ -30,21 +30,29 @@ const upload = multer({
   }
 });
 
+// ────────────────────────────────────────────────
+//  PUBLIC ROUTES – no authentication required
+// ────────────────────────────────────────────────
+router.get('/types', getPropertyTypes);
+router.get('/amenities', getAmenities);
+router.get('/builders', getBuilders);          // distinct names from properties
+router.get('/builders-list', getAllBuilders);  // full list from builders table
+router.get('/featured', getFeaturedProperties);
+router.get('/max-price', getMaxPrice);
+router.get('/:id', getPropertyById);           // public property detail view
+
+// ────────────────────────────────────────────────
+//  PROTECTED ROUTES – require JWT authentication
+// ────────────────────────────────────────────────
+router.use(authMiddleware);
+
 router.post('/', upload.fields([
   { name: 'cover_image', maxCount: 1 },
   { name: 'images[]', maxCount: 10 },
-  { name: 'video', maxCount: 1 } 
+  { name: 'video', maxCount: 1 }
 ]), createProperty);
 
-router.get('/types', getPropertyTypes);
-router.get('/amenities', getAmenities); // Added route
-router.get('/builders', getBuilders);
-router.get('/featured', getFeaturedProperties); 
-router.get('/max-price', getMaxPrice); 
 router.get('/most-viewed', getMostViewedProperties);
-router.get('/:id', getPropertyById);
-router.get("/:propertyId/viewers", authMiddleware, getPropertyViewers
-);
-
+router.get('/:propertyId/viewers', getPropertyViewers);
 
 module.exports = router;

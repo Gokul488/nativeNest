@@ -6,7 +6,7 @@ import QuillTableBetter from 'quill-table-better';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
 import 'quill-table-better/dist/quill-table-better.css';  // Updated CSS import
-import API_BASE_URL from '../config.js';
+import API_BASE_URL from '../../config.js';
 
 const AddBlog = () => {
   // Register the new table module (no more global register with true)

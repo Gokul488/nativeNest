@@ -6,7 +6,7 @@ import { useQuill } from "react-quilljs";
 import "quill/dist/quill.snow.css";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
-import API_BASE_URL from '../config.js';   // ← one level up
+import API_BASE_URL from '../../config.js';
 const animatedComponents = makeAnimated();
 
 const EditProperty = () => {

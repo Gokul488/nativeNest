@@ -15,7 +15,8 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Passwords do not match' });
     }
 
-    if (!['buyer', 'admin'].includes(account_type)) {
+    // Updated: Add 'builder' to valid types
+    if (!['buyer', 'admin', 'builder'].includes(account_type)) {
       return res.status(400).json({ error: 'Invalid account type' });
     }
 
@@ -78,6 +79,31 @@ const register = async (req, res) => {
       };
     }
 
+    // New: Builder Register
+    if (account_type === 'builder') {
+      const [existing] = await pool.query(
+        'SELECT id FROM builders WHERE mobile_number = ? OR email = ?',
+        [mobile_number, email || null]
+      );
+
+      if (existing.length > 0) {
+        return res.status(400).json({ error: 'Builder already exists' });
+      }
+
+      [result] = await pool.query(
+        'INSERT INTO builders (name, mobile_number, email, password, created_at) VALUES (?, ?, ?, ?, NOW())',
+        [name, mobile_number, email || null, hashedPassword]
+      );
+
+      user = {
+        id: result.insertId,
+        name,
+        mobile_number,
+        email,
+        account_type: 'builder'
+      };
+    }
+
     const token = jwt.sign(
       { userId: user.id, account_type: user.account_type },
       process.env.JWT_SECRET,
@@ -130,6 +156,19 @@ const login = async (req, res) => {
       if (rows.length > 0) {
         user = rows[0];
         account_type = 'admin';
+      } else {
+        // New: Builder Login
+        [rows] = await pool.query(
+          `SELECT id, name, mobile_number, email, password
+           FROM builders
+           WHERE mobile_number = ? OR email = ?`,
+          [identifier, identifier]
+        );
+
+        if (rows.length > 0) {
+          user = rows[0];
+          account_type = 'builder';
+        }
       }
     }
 
@@ -168,7 +207,8 @@ const login = async (req, res) => {
 
 /* ===================== ACCOUNT TYPES ===================== */
 const getAccountTypes = (req, res) => {
-  res.json({ accountTypes: ['buyer', 'admin'] });
+  // Updated: Add 'builder' to account types
+  res.json({ accountTypes: ['buyer', 'admin', 'builder'] });
 };
 
 module.exports = { register, login, getAccountTypes };

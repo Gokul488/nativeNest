@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaUsers, FaEye, FaHome } from "react-icons/fa";
-import API_BASE_URL from "../config";
+import API_BASE_URL from '../../config.js';
 
 const PropertyViewers = () => {
   const { propertyId } = useParams();

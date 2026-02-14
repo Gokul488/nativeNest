@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaEye, FaUsers } from "react-icons/fa";
-import API_BASE_URL from "../config.js";
+import API_BASE_URL from '../../config.js';
 
 const MostViewedProperties = () => {
   const [properties, setProperties] = useState([]);
