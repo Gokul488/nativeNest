@@ -7,6 +7,7 @@ const BuilderProfileSettings = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -22,6 +23,7 @@ const BuilderProfileSettings = () => {
         setName(builder.name || "");
         setEmail(builder.email || "");
         setMobileNumber(builder.mobile_number || "");
+        setContactPerson(builder.contact_person || "");
         // Update localStorage with fresh builder data
         localStorage.setItem("user", JSON.stringify(builder));
       } catch (err) {
@@ -44,6 +46,7 @@ const BuilderProfileSettings = () => {
           name,
           email,
           mobile_number: mobileNumber,
+          contact_person: contactPerson,
           password, // Optional: sent only if filled (backend can ignore if empty)
         },
         {
@@ -51,13 +54,11 @@ const BuilderProfileSettings = () => {
         }
       );
 
-      // Update localStorage with new builder data (if backend returns updated builder)
-      if (response.data) {
-        localStorage.setItem("user", JSON.stringify(response.data));
-      }
-
+    if (response.data && response.data.builder) {
+      localStorage.setItem("user", JSON.stringify(response.data.builder));
       setSuccess("Profile updated successfully!");
-      setPassword(""); // Clear password field after update
+    }
+      setPassword("");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to update profile");
     }
@@ -120,6 +121,18 @@ const BuilderProfileSettings = () => {
             required
             pattern="\d{10}"
             title="Mobile number must be 10 digits"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+          <input
+            type="text"
+            value={contactPerson}
+            onChange={(e) => setContactPerson(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+            required
+            placeholder="Primary contact person name"
           />
         </div>
 

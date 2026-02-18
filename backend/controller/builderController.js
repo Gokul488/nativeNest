@@ -1,6 +1,7 @@
 // Modified builderController.js
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const getBuilderDetails = async (req, res) => {
   try {
@@ -13,7 +14,7 @@ const getBuilderDetails = async (req, res) => {
     }
 
     const [builders] = await pool.query(
-      'SELECT id, name, mobile_number, email FROM builders WHERE id = ?',
+      'SELECT id, name, contact_person, mobile_number, email FROM builders WHERE id = ?',
       [decoded.userId]
     );
 
@@ -31,37 +32,99 @@ const getBuilderDetails = async (req, res) => {
 const updateBuilderDetails = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'No token provided' });
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (decoded.account_type !== 'builder') {
       return res.status(403).json({ error: 'Access denied: Builder only' });
     }
 
-    const { name, mobile_number, email } = req.body;
+    const builderId = decoded.userId;
+    const { name, email, mobile_number, contact_person, password } = req.body;
 
-    if (!name || !mobile_number || !email) {
-      return res.status(400).json({ error: 'All fields are required' });
+    if (!name || !email || !mobile_number || !contact_person) {
+      return res.status(400).json({ 
+        error: 'Name, email, mobile number, and contact person are required' 
+      });
+    }
+
+    if (!/^\d{10}$/.test(mobile_number)) {
+      return res.status(400).json({ error: 'Mobile number must be 10 digits' });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
     }
 
     const [existing] = await pool.query(
-      'SELECT id FROM builders WHERE (mobile_number = ? OR email = ?) AND id != ?',
-      [mobile_number, email, decoded.userId]
+      `SELECT id 
+       FROM builders 
+       WHERE (mobile_number = ? OR email = ?) 
+       AND id != ?`,
+      [mobile_number, email, builderId]
     );
 
     if (existing.length > 0) {
-      return res.status(400).json({ error: 'Mobile number or email already in use' });
+      return res.status(400).json({ 
+        error: 'Mobile number or email is already in use by another account' 
+      });
     }
 
-    await pool.query(
-      'UPDATE builders SET name=?, mobile_number=?, email=? WHERE id=?',
-      [name, mobile_number, email, decoded.userId]
+    let query = `
+      UPDATE builders 
+      SET name = ?, 
+          email = ?, 
+          mobile_number = ?, 
+          contact_person = ?
+    `;
+    let params = [name, email, mobile_number, contact_person];
+
+    if (password && password.trim() !== '') {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password.trim(), salt);
+      
+      query += `, password = ?`;
+      params.push(hashedPassword);
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(builderId);
+
+    await pool.query(query, params);
+
+    const [updatedRows] = await pool.query(
+      `SELECT id, name, email, mobile_number, contact_person 
+       FROM builders 
+       WHERE id = ?`,
+      [builderId]
     );
 
-    res.json({ message: 'Profile updated successfully' });
+    if (updatedRows.length === 0) {
+      return res.status(404).json({ error: 'Builder not found after update' });
+    }
+
+    const updatedBuilder = {
+      ...updatedRows[0],
+      account_type: 'builder'
+    };
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      builder: updatedBuilder
+    });
+
   } catch (error) {
     console.error('Error updating builder details:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    res.status(500).json({ 
+      error: 'Internal server error while updating profile' 
+    });
   }
 };
 

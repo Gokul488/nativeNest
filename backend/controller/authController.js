@@ -81,6 +81,13 @@ const register = async (req, res) => {
 
     // New: Builder Register
     if (account_type === 'builder') {
+
+      const { contact_person } = req.body;
+
+      if (!contact_person) {
+        return res.status(400).json({ error: 'Contact person is required for builders' });
+      }
+      
       const [existing] = await pool.query(
         'SELECT id FROM builders WHERE mobile_number = ? OR email = ?',
         [mobile_number, email || null]
@@ -91,13 +98,14 @@ const register = async (req, res) => {
       }
 
       [result] = await pool.query(
-        'INSERT INTO builders (name, mobile_number, email, password, created_at) VALUES (?, ?, ?, ?, NOW())',
-        [name, mobile_number, email || null, hashedPassword]
+        'INSERT INTO builders (name, contact_person, mobile_number, email, password, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
+        [name, contact_person, mobile_number, email || null, hashedPassword]
       );
 
       user = {
         id: result.insertId,
         name,
+        contact_person,
         mobile_number,
         email,
         account_type: 'builder'

@@ -23,6 +23,8 @@ const CreatePropertyEvent = () => {
     stall_count: 0,
   });
 
+  const [bannerImage, setBannerImage] = useState(null);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +32,10 @@ const CreatePropertyEvent = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: name === "stall_count" ? parseInt(value) || 0 : value }));
+  };
+
+  const handleBannerImageChange = (e) => {
+    setBannerImage(e.target.files[0]);
   };
 
   const handleSubmit = async (e) => {
@@ -46,11 +52,22 @@ const CreatePropertyEvent = () => {
         return;
       }
 
+      const data = new FormData();
+      for (const key in formData) {
+        data.append(key, formData[key]);
+      }
+      if (bannerImage) {
+        data.append('banner_image', bannerImage);
+      }
+
       await axios.post(
         `${API_BASE_URL}/api/admin/events`,
-        formData,
+        data,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          },
         }
       );
 
@@ -289,6 +306,19 @@ const CreatePropertyEvent = () => {
             onChange={handleChange}
             rows="5"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+          />
+        </div>
+
+        {/* Banner Image */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Banner Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleBannerImageChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
 

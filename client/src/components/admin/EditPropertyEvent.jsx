@@ -24,6 +24,9 @@ const EditPropertyEvent = () => {
     stall_count: 0,
   });
 
+  const [bannerImage, setBannerImage] = useState(null);
+  const [currentBanner, setCurrentBanner] = useState(null);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,6 +55,7 @@ const EditPropertyEvent = () => {
           end_date: event.end_date ? event.end_date.split('T')[0] : "",
           stall_count: event.stall_count || 0,
         });
+        setCurrentBanner(event.banner_image);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load event data.");
         console.error(err);
@@ -68,6 +72,10 @@ const EditPropertyEvent = () => {
     setFormData((prev) => ({ ...prev, [name]: name === "stall_count" ? parseInt(value) || 0 : value }));
   };
 
+  const handleBannerImageChange = (e) => {
+    setBannerImage(e.target.files[0]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -82,11 +90,22 @@ const EditPropertyEvent = () => {
         return;
       }
 
+      const data = new FormData();
+      for (const key in formData) {
+        data.append(key, formData[key]);
+      }
+      if (bannerImage) {
+        data.append('banner_image', bannerImage);
+      }
+
       await axios.put(
         `${API_BASE_URL}/api/admin/events/${id}`,
-        formData,
+        data,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          },
         }
       );
 
@@ -333,6 +352,33 @@ const EditPropertyEvent = () => {
             onChange={handleChange}
             rows="5"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+          />
+        </div>
+
+        {/* Current Banner Image */}
+        {currentBanner && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Current Banner Image
+            </label>
+            <img
+              src={currentBanner}
+              alt="Banner"
+              className="w-full h-64 object-cover rounded-lg mb-3 shadow-sm"
+            />
+          </div>
+        )}
+
+        {/* Banner Image Update */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Update Banner Image
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleBannerImageChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
 

@@ -1,7 +1,7 @@
 // register.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff, FiUserPlus } from "react-icons/fi";
 import { motion } from "framer-motion";
 import API_BASE_URL from "../config.js";
 
@@ -10,6 +10,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [accountType, setAccountType] = useState("");
   const navigate = useNavigate();
 
   const accountTypes = ["buyer", "admin", "builder"];
@@ -27,7 +28,20 @@ const Register = () => {
       password: formData.get("password"),
       confirm_password: formData.get("confirm_password"),
       account_type: formData.get("account_type"),
+      contact_person: formData.get("contact_person"),
     };
+
+    // Only include contact_person when builder is selected
+      if (payload.account_type === "builder") {
+        payload.contact_person = formData.get("contact_person")?.trim() || "";
+      }
+
+      // Optional: client-side validation before sending
+      if (payload.account_type === "builder" && !payload.contact_person) {
+        setError("Contact person is required for builders");
+        setLoading(false);
+        return;
+      }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -161,31 +175,60 @@ const Register = () => {
               </div>
 
               {/* Account Type */}
-              <div>
-                <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
-                  Account Type *
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-                    <FiType size={16} />
-                  </span>
-                  <select
-                    name="account_type"
-                    required
-                    defaultValue=""
-                    className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all appearance-none"
-                  >
-                    <option value="" disabled>
-                      Select type
-                    </option>
-                    {accountTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                <div>
+                  <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                    ACCOUNT TYPE *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                      <FiType size={16} />
+                    </span>
+                    <select
+                      name="account_type"
+                      required
+                      value={accountType}                    // ← controlled value (very important!)
+                      onChange={(e) => {
+                        setAccountType(e.target.value);
+                        console.log("Account type changed to:", e.target.value); // ← debug
+                      }}
+                      className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all appearance-none"
+                    >
+                      <option value="" disabled>
+                        Select type
                       </option>
-                    ))}
-                  </select>
+                      {accountTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
+
+                {/* Contact Person – shown only for builder */}
+                {accountType === "builder" && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="md:col-span-2"
+                  >
+                    <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                      Contact Person Name *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                        <FiUserPlus size={16} />
+                      </span>
+                      <input
+                        type="text"
+                        name="contact_person" // This must match the backend req.body key
+                        placeholder="Primary contact for this business"
+                        required
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                      />
+                    </div>
+                  </motion.div>
+                )}
 
               {/* Password */}
               <div>

@@ -11,12 +11,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendEmail = async ({ to, subject, html }) => {
+const sendEmail = async ({ to, subject, html, attachments = [] }) => {
   const mailOptions = {
     from: `"NativeNest" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html,
+    attachments
   };
 
   await transporter.sendMail(mailOptions);

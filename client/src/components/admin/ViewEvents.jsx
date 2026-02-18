@@ -9,7 +9,8 @@ import {
   FaClock, 
   FaStore, 
   FaTable,
-  FaUsers 
+  FaUsers,
+  FaDownload  // ← Added for download icon
 } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
 
@@ -57,6 +58,46 @@ const ViewEvents = () => {
         navigate("/login");
       } else {
         alert("Failed to delete event.");
+      }
+    }
+  };
+
+  // ─── New Download Handler ───────────────────────────────────────────────
+  const handleDownload = async (eventId, eventName) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to download.");
+        return;
+      }
+
+      const response = await axios.get(
+        `${API_BASE_URL}/api/admin/events/${eventId}/invitation.pdf`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'  // Important for binary PDF data
+        }
+      );
+
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invitation-${eventName.replace(/[^a-zA-Z0-9]/g, '-')}-${eventId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+      if (err.response?.status === 401) {
+        alert("Session expired. Please log in again.");
+        navigate("/login");
+      } else if (err.response?.status === 404) {
+        alert("Event not found.");
+      } else {
+        alert("Failed to download PDF. Check console for details.");
       }
     }
   };
@@ -164,7 +205,7 @@ const ViewEvents = () => {
                   <td className="px-6 py-5 text-center">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
                       <FaUsers className="text-[10px]" />
-                      {event.booked_count || 0} / {event.stall_count || 0}
+                      {event.booked_count || 0}
                     </div>
                     <Link
                       to={`/admin-dashboard/event-bookings/${event.id}`}
@@ -183,13 +224,25 @@ const ViewEvents = () => {
                     </Link>
                   </td>
                   <td className="px-6 py-5 text-right">
-                    <button
-                      onClick={() => handleDelete(event.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      title="Delete event"
-                    >
-                      <FaTrashAlt />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      {/* ─── Download Button (Replaces Link) ─────── */}
+                      <button
+                        onClick={() => handleDownload(event.id, event.event_name)}
+                        className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
+                        title="Download Invitation PDF"
+                      >
+                        <FaDownload className="w-5 h-5" />  {/* Using FaDownload for better icon */}
+                      </button>
+
+                      {/* Existing Delete Button */}
+                      <button
+                        onClick={() => handleDelete(event.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete event"
+                      >
+                        <FaTrashAlt />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -190,7 +190,7 @@ const StallBooking = () => {
                   onClick={() => handleBook(type.stall_type_id, type.stall_type_name, type.stall_price)}
                   className="flex items-center justify-center w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm tracking-widest uppercase transition-all hover:bg-teal-600 hover:shadow-xl hover:shadow-teal-600/20 active:scale-95"
                 >
-                  Book Category <FaCheckCircle className="ml-3" />
+                  Book<FaCheckCircle className="ml-3" />
                 </button>
               ) : (
                 <button
