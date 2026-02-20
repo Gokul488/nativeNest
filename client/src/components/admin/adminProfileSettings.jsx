@@ -2,12 +2,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import API_BASE_URL from '../../config.js';
+import { FiEye, FiEyeOff } from "react-icons/fi";   // ← added
 
 const AdminProfileSettings = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // Added states for password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -42,7 +49,7 @@ const AdminProfileSettings = () => {
     setSuccess("");
 
     if (!name || !email || !mobileNumber) {
-      setError("All fields are required");
+      setError("Name, email, and mobile number are required");
       return;
     }
 
@@ -51,16 +58,33 @@ const AdminProfileSettings = () => {
       return;
     }
 
+    if (password || confirmPassword) {
+      if (password !== confirmPassword) {
+        setError("New password and confirm password do not match");
+        return;
+      }
+      if (password.length < 6) {
+        setError("New password must be at least 6 characters long");
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem("token");
+
+      const payload = {
+        name,
+        email,
+        mobile_number: mobileNumber,
+      };
+
+      if (password && password.trim() !== "") {
+        payload.password = password;
+      }
+
       const response = await axios.put(
         `${API_BASE_URL}/api/admin`,
-        {
-          name,
-          email,
-          mobile_number: mobileNumber,
-          password, // Optional
-        },
+        payload,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -72,7 +96,9 @@ const AdminProfileSettings = () => {
       );
 
       setSuccess("Profile updated successfully!");
-      setPassword(""); // Clear password field
+      setPassword("");
+      setConfirmPassword("");
+
     } catch (err) {
       setError(err.response?.data?.error || "Failed to update profile");
     }
@@ -141,23 +167,64 @@ const AdminProfileSettings = () => {
           />
         </div>
 
-        <div>
+        {/* New Password Field with Eye Icon */}
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             New Password (leave blank to keep current)
           </label>
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter only if you want to change password"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition pr-10"
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-10 text-gray-500 hover:text-gray-700 focus:outline-none"
+          >
+            {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+          </button>
+        </div>
+
+        {/* Confirm Password Field with Eye Icon */}
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Confirm New Password
+          </label>
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter new password"
+            disabled={!password.trim()}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition pr-10 ${
+              password && confirmPassword && password !== confirmPassword
+                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                : "border-gray-300 focus:ring-teal-500 focus:border-teal-500"
+            }`}
+          />
+          {password.trim() && (
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-10 text-gray-500 hover:text-gray-700 focus:outline-none"
+            >
+              {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+            </button>
+          )}
         </div>
 
         <div className="flex justify-center pt-4">
           <button
             type="submit"
-            className="bg-teal-600 text-white px-8 py-3 rounded-lg hover:bg-teal-700 transition font-medium text-lg"
+            className={`bg-teal-600 text-white px-8 py-3 rounded-lg hover:bg-teal-700 transition font-medium text-lg ${
+              password && confirmPassword && password !== confirmPassword
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+            }`}
+            disabled={password && confirmPassword && password !== confirmPassword}
           >
             Update Profile
           </button>

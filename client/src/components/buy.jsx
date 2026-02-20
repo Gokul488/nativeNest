@@ -415,16 +415,17 @@ const toggleBookmark = async (e, propertyId, propertyTitle) => {
                 </div>
 
                 <div className="relative w-full md:w-40">
-                  <select
-                    className="h-12 border border-gray-300 pr-10 pl-4 rounded-xl w-full text-base focus:outline-none focus:ring-2 focus:ring-[#2e6171] focus:border-[#2e6171] transition-all duration-300 shadow-sm bg-gray-50/70 cursor-pointer appearance-none"
-                    value={selectedBuilder}
-                    onChange={(e) => setSelectedBuilder(e.target.value)}
-                  >
-                    <option value="All">All Builders</option>
-                    {builders.filter(builder => builder !== 'All').map((builder, index) => (
-                      <option key={index} value={builder}>{builder}</option>
-                    ))}
-                  </select>
+                    <select
+                      className="h-12 border border-gray-300 pr-10 pl-4 rounded-xl w-full text-base focus:outline-none focus:ring-2 focus:ring-[#2e6171] focus:border-[#2e6171] transition-all duration-300 shadow-sm bg-gray-50/70 cursor-pointer appearance-none"
+                      value={selectedBuilder}
+                      onChange={(e) => setSelectedBuilder(e.target.value)}
+                    >
+                      <option value="All">All Builders</option>
+                      {builders.filter(b => b !== 'All').map((builder, index) => (
+                        // Access builder.name instead of rendering the whole object
+                        <option key={index} value={builder.name}>{builder.name}</option>
+                      ))}
+                    </select>
                   <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[#2e6171] pointer-events-none"></i>
                 </div>
               </div>
@@ -556,16 +557,16 @@ const toggleBookmark = async (e, propertyId, propertyTitle) => {
               </div>
 
               <div className="relative">
-                <select
-                  className="h-11 w-full border border-gray-300 rounded-xl pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#2e6171] appearance-none"
-                  value={selectedBuilder}
-                  onChange={(e) => setSelectedBuilder(e.target.value)}
-                >
-                  <option value="All">All Builders</option>
-                  {builders.filter(b => b !== 'All').map((b, i) => (
-                    <option key={i} value={b}>{b}</option>
-                  ))}
-                </select>
+                  <select
+                    className="h-11 w-full border border-gray-300 rounded-xl pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#2e6171] appearance-none"
+                    value={selectedBuilder}
+                    onChange={(e) => setSelectedBuilder(e.target.value)}
+                  >
+                    <option value="All">All Builders</option>
+                    {builders.filter(b => b !== 'All').map((builder, i) => (
+                      <option key={i} value={builder.name}>{builder.name}</option>
+                    ))}
+                  </select>
                 <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[#2e6171] pointer-events-none"></i>
               </div>
 

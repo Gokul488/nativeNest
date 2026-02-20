@@ -168,12 +168,20 @@ const getMyRegisteredEvents = async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const [rows] = await pool.query(
-      `SELECT pe.*
-       FROM event_participants ep
-       JOIN property_events pe ON pe.id = ep.event_id
-       WHERE ep.buyer_id = ?
-       ORDER BY pe.start_date DESC`,
+    const [rows] = await pool.query(`
+          SELECT 
+              pe.id,
+              pe.event_name,
+              pe.event_type,
+              pe.city,
+              pe.state,
+              pe.start_date,
+              pe.end_date
+            FROM event_participants ep
+            JOIN property_events pe ON pe.id = ep.event_id
+            WHERE ep.buyer_id = ?
+            ORDER BY pe.start_date DESC
+  `,
       [decoded.userId]
     );
 
@@ -215,5 +223,92 @@ const getOngoingEventsForHome = async (req, res) => {
   }
 };
 
+// Register interest in a stall type
+const registerStallInterest = async (req, res) => {
+  try {
+    const { eventId, stallTypeId } = req.body;
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token' });
 
-module.exports = { getPublicEvents, participateEvent, getMyRegisteredEvents, getOngoingEventsForHome };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== 'buyer') {
+      return res.status(403).json({ error: 'Buyers only' });
+    }
+
+    const buyerId = decoded.userId;
+
+    await pool.query(
+      `INSERT IGNORE INTO buyer_stall_interest 
+       (buyer_id, event_id, stall_type_id) 
+       VALUES (?, ?, ?)`,
+      [buyerId, eventId, stallTypeId]
+    );
+
+    res.status(201).json({ message: 'Interest registered successfully' });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to register interest' });
+  }
+};
+
+// Get builders who booked stalls + whether buyer already showed interest in any of their stalls
+const getBookedBuildersForEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "buyer") return res.status(403).json({ error: "Buyers only" });
+
+    const buyerId = decoded.userId;
+
+    const [builders] = await pool.query(
+      `
+      SELECT 
+        b.id AS builder_id,
+        b.name,
+        b.contact_person,
+        b.mobile_number,
+        COUNT(s.stall_id) AS stall_count,
+        MIN(st.stall_type_id) AS sample_stall_type_id,
+        MAX(CASE WHEN bsi.id IS NOT NULL THEN 1 ELSE 0 END) AS interest_registered
+      FROM builders b
+      INNER JOIN stall s ON s.builder_id = b.id
+      INNER JOIN stall_type st ON st.stall_type_id = s.stall_type_id
+      LEFT JOIN buyer_stall_interest bsi 
+        ON bsi.buyer_id = ?
+        AND bsi.event_id = ?
+        AND bsi.stall_type_id = st.stall_type_id
+      WHERE s.event_id = ?
+      GROUP BY b.id
+      ORDER BY b.name ASC
+      `,
+      [buyerId, eventId, eventId]
+    );
+
+    const [[eventInfo]] = await pool.query(
+      "SELECT event_name FROM property_events WHERE id = ?",
+      [eventId]
+    );
+
+    res.json({
+      builders,
+      event_name: eventInfo?.event_name || "Event",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load booked builders" });
+  }
+};
+
+
+module.exports = { 
+  getPublicEvents, 
+  participateEvent, 
+  getMyRegisteredEvents, 
+  getOngoingEventsForHome,  
+  getBookedBuildersForEvent,
+  registerStallInterest,
+};

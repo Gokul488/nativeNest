@@ -67,49 +67,68 @@ const getBookmarkedProperties = async (req, res) => {
 
     const buyerId = decoded.userId;
     const connection = await pool.getConnection();
+    
     try {
       const [bookmarks] = await connection.query(
         'SELECT property_id FROM bookmarks WHERE buyer_id = ? ORDER BY created_at DESC',
         [buyerId]
       );
 
-      if (bookmarks.length === 0) return res.json({ properties: [] });
+      if (bookmarks.length === 0) {
+        return res.json({ properties: [] });
+      }
 
       const propertyIds = bookmarks.map(b => b.property_id);
       const placeholders = propertyIds.map(() => '?').join(',');
+
       const [properties] = await connection.query(
-        `SELECT property_id AS id, title, price, city, builder_name AS builderName, cover_image
-         FROM properties WHERE property_id IN (${placeholders})`,
+        `SELECT 
+           p.property_id AS id,
+           p.title,
+           p.price,
+           p.city,
+           b.name AS builderName,
+           p.cover_image
+         FROM properties p
+         LEFT JOIN builders b ON p.builder_id = b.id
+         WHERE p.property_id IN (${placeholders})
+         ORDER BY FIELD(p.property_id, ${propertyIds.join(',')})`,
         propertyIds
       );
 
-      const formatted = await Promise.all(properties.map(async (property) => {
-        let img = null;
-        if (property.cover_image) {
-          img = `data:image/jpeg;base64,${Buffer.from(property.cover_image).toString('base64')}`;
-        } else {
-          const [fallback] = await connection.query(
-            'SELECT image FROM property_images WHERE property_id = ? LIMIT 1',
-            [property.id]
-          );
-          if (fallback.length > 0) img = `data:image/jpeg;base64,${Buffer.from(fallback[0].image).toString('base64')}`;
-        }
-        return {
-          id: property.id,
-          title: property.title,
-          city: property.city,
-          price: parseFloat(property.price),
-          img,
-          builderName: property.builderName
-        };
-      }));
+      const formatted = await Promise.all(
+        properties.map(async (property) => {
+          let img = null;
+
+          if (property.cover_image) {
+            img = `data:image/jpeg;base64,${Buffer.from(property.cover_image).toString('base64')}`;
+          } else {
+            const [fallback] = await connection.query(
+              'SELECT image FROM property_images WHERE property_id = ? LIMIT 1',
+              [property.id]
+            );
+            if (fallback.length > 0) {
+              img = `data:image/jpeg;base64,${Buffer.from(fallback[0].image).toString('base64')}`;
+            }
+          }
+
+          return {
+            id: property.id,
+            title: property.title,
+            city: property.city,
+            price: parseFloat(property.price),
+            img,
+            builderName: property.builderName || null, 
+          };
+        })
+      );
 
       res.json({ properties: formatted });
     } finally {
       connection.release();
     }
   } catch (error) {
-    console.error(error);
+    console.error('Error in getBookmarkedProperties:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

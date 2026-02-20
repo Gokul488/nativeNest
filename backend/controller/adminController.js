@@ -162,6 +162,32 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+/* =========================
+   ADMIN: GET ALL EVENTS (for dropdown)
+========================= */
+const getAllEvents = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const [events] = await pool.query(
+      `SELECT id, event_name, event_type, city, start_date
+       FROM property_events
+       ORDER BY start_date DESC, created_at DESC`
+    );
+
+    res.json(events);
+  } catch (error) {
+    console.error("Get all events error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 /* =========================
    ADMIN: EVENT PARTICIPANTS
@@ -201,5 +227,6 @@ module.exports = {
   updateAdminDetails,
   getWhatsappAdmin,
   getAllUsers,
+  getAllEvents,
   getEventParticipants,
 };

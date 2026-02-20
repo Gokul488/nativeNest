@@ -5,7 +5,7 @@ const {
   getAvailableStallsForEvent,
   bookStallByType,
   getStallTypesWithAvailabilityForEvent,
-  getStallBookingsForEvent
+  getStallBookingsForEvent,
 } = require('../controller/stallController');
 
 const {
@@ -26,4 +26,5 @@ router.get('/event/:eventId/available', getAvailableStallsForEvent);
 router.post('/book-by-type', bookStallByType);
 router.get('/event/:eventId/types-availability', getStallTypesWithAvailabilityForEvent);
 router.get('/event/:eventId/bookings', getStallBookingsForEvent);
+
 module.exports = router;

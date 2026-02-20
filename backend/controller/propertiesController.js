@@ -210,10 +210,27 @@ const getAmenities = async (req, res) => {
 };
 
 const getBuilders = async (req, res) => {
-  const [rows] = await pool.query(
-    `SELECT DISTINCT builder_name FROM properties WHERE builder_name IS NOT NULL`
-  );
-  res.json({ builders: rows.map(r => r.builder_name) });
+  try {
+    const [rows] = await pool.query(`
+      SELECT DISTINCT 
+        b.id,
+        b.name
+      FROM builders b
+      INNER JOIN properties p ON p.builder_id = b.id
+      ORDER BY b.name ASC
+    `);
+
+    // Return format that frontend usually expects
+    res.json({
+      builders: rows.map(row => ({
+        id: row.id,
+        name: row.name
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching builders:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 const getMaxPrice = async (req, res) => {
@@ -432,16 +449,17 @@ const getPropertyById = async (req, res) => {
         p.country,
         p.pincode,
         p.property_type,
-        p.builder_name AS builderName,
         p.sqft,
         p.created_at,
         p.cover_image,
         p.video,
         p.views,
+        b.name,
         a.mobile_number,
         a.email
       FROM properties p
-      LEFT JOIN admins a ON p.admin_id = a.id
+      LEFT JOIN builders b ON p.builder_id = b.id
+      LEFT JOIN admins   a ON p.admin_id   = a.id
       WHERE p.property_id = ?
       `,
       [propertyId]
@@ -564,22 +582,25 @@ const getMostViewedProperties = async (req, res) => {
 
     const [rows] = await pool.query(`
       SELECT 
-        property_id AS id,
-        title,
-        city,
-        price,
-        property_type,
-        views,
-        created_at,
-        cover_image
-      FROM properties
-      WHERE views > 0
-      ORDER BY views DESC
+        p.property_id           AS id,
+        p.title,
+        p.city,
+        p.price,
+        p.property_type,
+        p.views,
+        p.created_at,
+        p.cover_image,
+        b.name                  AS builderName       -- ← added
+      FROM properties p
+      LEFT JOIN builders b ON p.builder_id = b.id
+      WHERE p.views > 0
+      ORDER BY p.views DESC
       LIMIT 50
     `);
 
     const properties = rows.map(p => ({
       ...p,
+      builderName: p.builderName || 'Unknown',
       cover_image: p.cover_image 
         ? `data:image/jpeg;base64,${Buffer.from(p.cover_image).toString('base64')}`
         : null

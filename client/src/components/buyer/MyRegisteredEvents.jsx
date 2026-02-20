@@ -1,9 +1,11 @@
 // src/components/MyRegisteredEvents.jsx
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from '../../config.js';
 
 const MyRegisteredEvents = () => {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -18,10 +20,10 @@ const MyRegisteredEvents = () => {
           return;
         }
 
-        const response = await axios.get(`${API_BASE_URL}/api/buyer/events/my`, {
+        const res = await axios.get(`${API_BASE_URL}/api/buyer/events/my`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setEvents(response.data);
+        setEvents(res.data);
       } catch (err) {
         setError("Failed to load your registered events.");
         console.error(err);
@@ -37,11 +39,15 @@ const MyRegisteredEvents = () => {
     <div className="bg-white rounded-xl shadow-md overflow-hidden">
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-3xl font-bold text-gray-800">My Registered Events</h2>
-        <p className="text-gray-600 mt-2">Events you have successfully registered for</p>
+        <p className="text-gray-600 mt-2">
+          Events you have successfully registered for
+        </p>
       </div>
 
       {loading && (
-        <div className="p-8 text-center text-gray-500">Loading your events...</div>
+        <div className="p-8 text-center text-gray-500">
+          Loading your events...
+        </div>
       )}
 
       {error && (
@@ -52,52 +58,43 @@ const MyRegisteredEvents = () => {
 
       {!loading && !error && events.length === 0 && (
         <div className="px-6 py-12 text-center text-gray-500">
-          You haven't registered for any events yet.
-          <br />
-          <span className="text-teal-600 font-medium">Explore available events to get started!</span>
+          You haven't registered for any events yet.<br />
+          <span className="text-teal-600 font-medium">
+            Explore upcoming events to get started!
+          </span>
         </div>
       )}
 
       {!loading && !error && events.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Event Name
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dates
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {events.map((event) => (
-                <tr key={event.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+        <div className="divide-y divide-gray-200">
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="p-6 hover:bg-gray-50 transition"
+            >
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
                     {event.event_name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    {event.event_type || "-"}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    {event.event_location && `${event.event_location}, `}
-                    {event.city}, {event.state}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    {new Date(event.start_date).toLocaleDateString()} -{" "}
-                    {new Date(event.end_date).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {event.event_type} • {event.city}, {event.state}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {new Date(event.start_date).toLocaleDateString('en-IN')} –{" "}
+                    {new Date(event.end_date).toLocaleDateString('en-IN')}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => navigate(`/buyer-dashboard/my-events/builders/${event.id}`)}
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium min-w-[170px] bg-teal-600 hover:bg-teal-700 text-white transition"
+                >
+                  View Participating Builders
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -160,5 +160,5 @@ module.exports = {
   getAvailableStallsForEvent,
   bookStallByType,
   getStallTypesWithAvailabilityForEvent,
-  getStallBookingsForEvent // NEW
+  getStallBookingsForEvent,
 };

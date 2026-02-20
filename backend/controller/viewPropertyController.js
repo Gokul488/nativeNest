@@ -45,27 +45,30 @@ const getProperties = async (req, res) => {
 const getPropertyById = async (req, res) => {
   try {
     const { id } = req.params;
-    const [properties] = await pool.query(
-      `SELECT 
-          p.property_id AS id, 
-          p.admin_id, 
-          p.title, 
-          p.description, 
-          p.price, 
-          p.address, 
-          p.city, 
-          p.state, 
-          p.country, 
-          p.pincode, 
-          p.property_type,
-          p.sqft, 
-          p.video,
-          p.cover_image, 
-          p.created_at
-       FROM properties p
-       WHERE p.property_id = ?`,
-      [id]
-    );
+
+    const [properties] = await pool.query(`
+      SELECT 
+        p.property_id AS id, 
+        p.admin_id, 
+        p.builder_id,
+        b.name AS builder_name,
+        p.title, 
+        p.description, 
+        p.price, 
+        p.address, 
+        p.city, 
+        p.state, 
+        p.country, 
+        p.pincode, 
+        p.property_type,
+        p.sqft, 
+        p.video,
+        p.cover_image, 
+        p.created_at
+      FROM properties p
+      LEFT JOIN builders b ON p.builder_id = b.id
+      WHERE p.property_id = ?
+    `, [id]);
 
     if (properties.length === 0) {
       return res.status(404).json({ error: 'Property not found' });
@@ -76,7 +79,6 @@ const getPropertyById = async (req, res) => {
       [id]
     );
 
-    // Fetch amenities
     const [amenitiesResult] = await pool.query(
       `SELECT a.amenity_id, a.name, a.icon 
        FROM amenities a
@@ -95,6 +97,7 @@ const getPropertyById = async (req, res) => {
         icon: a.icon 
       }))
     };
+
     res.json(property);
   } catch (error) {
     console.error('Error fetching property:', error);
@@ -112,12 +115,12 @@ const updateProperty = async (req, res) => {
     const { id } = req.params;
 
     const {
-      title, builder_name, description, price, address, city, state, country, pincode, property_type, sqft,
+      title, builder_id, description, price, address, city, state, country, pincode, property_type, sqft,
       amenities,
       other_amenity
     } = req.body;
 
-    if (!title || !builder_name || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
+    if (!title || !builder_id || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
       return res.status(400).json({ error: 'All required fields must be filled' });
     }
 
@@ -152,12 +155,12 @@ const updateProperty = async (req, res) => {
 
       await connection.query(
         `UPDATE properties SET 
-          title = ?, builder_name = ?, description = ?, price = ?, address = ?, city = ?, state = ?, country = ?, 
+          title = ?, builder_id = ?, description = ?, price = ?, address = ?, city = ?, state = ?, country = ?, 
           pincode = ?, property_type = ?, sqft = ?,
           cover_image = COALESCE(?, cover_image),
           video = COALESCE(?, video)
          WHERE property_id = ?`,
-        [title, builder_name, description, price, address, city, state, country, pincode, property_type, sqft || null, coverImage, video, id]
+        [title, builder_id, description, price, address, city, state, country, pincode, property_type, sqft || null, coverImage, video, id]
       );
 
       if (images.length > 0) {

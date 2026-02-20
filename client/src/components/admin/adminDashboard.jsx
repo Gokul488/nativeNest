@@ -66,8 +66,7 @@ const AdminDashboard = () => {
             NativeNest Admin
           </h1>
         </div>
-
-        {/* Removed overflow-y-auto and added scrollbar-hide if needed */}
+        
         <nav className="flex-1 p-4 space-y-2 overflow-y-hidden">
           <Link
             to="/admin-dashboard/"
@@ -201,7 +200,6 @@ const AdminDashboard = () => {
         {/* Main Content Area */}
         <main className="p-6 max-w-7xl mx-auto">
           <Routes>
-            {/* Dashboard Home / Overview - MODIFIED TO MATCH BUYER STYLE */}
             <Route
               path="/"
               element={
@@ -292,6 +290,7 @@ const AdminDashboard = () => {
 
             {/* Manage Users */}
             <Route path="/manage-users" element={<ManageUsers />} />
+            <Route path="/events/:eventId/participants" element={<EventParticipants />} />
 
             {/* Properties Management */}
             <Route path="/manage-properties">
@@ -313,25 +312,12 @@ const AdminDashboard = () => {
               <Route path="edit/:id" element={<EditPropertyEvent />} />
             </Route>
 
-            {/* NEW: Event Stall Bookings */}
             <Route path="/event-bookings/:eventId" element={<EventStallBookings />} />
-
-            {/* Create Property Event */}
             <Route path="/create-property-event" element={<CreatePropertyEvent />} />
-
-            {/* NEW: Manage Stall Types */}
             <Route path="/manage-stall-types/:eventId" element={<ManageStallTypes />} />
-
-            {/* Analytics */}
             <Route path="/analytics/most-viewed" element={<MostViewedProperties />} />
-
-            {/* Property Viewers */}
             <Route path="/property/:propertyId/viewers" element={<PropertyViewers />} />
-
-            {/* Enquiries */}
             <Route path="/enquiries" element={<ViewEnquiries />} />
-
-            {/* Profile Settings */}
             <Route path="/profile-settings" element={<AdminProfileSettings />} />
           </Routes>
         </main>
