@@ -355,8 +355,6 @@ const markStallAttendance = async (req, res) => {
     }
     const buyerId = buyer[0].id;
 
-    // 2. Mark attendance based on the unique stall_id
-    // Note: We update the record where the buyer showed interest in the category this stall belongs to
     const [result] = await pool.query(
       `UPDATE buyer_stall_interest bsi
        JOIN stall s ON s.stall_type_id = bsi.stall_type_id
@@ -376,6 +374,35 @@ const markStallAttendance = async (req, res) => {
   }
 };
 
+/* ================= GET STALL CHECK-IN DETAILS ================= */
+const getStallCheckInDetails = async (req, res) => {
+  try {
+    const { stallId } = req.params;
+
+    const [details] = await pool.query(
+      `SELECT 
+        s.stall_number, 
+        st.stall_type_name, 
+        pe.event_name,
+        b.name as builder_name
+       FROM stall s
+       JOIN stall_type st ON s.stall_type_id = st.stall_type_id
+       JOIN property_events pe ON s.event_id = pe.id
+       LEFT JOIN builders b ON s.builder_id = b.id
+       WHERE s.stall_id = ?`,
+      [stallId]
+    );
+
+    if (details.length === 0) {
+      return res.status(404).json({ error: 'Stall not found' });
+    }
+
+    res.json(details[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch stall details' });
+  }
+};
 
 module.exports = { 
   getPublicEvents, 
@@ -385,5 +412,6 @@ module.exports = {
   getBookedBuildersForEvent,
   registerStallInterest,
   markAttendance,
-  markStallAttendance
+  markStallAttendance,
+  getStallCheckInDetails
 };

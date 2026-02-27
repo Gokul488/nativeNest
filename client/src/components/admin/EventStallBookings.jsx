@@ -131,12 +131,14 @@ const EventStallBookings = () => {
                     <div className="text-xs text-gray-400">{booking.email}</div>
                   </td>
                   <td className="px-6 py-5 text-center">
-                    <button 
-                      onClick={() => openQR(booking)}
-                      className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-600 hover:text-white transition-all text-xs font-bold"
-                    >
-                      <FaQrcode /> Generate QR
-                    </button>
+                  <button 
+                    onClick={() => openQR(booking)}
+                    className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-600 hover:text-white transition-all text-xs font-bold"
+                    title="Generate QR"
+                  >
+                    {/* Increased size from default to 20 or 24 depending on your preference */}
+                    <FaQrcode size={22} /> 
+                  </button>
                   </td>
                 </tr>
               ))}
