@@ -30,4 +30,5 @@ router.get('/buyer/events/:eventId/booked-builders', getBookedBuildersForEvent);
 router.post('/events/mark-attendance', markAttendance);
 router.post('/events/mark-stall-attendance', markStallAttendance);
 router.get('/events/stall-details/:stallId', getStallCheckInDetails);
+
 module.exports = router;
