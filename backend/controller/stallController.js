@@ -136,6 +136,7 @@ const getStallBookingsForEvent = async (req, res) => {
 
     const [bookings] = await pool.query(`
       SELECT 
+        s.stall_id,
         s.stall_number,
         st.stall_type_name,
         b.name AS builder_name,
