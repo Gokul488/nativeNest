@@ -1,0 +1,188 @@
+/* index.css */
+@import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Reusable flex center - Pure CSS version */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.2; }
+}
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+/* Blog Content Styles (Pure CSS equivalent of Tailwind @apply) */
+.blog-content h1 {
+  font-size: 2.25rem;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  color: #011936;
+  line-height: 1.2;
+}
+@media (min-width: 768px) {
+  .blog-content h1 {
+    font-size: 3rem;
+  }
+}
+
+.blog-content h2 {
+  font-size: 1.5rem;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  color: #011936;
+  line-height: 1.2;
+}
+@media (min-width: 768px) {
+  .blog-content h2 {
+    font-size: 1.875rem;
+  }
+}
+
+.blog-content h3 {
+  font-size: 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  color: #2e6171;
+}
+
+.blog-content p {
+  color: #4b5563;
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+}
+
+.blog-content ul,
+.blog-content ol {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+.blog-content ul li,
+.blog-content ol li {
+  margin-bottom: 0.5rem;
+}
+
+.blog-content li {
+  color: #4b5563;
+}
+
+.blog-content strong {
+  font-weight: 700;
+  color: #011936;
+}
+
+.blog-content em {
+  font-style: italic;
+  color: #374151;
+}
+
+.blog-content blockquote {
+  border-left: 4px solid #2e6171;
+  padding-left: 1.5rem;
+  font-style: italic;
+  color: #374151;
+  margin: 1.5rem 0;
+  background-color: #eff6ff;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+.blog-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 2rem auto;
+  display: block;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.blog-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-size: 0.875rem;
+}
+
+.blog-content th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+}
+
+.blog-content td {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+}
+
+.blog-content a {
+  color: #2e6171;
+  text-decoration: underline;
+}
+.blog-content a:hover {
+  color: #011936;
+}
+/* Hide scrollbar but keep scroll */
+.scrollbar-hide::-webkit-scrollbar {
+  width: 0px;
+}
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
+
+/* Hide scrollbar by default */
+.scrollbar-hide {
+  -ms-overflow-style: none;        /* IE and Edge */
+  scrollbar-width: none;            /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;                    /* Chrome, Safari, Opera */
+}
+
+/* Show scrollbar on hover */
+.hover\:scrollbar-show:hover::-webkit-scrollbar {
+  display: block;
+}
+
+.hover\:scrollbar-show:hover {
+  -ms-overflow-style: auto;
+  scrollbar-width: auto;
+}
+
+/* Optional: customize scrollbar appearance */
+.hover\:scrollbar-show:hover::-webkit-scrollbar {
+  width: 6px;
+}
+
+.hover\:scrollbar-show:hover::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.1);
+}
+
+.hover\:scrollbar-show:hover::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.4);
+  border-radius: 3px;
+}
+
+.hover\:scrollbar-show:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.6);
+}
