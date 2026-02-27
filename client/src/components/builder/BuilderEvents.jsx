@@ -183,7 +183,8 @@ const BuilderEvents = () => {
                     </td>
                     <td className="px-6 py-5 text-center border-b border-gray-100">
                       <Link
-                        to={`/builder-dashboard/interests?event=${encodeURIComponent(event.event_name)}`}
+                        // Change this to use the ID as a query param
+                        to={`/builder-dashboard/interests?eventId=${event.id}`}
                         className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white transition-all shadow-sm group/btn active:scale-90"
                         title="View Buyer Interests"
                       >

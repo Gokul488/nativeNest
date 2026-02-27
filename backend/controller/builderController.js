@@ -257,6 +257,8 @@ const deleteBuilderProperty = async (req, res) => {
 
 // Add this function to builderController.js
 
+// src/controller/builderController.js
+
 const getBuilderStallInterests = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -268,12 +270,13 @@ const getBuilderStallInterests = async (req, res) => {
     }
 
     const builderId = decoded.userId;
+    const { eventId } = req.query; // Get eventId from query string
 
-    const [interests] = await pool.query(
-      `
+    let query = `
       SELECT 
         bsi.id,
         bsi.created_at AS interest_date,
+        bsi.is_attended,
         pe.event_name,
         pe.city,
         pe.state,
@@ -289,11 +292,19 @@ const getBuilderStallInterests = async (req, res) => {
       INNER JOIN property_events pe  ON pe.id = st.event_id
       INNER JOIN buyers buy          ON buy.id = bsi.buyer_id
       WHERE s.builder_id = ?
-      ORDER BY bsi.created_at DESC
-      `,
-      [builderId]
-    );
+    `;
+    
+    const params = [builderId];
 
+    // If an eventId is provided, filter the SQL results immediately
+    if (eventId) {
+      query += ` AND pe.id = ?`;
+      params.push(eventId);
+    }
+
+    query += ` ORDER BY bsi.created_at DESC`;
+
+    const [interests] = await pool.query(query, params);
     res.json({ interests });
 
   } catch (err) {

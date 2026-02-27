@@ -151,7 +151,6 @@ const BuilderDashboard = () => {
             <button onClick={toggleSidebar} className="text-teal-600 md:hidden">
               <FaBars className="w-6 h-6" />
             </button>
-            <h2 className="text-xl font-bold tracking-tight text-gray-800">Builder Dashboard</h2>
           </div>
           <div className="flex items-center gap-3 bg-teal-50 py-2 px-4 rounded-full border border-teal-100">
             <FaUser className="text-teal-600" />

@@ -148,7 +148,6 @@ const AdminDashboard = () => {
             <button onClick={toggleSidebar} className="text-teal-600 md:hidden">
               <FaBars className="w-6 h-6" />
             </button>
-            <h2 className="text-2xl font-bold tracking-tight text-gray-800"> Admin Dashboard</h2>
           </div>
           <div className="flex items-center gap-3 bg-teal-50 py-2 px-4 rounded-full">
             <FaUser className="text-teal-600 w-5 h-5" />

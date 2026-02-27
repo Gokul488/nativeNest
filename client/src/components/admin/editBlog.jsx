@@ -1,11 +1,26 @@
 // src/components/EditBlog.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import Quill from 'quill';
+import QuillTableBetter from 'quill-table-better';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
+import 'quill-table-better/dist/quill-table-better.css';
+import { 
+  FaArrowLeft, 
+  FaBlog, 
+  FaImage, 
+  FaExclamationTriangle, 
+  FaCheckCircle, 
+  FaCloudUploadAlt,
+  FaEdit
+} from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 
 const EditBlog = () => {
+  // Register the table module to match AddBlog functionality
+  Quill.register('modules/table-better', QuillTableBetter);
+
   const { quill, quillRef } = useQuill({
     modules: {
       toolbar: [
@@ -18,7 +33,24 @@ const EditBlog = () => {
         [{ color: [] }, { background: [] }],
         ['table'],
       ],
-      'better-table': true,
+      'table-better': {
+        operationMenu: {
+          items: {
+            insertColumnRight: { text: 'Insert Column Right' },
+            insertColumnLeft: { text: 'Insert Column Left' },
+            insertRowUp: { text: 'Insert Row Above' },
+            insertRowDown: { text: 'Insert Row Below' },
+            mergeCells: { text: 'Merge Cells' },
+            unmergeCells: { text: 'Unmerge Cells' },
+            deleteColumn: { text: 'Delete Column' },
+            deleteRow: { text: 'Delete Row' },
+            deleteTable: { text: 'Delete Table' },
+          },
+        },
+      },
+      keyboard: {
+        bindings: QuillTableBetter.keyboardBindings
+      },
     },
     formats: ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'align', 'color', 'background', 'table'],
   });
@@ -33,14 +65,12 @@ const EditBlog = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  // Fetch Blog Data
   useEffect(() => {
     const fetchBlog = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
+        if (!token) { navigate('/login'); return; }
 
         const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -67,8 +97,12 @@ const EditBlog = () => {
     fetchBlog();
   }, [id, quill, navigate]);
 
+  // Handle Editor Changes
   useEffect(() => {
     if (quill) {
+      quill.getModule('toolbar').addHandler('table', () => {
+        quill.getModule('table-better').insertTable(2, 2);
+      });
       quill.on('text-change', () => {
         setContent(quill.root.innerHTML);
       });
@@ -79,7 +113,7 @@ const EditBlog = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        setError('Image size exceeds 10MB');
+        setError('Image size exceeds 10MB limit');
         return;
       }
       const reader = new FileReader();
@@ -131,59 +165,127 @@ const EditBlog = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-8">
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-gray-800">Edit Blog</h2>
-        <Link to="/admin-dashboard/manage-blogs" className="text-teal-600 hover:underline">
-          ← Back to Blogs
-        </Link>
+    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
+      {/* Top Header - Consistent with AddBlog Design */}
+      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <Link 
+            to="/admin-dashboard/manage-blogs" 
+            className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600"
+          >
+            <FaArrowLeft />
+          </Link>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Edit Blog Post</h2>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Modify existing content</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <span className="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
+            <FaEdit /> Editor Mode
+          </span>
+        </div>
       </div>
 
-      {error && <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">{error}</div>}
-      {success && <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 border border-green-200">{success}</div>}
+      <div className="p-6 lg:p-8 max-w-5xl mx-auto w-full">
+        {error && (
+          <div className="mb-6 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 flex items-center gap-3 animate-headShake">
+            <FaExclamationTriangle /> {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-6 bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 flex items-center gap-3">
+            <FaCheckCircle /> {success}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-            required
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Title Input Section */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+              Blog Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-lg font-semibold text-gray-800"
+              placeholder="Enter blog title"
+              required
+            />
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-          <div ref={quillRef} className="min-h-[400px] border border-gray-300 rounded-lg overflow-hidden" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image (Max 10MB)</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-teal-50 file:text-teal-700"
-          />
-          {previewUrl && (
-            <div className="mt-4">
-              <img src={previewUrl} alt="Preview" className="w-full max-h-96 object-contain rounded-lg shadow-md border" />
+          {/* Content Editor Section */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+              Blog Content <span className="text-red-500">*</span>
+            </label>
+            <div className="rounded-xl border border-gray-300 overflow-hidden shadow-sm focus-within:ring-4 focus-within:ring-teal-500/10 focus-within:border-teal-500 transition-all">
+              <div ref={quillRef} className="min-h-[450px] text-gray-700" />
             </div>
-          )}
-        </div>
+          </div>
 
-        <div className="flex justify-center pt-4">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 text-white font-medium px-8 py-4 rounded-lg transition transform hover:scale-105 disabled:scale-100 shadow-lg"
-          >
-            {isSubmitting ? 'Updating...' : 'Update Blog'}
-          </button>
-        </div>
-      </form>
+          {/* Image Upload Section */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+              Featured Image (Max 10MB)
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              <div className="relative group">
+                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-teal-50 hover:border-teal-400 transition-all">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <FaCloudUploadAlt className="text-4xl text-gray-400 group-hover:text-teal-500 mb-3 transition-colors" />
+                    <p className="mb-1 text-sm text-gray-600 font-semibold">Replace image</p>
+                    <p className="text-xs text-gray-400">Click or drag and drop</p>
+                  </div>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                </label>
+              </div>
+
+              {previewUrl ? (
+                <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-48 group">
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-white text-xs font-bold uppercase tracking-widest">
+                      <FaImage className="inline mr-2" /> Current Image
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-48 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-sm italic bg-gray-50/50">
+                  No image currently set
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div className="pt-6 border-t border-gray-100 flex justify-end">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="group flex items-center gap-3 bg-linear-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold px-10 py-4 rounded-xl transition-all shadow-lg hover:shadow-teal-200 transform hover:-translate-y-1 active:translate-y-0"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                  <span>Updating...</span>
+                </>
+              ) : (
+                <>
+                  <span>Save Changes</span>
+                  <FaCheckCircle className="group-hover:scale-110 transition-transform" />
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
