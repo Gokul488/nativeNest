@@ -17,13 +17,13 @@ const PropertyDetails = () => {
   const navigate = useNavigate();
 
   const getGuestId = () => {
-  let guestId = localStorage.getItem("guest_id");
-  if (!guestId) {
-    guestId = "guest_" + crypto.randomUUID();
-    localStorage.setItem("guest_id", guestId);
-  }
-  return guestId;
-};
+    let guestId = localStorage.getItem("guest_id");
+    if (!guestId) {
+      guestId = "guest_" + crypto.randomUUID();
+      localStorage.setItem("guest_id", guestId);
+    }
+    return guestId;
+  };
 
   // Format price in Indian Rupees
   const formatPriceInINR = (price) => {
@@ -41,35 +41,34 @@ const PropertyDetails = () => {
     return formatPriceInINR(Math.round(rate));
   };
 
-const fetchPropertyDetails = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const guestId = getGuestId();
+  const fetchPropertyDetails = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const guestId = getGuestId();
 
-    const headers = {
-      "Content-Type": "application/json"
-    };
+      const headers = {
+        "Content-Type": "application/json"
+      };
 
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/properties/${id}?guestId=${guestId}`,
+        { headers }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch property");
+
+      const data = await response.json();
+      setProperty(data.property);
+    } catch (err) {
+      setError("Unable to load property details");
+    } finally {
+      setLoading(false);
     }
-
-    const response = await fetch(
-      `${API_BASE_URL}/api/properties/${id}?guestId=${guestId}`,
-      { headers }
-    );
-
-    if (!response.ok) throw new Error("Failed to fetch property");
-
-    const data = await response.json();
-    setProperty(data.property);
-  } catch (err) {
-    setError("Unable to load property details");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     fetchPropertyDetails();
@@ -121,6 +120,21 @@ const fetchPropertyDetails = async () => {
     const message = encodeURIComponent(`Hello, I'm interested in ${property.title} (ID: ${property.id}).`);
     window.open(`https://wa.me/+91${property.mobile_number}?text=${message}`, '_blank');
   };
+
+  // Build full address string safely
+  const fullAddress = property
+    ? [
+        property.address,
+        property.city,
+        property.state,
+        property.pincode || '', // if pincode exists in your data
+      ]
+        .filter(Boolean)
+        .join(', ')
+    : '';
+
+  // Encode address for Google Maps iframe
+  const encodedAddress = encodeURIComponent(fullAddress);
 
   // Loading State
   if (loading) {
@@ -241,22 +255,6 @@ const fetchPropertyDetails = async () => {
             <DescriptionRenderer html={property.description} />
           </motion.section>
 
-          {/* Property Details */}
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            viewport={{ once: true }}
-            className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100"
-          >
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#011936] mb-6 flex items-center gap-3 border-b-2 border-gray-200 pb-3">
-              <i className="fas fa-home text-[#2e6171]"></i> Property Details
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* ... (existing details cards) ... */}
-            </div>
-          </motion.section>
-
           {/* Images Gallery */}
           {(property.cover_image || (property.images && property.images.length > 0)) && (
             <motion.section
@@ -306,8 +304,11 @@ const fetchPropertyDetails = async () => {
                 <i className="fas fa-star text-[#2e6171]"></i> Amenities
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                {property.amenities.map(amenity => {
-                  const iconClass = amenity.icon ? amenity.icon : 'fas fa-building-columns';
+                {property.amenities.map((amenity) => {
+                  const iconClass = amenity.icon 
+                    ? (amenity.icon.startsWith('fa') ? `fas ${amenity.icon}` : amenity.icon) 
+                    : 'fas fa-check-circle';
+                  
                   return (
                     <motion.div
                       key={amenity.id}
@@ -319,6 +320,60 @@ const fetchPropertyDetails = async () => {
                     </motion.div>
                   );
                 })}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Location - Address + Map */}
+          {fullAddress && (
+            <motion.section
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              viewport={{ once: true }}
+              className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100"
+            >
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#011936] mb-6 flex items-center gap-3 border-b-2 border-gray-200 pb-3">
+                <i className="fas fa-map-marked-alt text-[#2e6171]"></i> Location
+              </h2>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Left: Address Details */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
+                      <i className="fas fa-map-marker-alt text-[#2e6171]"></i> Property Address
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed">
+                      {property.address}<br />
+                      {property.city}, {property.state}<br />
+                      {property.pincode && `PIN: ${property.pincode}`}
+                    </p>
+                  </div>
+
+                  {property.landmark && (
+                    <div>
+                      <h3 className="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
+                        <i className="fas fa-landmark text-[#2e6171]"></i> Landmark
+                      </h3>
+                      <p className="text-gray-700">{property.landmark}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Google Map Embed */}
+                <div className="rounded-xl overflow-hidden shadow-inner border border-gray-200 h-[400px] md:h-auto">
+                  <iframe
+                    title="Property location map"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps?q=${encodedAddress}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  ></iframe>
+                </div>
               </div>
             </motion.section>
           )}

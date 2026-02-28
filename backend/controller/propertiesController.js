@@ -456,7 +456,8 @@ const getPropertyById = async (req, res) => {
         p.views,
         b.name,
         a.mobile_number,
-        a.email
+        a.email,
+        b.name AS builderName
       FROM properties p
       LEFT JOIN builders b ON p.builder_id = b.id
       LEFT JOIN admins   a ON p.admin_id   = a.id

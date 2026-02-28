@@ -18,6 +18,7 @@ import {
   FaExclamationTriangle,
   FaCheckCircle,
   FaCloudUploadAlt,
+  FaImages,
 } from "react-icons/fa";
 
 const animatedComponents = makeAnimated();
@@ -42,7 +43,6 @@ const EditProperty = () => {
     property_type: "",
     sqft: "",
   });
-  const [builderId, setBuilderId] = useState("");
   const [builderName, setBuilderName] = useState("");
 
   const [selectedAmenities, setSelectedAmenities] = useState([]);
@@ -56,13 +56,16 @@ const EditProperty = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [video, setVideo] = useState(null);
-  const [images, setImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
+  const [images, setImages] = useState([]);           // new files to upload
+  const [extraImageInputs, setExtraImageInputs] = useState([]); // for UX consistency
 
   // ── UI state ──────────────────────────────────────────────────
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Media Tabs
+  const [activeMediaTab, setActiveMediaTab] = useState("cover");
 
   // ── Quill setup ───────────────────────────────────────────────
   const { quill, quillRef } = useQuill({
@@ -122,7 +125,7 @@ const EditProperty = () => {
     }
   }, [quill]);
 
-  // ── Fetch initial data ────────────────────────────────────────
+  // ── Fetch data ────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -138,6 +141,7 @@ const EditProperty = () => {
         });
         const prop = propertyRes.data;
         setProperty(prop);
+
         setFormData({
           title: prop.title || "",
           description: prop.description || "",
@@ -150,31 +154,36 @@ const EditProperty = () => {
           property_type: prop.property_type || "",
           sqft: prop.sqft || "",
         });
-        setBuilderId(prop.builder_id || "");
+
         setBuilderName(prop.builder_name || "");
+
         if (quill && prop.description) {
           quill.clipboard.dangerouslyPasteHTML(prop.description);
         }
 
-        // Fetch property types
-        const typesRes = await axios.get(`${API_BASE_URL}/api/properties/types`);
+        // Fetch types & amenities
+        const [typesRes, amenitiesRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/properties/types`),
+          axios.get(`${API_BASE_URL}/api/properties/amenities`),
+        ]);
+
         setPropertyTypes(typesRes.data.propertyTypes || []);
 
-        // Fetch amenities
-        const amenitiesRes = await axios.get(`${API_BASE_URL}/api/properties/amenities`);
-        const options = (amenitiesRes.data.amenities || []).map((a) => ({
+        const amenityOpts = (amenitiesRes.data.amenities || []).map((a) => ({
           value: a.amenity_id,
           label: a.name,
           icon: a.icon,
           isDb: true,
         }));
-        options.push({
+
+        amenityOpts.push({
           value: "OTHER",
           label: "Other …",
           icon: null,
           isDb: false,
         });
-        setAmenityOptions(options);
+
+        setAmenityOptions(amenityOpts);
 
         // Set selected amenities
         if (prop.amenities) {
@@ -189,7 +198,7 @@ const EditProperty = () => {
         }
       } catch (err) {
         console.error(err);
-        setError(err.response?.data?.error || "Failed to load data");
+        setError(err.response?.data?.error || "Failed to load property data");
       }
     };
 
@@ -220,9 +229,19 @@ const EditProperty = () => {
 
   const handleMultipleImagesChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setImagePreviews(previews);
+    setImages((prev) => [...prev, ...files].slice(0, 10));
+  };
+
+  const handleExtraImageChange = (id, file) => {
+    setExtraImageInputs((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, file } : i))
+    );
+  };
+
+  const addExtraImageInput = () => {
+    if (images.length + extraImageInputs.length < 10) {
+      setExtraImageInputs((prev) => [...prev, { id: Date.now(), file: null }]);
+    }
   };
 
   const handleAmenityChange = (selected) => {
@@ -250,13 +269,17 @@ const EditProperty = () => {
     }
 
     const data = new FormData();
+
     Object.entries(formData).forEach(([k, v]) => data.append(k, v));
-    data.append("builder_id", builderId);
+
     selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
     if (showOtherInput && otherAmenityName.trim()) {
       data.append("other_amenity", otherAmenityName.trim());
     }
+
     images.forEach((img) => data.append("images[]", img));
+    extraImageInputs.forEach((i) => i.file && data.append("images[]", i.file));
+
     if (coverImage) data.append("cover_image", coverImage);
     if (video) data.append("video", video);
 
@@ -268,6 +291,7 @@ const EditProperty = () => {
           "Content-Type": "multipart/form-data",
         },
       });
+
       setSuccess("Property updated successfully!");
       setTimeout(() => navigate("/admin-dashboard/manage-properties"), 1500);
     } catch (err) {
@@ -283,7 +307,7 @@ const EditProperty = () => {
     return btoa(binary);
   };
 
-  // ── Custom Select Styles ──────────────────────────────────────
+  // ── Custom Select Styles (same as PostProperty) ───────────────
   const customStyles = {
     control: (provided) => ({
       ...provided,
@@ -328,7 +352,7 @@ const EditProperty = () => {
   // ── Render ────────────────────────────────────────────────────
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
-      {/* Header */}
+      {/* Header – same as PostProperty */}
       <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link
@@ -383,7 +407,7 @@ const EditProperty = () => {
             />
           </div>
 
-          {/* Builder */}
+          {/* Builder – read only */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
               Builder <span className="text-red-500">*</span>
@@ -396,7 +420,7 @@ const EditProperty = () => {
             />
           </div>
 
-          {/* Description (Quill) */}
+          {/* Description */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
               Description <span className="text-red-500">*</span>
@@ -464,7 +488,7 @@ const EditProperty = () => {
             </select>
           </div>
 
-          {/* Location Fields */}
+          {/* Location – same grid layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">
@@ -544,7 +568,7 @@ const EditProperty = () => {
             </div>
           </div>
 
-          {/* Amenities */}
+          {/* Amenities – identical */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
               Amenities
@@ -584,160 +608,260 @@ const EditProperty = () => {
             )}
           </div>
 
-          {/* Media – Cover Image */}
-          <div className="space-y-3">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              Cover Image <span className="text-xs font-normal normal-case text-gray-500">(recommended: 1200×800)</span>
-            </label>
-            {property.cover_image && (
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Current Cover Image:</p>
-                <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-56 group">
-                  <img
-                    src={`data:image/jpeg;base64,${bufferToBase64(property.cover_image)}`}
-                    alt="Current cover"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-sm font-bold uppercase tracking-wider">
-                      <FaImage className="inline mr-2" /> Current
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              <label className="flex flex-col items-center justify-center w-full h-56 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-teal-50 hover:border-teal-400 transition-all group">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <FaCloudUploadAlt className="text-5xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
-                  <p className="mb-2 text-base font-semibold text-gray-700">Click to update cover image</p>
-                  <p className="text-sm text-gray-500">PNG, JPG, WebP • Max 5MB</p>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleCoverImageChange}
-                />
-              </label>
+          {/* ── MEDIA TABS ──────────────────────────────────────────────── */}
+          <div className="space-y-6">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8" aria-label="Media tabs">
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaTab("cover")}
+                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeMediaTab === "cover"
+                      ? "border-teal-500 text-teal-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <FaImage className="mr-2 h-5 w-5" />
+                  Cover Image
+                </button>
 
-              {coverPreview ? (
-                <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-56 group">
-                  <img
-                    src={coverPreview}
-                    alt="Cover preview"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-sm font-bold uppercase tracking-wider">
-                      <FaImage className="inline mr-2" /> Preview
-                    </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaTab("video")}
+                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeMediaTab === "video"
+                      ? "border-teal-500 text-teal-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <FaVideo className="mr-2 h-5 w-5" />
+                  Video Tour
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaTab("gallery")}
+                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeMediaTab === "gallery"
+                      ? "border-teal-500 text-teal-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <FaImages className="mr-2 h-5 w-5" />
+                  Gallery ({images.length + extraImageInputs.length}/10)
+                </button>
+              </nav>
+            </div>
+
+            {/* Tab Content */}
+            <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-200">
+              {/* Cover Image Tab */}
+              {activeMediaTab === "cover" && (
+                <div className="space-y-4">
+                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
+                    Cover Image <span className="text-xs font-normal normal-case text-gray-500">(recommended: 1200×800)</span>
+                  </label>
+
+                  {property.cover_image && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">Current Cover:</p>
+                      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-64 group">
+                        <img
+                          src={`data:image/jpeg;base64,${bufferToBase64(property.cover_image)}`}
+                          alt="Current cover"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-white text-base font-bold uppercase tracking-wider">
+                            <FaImage className="inline mr-2" /> Current
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <FaCloudUploadAlt className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
+                        <p className="mb-2 text-lg font-semibold text-gray-700">Click to update cover image</p>
+                        <p className="text-sm text-gray-500">PNG, JPG, WebP • Max 5MB</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleCoverImageChange}
+                      />
+                    </label>
+
+                    {coverPreview ? (
+                      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-64 group">
+                        <img
+                          src={coverPreview}
+                          alt="New cover preview"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-white text-base font-bold uppercase tracking-wider">
+                            <FaImage className="inline mr-2" /> New Preview
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-64 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-base italic bg-white/50">
+                        No new cover selected
+                      </div>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="h-56 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-sm italic bg-gray-50/50">
-                  No new cover selected
+              )}
+
+              {/* Video Tab */}
+              {activeMediaTab === "video" && (
+                <div className="space-y-4">
+                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
+                    Video Tour <span className="text-xs font-normal normal-case text-gray-500">(optional)</span>
+                  </label>
+
+                  {property.video && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">Current Video:</p>
+                      <video
+                        src={`data:video/mp4;base64,${bufferToBase64(property.video)}`}
+                        controls
+                        className="w-full h-56 object-cover rounded-xl border border-gray-200 shadow-lg"
+                      />
+                    </div>
+                  )}
+
+                  <label className="flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
+                    <div className="flex flex-col items-center justify-center">
+                      <FaVideo className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
+                      <p className="text-lg font-semibold text-gray-700">Upload new video (MP4 recommended)</p>
+                      <p className="text-sm text-gray-500 mt-2">Max size ~50MB suggested</p>
+                    </div>
+                    <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />
+                  </label>
+
+                  {video && (
+                    <div className="bg-teal-50 p-4 rounded-lg text-teal-800">
+                      <p className="font-medium">Selected video:</p>
+                      <p className="text-sm mt-1">{video.name}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Gallery Tab */}
+              {activeMediaTab === "gallery" && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
+                      Additional Images <span className="text-xs font-normal normal-case text-gray-500">(max 10 – replaces existing)</span>
+                    </label>
+                    {images.length + extraImageInputs.length < 10 && (
+                      <button
+                        type="button"
+                        onClick={addExtraImageInput}
+                        className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm font-medium flex items-center gap-2"
+                      >
+                        + Add Image
+                      </button>
+                    )}
+                  </div>
+
+                  {property.images && property.images.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">Current Images:</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {property.images.map((img, idx) => (
+                          <div
+                            key={idx}
+                            className="h-40 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group aspect-square"
+                          >
+                            <img
+                              src={`data:image/jpeg;base64,${bufferToBase64(img.image)}`}
+                              alt={`Current ${idx}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium px-2 text-center">
+                              Current Image
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {/* Upload slot */}
+                    <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group aspect-square">
+                      <FaCloudUploadAlt className="text-5xl text-gray-400 group-hover:text-teal-500 mb-3 transition-colors" />
+                      <p className="text-sm font-semibold text-gray-700 text-center">Upload new images</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleMultipleImagesChange}
+                      />
+                    </label>
+
+                    {/* New previews */}
+                    {images.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="h-40 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group aspect-square"
+                      >
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`New ${idx}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium px-2 text-center">
+                          {file.name}
+                        </div>
+                      </div>
+                    ))}
+
+                    {extraImageInputs.map((inp) => (
+                      <div
+                        key={inp.id}
+                        className="h-40 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative aspect-square"
+                      >
+                        {inp.file ? (
+                          <img
+                            src={URL.createObjectURL(inp.file)}
+                            alt="Extra preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-teal-50/50 transition">
+                            <FaImage className="text-4xl text-gray-400 mb-2" />
+                            <span className="text-sm text-gray-600 text-center px-2">Choose image</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleExtraImageChange(inp.id, e.target.files[0])}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Video */}
-          <div className="space-y-3">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              Video Tour <span className="text-xs font-normal normal-case text-gray-500">(optional)</span>
-            </label>
-            {property.video && (
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Current Video:</p>
-                <video
-                  src={`data:video/mp4;base64,${bufferToBase64(property.video)}`}
-                  controls
-                  className="w-full h-56 object-cover rounded-xl border border-gray-200 shadow-lg"
-                />
-              </div>
-            )}
-            <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-teal-50 hover:border-teal-400 transition-all group">
-              <div className="flex flex-col items-center justify-center">
-                <FaVideo className="text-4xl text-gray-400 group-hover:text-teal-500 mb-2 transition-colors" />
-                <p className="text-sm font-semibold text-gray-700">Update video (MP4, max 50MB recommended)</p>
-              </div>
-              <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />
-            </label>
-            {video && (
-              <p className="text-sm text-teal-700 mt-1">Selected: {video.name}</p>
-            )}
-          </div>
-
-          {/* Additional Images */}
-          <div className="space-y-3">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-              Additional Images <span className="text-xs font-normal normal-case text-gray-500">(max 10)</span>
-            </label>
-            {property.images && property.images.length > 0 && (
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Current Images:</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {property.images.map((img, idx) => (
-                    <div
-                      key={idx}
-                      className="h-40 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group"
-                    >
-                      <img
-                        src={`data:image/jpeg;base64,${bufferToBase64(img.image)}`}
-                        alt={`Current ${idx}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                        Current Image
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="flex justify-between items-center mb-3">
-              <p className="text-sm text-gray-500">
-                Uploading new images will replace all existing ones.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-teal-50 hover:border-teal-400 transition-all group">
-                <FaCloudUploadAlt className="text-4xl text-gray-400 group-hover:text-teal-500 mb-3" />
-                <p className="text-sm font-semibold text-gray-700">Click to update images</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleMultipleImagesChange}
-                />
-              </label>
-
-              {imagePreviews.map((preview, idx) => (
-                <div
-                  key={idx}
-                  className="h-40 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group"
-                >
-                  <img
-                    src={preview}
-                    alt={`New Preview ${idx}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                    {images[idx].name}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Submit */}
-          <div className="pt-8 border-t border-gray-100 flex justify-end">
+          <div className="pt-10 border-t border-gray-100 flex justify-end">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group flex items-center gap-3 bg-linear-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold px-10 py-4 rounded-xl transition-all shadow-lg hover:shadow-teal-200 transform hover:-translate-y-1 active:translate-y-0 disabled:transform-none min-w-60 justify-center"
+              className="group flex items-center gap-3 bg-linear-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold px-12 py-4 rounded-xl transition-all shadow-lg hover:shadow-teal-200 transform hover:-translate-y-1 active:translate-y-0 disabled:transform-none min-w-72 justify-center"
             >
               {isSubmitting ? (
                 <>

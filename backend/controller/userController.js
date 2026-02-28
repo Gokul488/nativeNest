@@ -131,4 +131,40 @@ const updateUserDetails = async (req, res) => {
   }
 };
 
-module.exports = { getUserDetails, updateUserDetails };
+const getBuyerDashboardStats = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    // 1. Count events the buyer has registered for
+    const [registeredEvents] = await pool.query(
+      "SELECT COUNT(*) as total FROM event_participants WHERE buyer_id = ?",
+      [userId]
+    );
+
+    // 2. Count total bookmarked properties
+    const [bookmarks] = await pool.query(
+      "SELECT COUNT(*) as total FROM bookmarks WHERE buyer_id = ?",
+      [userId]
+    );
+
+    // 3. Count total available upcoming events
+    const [totalEvents] = await pool.query(
+      "SELECT COUNT(*) as total FROM property_events WHERE end_date >= CURDATE()"
+    );
+
+    res.json({
+      myEvents: registeredEvents[0].total,
+      bookmarks: bookmarks[0].total,
+      totalEvents: totalEvents[0].total
+    });
+  } catch (error) {
+    console.error("Buyer stats error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+module.exports = { getUserDetails, updateUserDetails, getBuyerDashboardStats};

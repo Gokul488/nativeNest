@@ -1,29 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FaBookmark } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { FaBookmark, FaMapMarkerAlt, FaSpinner, FaBuilding, FaArrowRight } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
 
 const BookmarkedProperties = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const token = localStorage.getItem('token');
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', { 
-      style: 'currency', 
-      currency: 'INR', 
-      maximumFractionDigits: 0 
-    }).format(amount);
-  };
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchBookmarked = async () => {
       if (!token) {
-        setError('Please log in to view bookmarks');
+        setError("Please log in to view bookmarks");
         setLoading(false);
         return;
       }
@@ -31,19 +23,18 @@ const BookmarkedProperties = () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/bookmarks/properties`, {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (res.status === 401) {
-          setError('Session expired. Please log in again.');
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          navigate('/login');
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
           return;
         }
 
-        if (!res.ok) throw new Error('Failed to fetch bookmarks');
+        if (!res.ok) throw new Error("Failed to fetch bookmarks");
 
         const data = await res.json();
         setProperties(data.properties || []);
@@ -57,83 +48,109 @@ const BookmarkedProperties = () => {
     fetchBookmarked();
   }, [token, navigate]);
 
-  const handlePropertyClick = (id) => navigate(`/property/${id}`);
+  const formatPrice = (price) => `₹${Number(price).toLocaleString("en-IN")}`;
 
-  if (loading) return <p className="text-center py-20 text-gray-600 text-lg">Loading bookmarked properties...</p>;
-  if (error) return <p className="text-center text-red-600 py-20 text-lg font-medium">{error}</p>;
+  if (loading) {
+    return (
+      <div className="min-h-[400px] flex flex-col items-center justify-center gap-4 text-gray-500">
+        <FaSpinner className="animate-spin text-teal-600 text-4xl" />
+        <p className="font-medium">Loading your favorites...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-cream-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-screen-2xl mx-auto"> {/* Wider container */}
-        <h2 className="text-3xl font-bold text-gray-800 mb-10 flex items-center gap-4">
-          <FaBookmark className="text-red-500 text-4xl" />
-          My Bookmarked Properties
-        </h2>
-
-        {properties.length === 0 ? (
-          <div className="text-center py-32 bg-white rounded-2xl shadow-lg border border-gray-100">
-            <FaBookmark className="mx-auto text-gray-300 text-8xl mb-6" />
-            <p className="text-xl text-gray-600">
-              You haven't bookmarked any properties yet.
-            </p>
-            <p className="text-gray-500 mt-2">
-              Start exploring and save your favorites!
-            </p>
+    <div className="space-y-8 animate-in fade-in duration-500 p-4 sm:p-8">
+      {/* HEADER SECTION - Styled like MostViewedProperties */}
+      <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex items-center gap-5">
+          <div className="p-4 bg-teal-50 text-teal-600 rounded-2xl text-3xl">
+            <FaBookmark />
           </div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" // Added 5 columns on largest screens
-          >
-            {properties.map((listing, i) => (
-              <motion.div
-                key={listing.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -10, scale: 1.02 }}
-                onClick={() => handlePropertyClick(listing.id)}
-                className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-200 cursor-pointer"
-              >
-                <div className="relative h-64 overflow-hidden bg-gray-100">
-                  <img 
-                    src={listing.img} 
-                    alt={listing.title} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800 tracking-tight">Saved Listings</h2>
+            <p className="text-gray-500 font-medium">Your curated collection of properties on NativeNest</p>
+          </div>
+        </div>
+        <div className="bg-teal-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-200">
+          <span className="text-sm font-bold uppercase tracking-wider opacity-80">Total Saved</span>
+          <div className="text-2xl font-bold">{properties.length} Properties</div>
+        </div>
+      </div>
 
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-[#011936] mb-3 line-clamp-2">
-                    {listing.title}
-                  </h3>
-                  <p className="text-sm text-[#2e6171] font-medium mb-3 flex items-center gap-2">
-                    <i className="fas fa-location-dot"></i> {listing.city}
+      {error ? (
+        <div className="bg-red-50 text-red-700 p-6 rounded-2xl border border-red-100 flex items-center gap-3">
+          <FaBookmark className="opacity-50" /> {error}
+        </div>
+      ) : properties.length === 0 ? (
+        <div className="bg-white rounded-2xl p-20 text-center border-2 border-dashed border-gray-100">
+          <FaBookmark className="mx-auto text-6xl text-gray-200 mb-4" />
+          <p className="text-gray-500 text-lg">You haven't bookmarked any properties yet.</p>
+          <button 
+            onClick={() => navigate('/properties')}
+            className="mt-4 text-teal-600 font-bold hover:underline"
+          >
+            Start Exploring
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {properties.map((prop, index) => (
+            <motion.div
+              key={prop.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => navigate(`/property/${prop.id}`)}
+              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col cursor-pointer"
+            >
+              {/* Image Container */}
+              <div className="relative h-56 overflow-hidden">
+                {prop.img ? (
+                  <img
+                    src={prop.img}
+                    alt={prop.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="h-full bg-gray-50 flex items-center justify-center text-gray-300">
+                    <FaBookmark size={40} />
+                  </div>
+                )}
+                {/* Save Badge */}
+                <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/95 backdrop-blur-sm text-teal-600 px-3 py-1.5 rounded-lg shadow-sm font-bold text-xs">
+                  <FaBookmark /> SAVED
+                </div>
+              </div>
+
+              {/* Info Content */}
+              <div className="p-6 flex-1 flex flex-col">
+                <h3 className="font-bold text-gray-800 mb-1 line-clamp-1 group-hover:text-teal-600 transition-colors">
+                  {prop.title}
+                </h3>
+                
+                <div className="flex flex-col gap-1 mb-4">
+                  <p className="text-sm text-gray-500 flex items-center gap-1">
+                    <FaMapMarkerAlt className="text-teal-500 text-xs" /> {prop.city}
                   </p>
-                  <p className="text-2xl font-bold text-[#011936] mb-4">
-                    {formatCurrency(listing.price)}
-                  </p>
-                  {listing.builderName && (
-                    <div className="text-sm text-gray-600 flex items-center gap-2">
-                      <i className="fas fa-building"></i>
-                      <span>{listing.builderName}</span>
-                    </div>
+                  {prop.builderName && (
+                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                      <FaBuilding className="text-gray-300" /> {prop.builderName}
+                    </p>
                   )}
                 </div>
 
-                {/* Hover arrow indicator */}
-                <div className="absolute bottom-6 right-6 text-[#2e6171] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <i className="fas fa-arrow-right text-2xl"></i>
+                <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                  <span className="text-xl font-black text-gray-900">{formatPrice(prop.price)}</span>
+                  <div className="p-3 bg-teal-50 text-teal-600 rounded-xl group-hover:bg-teal-600 group-hover:text-white transition-all shadow-sm">
+                    <FaArrowRight size={18} />
+                  </div>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
