@@ -1,156 +1,119 @@
-// Modified generateEventInvitation.js
 const PDFDocument = require('pdfkit');
 
-// Added recipientType param: 'builder', 'buyer', 'admin' (or null for admin/no link)
 const generateEventInvitationPDF = (event, recipientType = null) => {
   return new Promise((resolve, reject) => {
-    // Standard A4 is 595.28 x 841.89 points
     const doc = new PDFDocument({ 
       size: 'A4', 
-      margins: { top: 0, bottom: 0, left: 0, right: 0 } // Manual margins for full-bleed feel
+      margins: { top: 0, bottom: 0, left: 0, right: 0 } 
     });
     const buffers = [];
 
     doc.on('data', buffers.push.bind(buffers));
-    doc.on('end', () => {
-      const pdfBuffer = Buffer.concat(buffers);
-      resolve(pdfBuffer);
-    });
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
 
-    // --- COLORS ---
-    const primaryNavy = '#1A237E';
-    const accentGold = '#C5A059';
-    const lightGray = '#F5F5F5';
-    const textGray = '#444444';
+    // --- BRAND PALETTE ---
+    const colors = {
+      deepNavy: '#0F172A',
+      accentGold: '#B8977E', // Muted champagne gold
+      softWhite: '#F8FAFC',
+      textMain: '#1E293B',
+      textMuted: '#64748B'
+    };
 
-    // 1. BACKGROUND DESIGN
-    // Left Sidebar Accent
-    doc.rect(0, 0, 200, 841.89).fill(primaryNavy);
-    // Main Body Background
-    doc.rect(200, 0, 395.28, 841.89).fill('#FFFFFF');
+    // 1. DYNAMIC BACKGROUND
+    // Gradient Sidebar
+    const grad = doc.linearGradient(0, 0, 250, 841);
+    grad.stop(0, colors.deepNavy).stop(1, '#1E293B');
+    doc.rect(0, 0, 240, 841.89).fill(grad);
 
-    // 2. HEADER / LOGO (Inside Sidebar)
-    doc.fillColor('#FFFFFF')
-       .fontSize(22)
+    // Abstract Slanted Shape for Modern Feel
+    doc.save()
+       .moveTo(240, 0)
+       .lineTo(320, 0)
+       .lineTo(240, 400)
+       .fillColor(colors.deepNavy)
+       .fillOpacity(0.05)
+       .fill();
+    doc.restore();
+
+    // 2. LOGO SECTION
+    doc.fillColor(colors.accentGold)
+       .fontSize(24)
        .font('Helvetica-Bold')
-       .text('NATIVE', 40, 60)
-       .text('NEST', 40, 85)
-       .rect(40, 115, 30, 3).fill(accentGold); // Elegant gold underline
-
-    doc.fillColor('#FFFFFF')
-       .fontSize(10)
-       .font('Helvetica')
-       .text('PROPERTY EXHIBITION', 40, 130, { characterSpacing: 1 });
-
-    // 3. MAIN BANNER IMAGE
-    // If no image, we create a placeholder box to maintain layout
-    if (event.banner_image) {
-      doc.image(event.banner_image, 230, 50, { width: 330, height: 220, cover: [330, 220] });
-    } else {
-      doc.rect(230, 50, 330, 220).fill(lightGray);
-      doc.fillColor('#CCCCCC').fontSize(12).text('Property Preview Image', 330, 150);
-    }
-
-    // 4. TITLES & DATE
-    doc.fillColor(primaryNavy)
-       .fontSize(28)
-       .font('Helvetica-Bold')
-       .text((event.event_name || 'LUXURY PROPERTY FAIR').toUpperCase(), 230, 290, { width: 330 });
-
-    const date = new Date(event.start_date);
-    const dateStr = date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+       .text('NATIVE', 45, 60, { characterSpacing: 2 })
+       .fillColor('#FFFFFF')
+       .text('NEST', 45, 88, { characterSpacing: 8 });
     
-    doc.fillColor(accentGold)
-       .fontSize(14)
+    doc.path('M 45 125 L 100 125').lineWidth(1).stroke(colors.accentGold);
+
+    // 3. HERO IMAGE WITH BORDER
+    const imgX = 280, imgY = 60, imgW = 280, imgH = 350;
+    if (event.banner_image) {
+      doc.image(event.banner_image, imgX, imgY, { width: imgW, height: imgH, cover: [imgW, imgH] });
+    } else {
+      doc.rect(imgX, imgY, imgW, imgH).fill('#E2E8F0');
+      doc.fillColor(colors.textMuted).fontSize(10).text('PREMIUM PROPERTY VIEW', imgX + 80, imgY + 160);
+    }
+    // Decorative Gold Frame Offset
+    doc.rect(imgX + 15, imgY + 15, imgW, imgH).lineWidth(1).stroke(colors.accentGold);
+
+    // 4. MAIN CONTENT
+    doc.fillColor(colors.deepNavy)
+       .fontSize(32)
        .font('Helvetica-Bold')
-       .text(dateStr.toUpperCase(), 230, 350);
+       .text(event.event_name || 'EXCLUSIVE REAL ESTATE EXPO', 45, 480, { width: 400 });
 
-    // 5. DESCRIPTION
-    doc.fillColor(textGray)
-       .fontSize(11)
-       .font('Helvetica')
-       .text(event.description || 'Discover an exquisite collection of premium properties. Experience architecture and lifestyle excellence in one exclusive event.', 230, 380, { width: 330, lineGap: 5 });
-
-    // 6. FEATURES / "WHAT YOU'LL GAIN" (In the Navy Sidebar)
-    doc.fillColor(accentGold)
-       .fontSize(14)
+    // Date/Time Badge
+    const date = new Date(event.start_date || Date.now());
+    const dateStr = date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+    
+    doc.rect(45, 570, 160, 35).fill(colors.accentGold);
+    doc.fillColor('#FFFFFF')
+       .fontSize(12)
        .font('Helvetica-Bold')
-       .text('EVENT HIGHLIGHTS', 40, 450);
+       .text(dateStr.toUpperCase(), 60, 582, { characterSpacing: 1 });
 
-    const benefits = [
-      'Expert Consultations',
-      'Virtual Site Tours',
-      'Exclusive Pricing',
-      'Market Analytics',
-      'Networking'
-    ];
+    // 5. SIDEBAR HIGHLIGHTS
+    doc.fillColor(colors.accentGold)
+       .fontSize(12)
+       .font('Helvetica-Bold')
+       .text('EVENT PRIVILEGES', 45, 200);
 
-    let listY = 480;
-    benefits.forEach((item) => {
-      doc.circle(45, listY + 5, 3).fill(accentGold);
-      doc.fillColor('#FFFFFF')
-         .fontSize(10)
-         .font('Helvetica')
-         .text(item, 60, listY);
-      listY += 25;
+    const perks = ['Private Tours', 'Direct Builder Access', 'VIP Pricing', 'Market Insights'];
+    perks.forEach((perk, i) => {
+      let yPos = 230 + (i * 35);
+      // Small decorative dash
+      doc.path(`M 45 ${yPos + 7} L 55 ${yPos + 7}`).lineWidth(2).stroke(colors.accentGold);
+      doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica').text(perk, 65, yPos);
     });
 
-    // 7. CALL TO ACTION & BADGE
-    // Circular Badge on the right
-    doc.circle(500, 450, 45).lineWidth(2).stroke(accentGold);
-    doc.fillColor(primaryNavy)
-       .fontSize(12)
-       .font('Helvetica-Bold')
-       .text('ENTRY', 480, 438)
-       .fontSize(16)
-       .text('FREE', 478, 452);
-
-    // 8. REGISTRATION & CONTACT
-    doc.rect(230, 580, 330, 150).fill(lightGray); // Contact Box
-    
-    doc.fillColor(primaryNavy)
-       .fontSize(12)
-       .font('Helvetica-Bold')
-       .text('SECURE YOUR SPOT:', 250, 600);
-
-    let ctaText = '';
-    let ctaLink = '';
-    if (recipientType === 'builder') {
-      ctaText = 'Book your stalls';
-      ctaLink = `http://localhost:5173/builder-dashboard/events`;
-    } else if (recipientType === 'buyer') {
-      ctaText = 'Register for the event';
-      ctaLink = `http://localhost:5173/buyer-dashboard/events`;
-    } // For 'admin' or null, no link/text
-
-    if (ctaText && ctaLink) {
-      doc.fillColor('#0000FF')
-         .fontSize(10)
-         .font('Helvetica')
-         .text(ctaText, 250, 620, {
-           link: ctaLink,
-           underline: true
-         });
-    }
-
-    doc.fillColor(textGray)
+    // 6. DESCRIPTION & CTA
+    doc.fillColor(colors.textMain)
        .fontSize(11)
-       .font('Helvetica-Bold')
-       .text('LOCATION:', 250, 655)
        .font('Helvetica')
-       .text(`${event.event_location || 'Grand Convention Hall'}`, 250, 670)
-       .text(`${event.city || 'Downtown'}, ${event.state || ''}`, 250, 685);
+       .text(event.description || 'Join us for an unparalleled journey through the finest architectural masterpieces. Experience luxury redefined.', 230, 630, { width: 320, lineGap: 6, align: 'left' });
 
-    doc.fillColor(textGray)
-       .fontSize(10)
-       .text(`Inquiries: ${event.contact_phone || '+1 234 567 890'}`, 250, 705);
+    // Registration Box
+    doc.roundedRect(230, 710, 330, 80, 5).fill(colors.softWhite);
+    
+    let ctaText = 'Scan to Register';
+    let ctaLink = `http://localhost:5173/events`;
+    if (recipientType === 'builder') ctaText = 'RESERVE EXHIBITOR SPACE';
+    if (recipientType === 'buyer') ctaText = 'GET YOUR VISITOR PASS';
 
-    // 9. FOOTER
-    doc.rect(0, 800, 595.28, 41.89).fill(primaryNavy);
-    doc.fillColor('#FFFFFF')
-       .fontSize(8)
-       .text('© 2026 NATIVE NEST PROPERTY EXHIBITION PLATFORM', 0, 815, { align: 'center' });
+    doc.fillColor(colors.deepNavy).font('Helvetica-Bold').fontSize(10).text(ctaText.toUpperCase(), 250, 730);
+    doc.fillColor('#2563EB').fontSize(9).text('Click here to open registration portal', 250, 750, { link: ctaLink, underline: true });
+
+    // 7. LOCATION BLOCK (Bottom Left)
+    doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica-Bold').text('WHERE', 45, 730);
+    doc.fillColor('#CBD5E1').font('Helvetica').fontSize(9)
+       .text(event.event_location || 'Grand Plaza Mall', 45, 745)
+       .text(`${event.city || 'Dubai'}, ${event.state || 'UAE'}`, 45, 758);
+
+    // 8. MINIMAL FOOTER
+    doc.rect(0, 820, 595.28, 22).fill(colors.deepNavy);
+    doc.fillColor('#475569').fontSize(7).text('INVITATION ONLY • NATIVE NEST 2026', 0, 828, { align: 'center', characterSpacing: 2 });
 
     doc.end();
   });
