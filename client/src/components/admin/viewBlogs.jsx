@@ -42,7 +42,7 @@ const ViewBlogs = () => {
   }, [navigate]);
 
   const filteredBlogs = useMemo(() => {
-    return blogs.filter(blog => 
+    return blogs.filter(blog =>
       blog.title?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [blogs, searchQuery]);
@@ -71,7 +71,7 @@ const ViewBlogs = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
       {/* Header - Aligned with ViewEvents */}
-      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
+      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Manage Blogs</h2>
           <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
@@ -79,7 +79,7 @@ const ViewBlogs = () => {
           </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-1 sm:w-64">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -121,50 +121,88 @@ const ViewBlogs = () => {
         )}
 
         {!loading && filteredBlogs.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-separate border-spacing-0">
-              <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                <tr>
-                  <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                  <th className="px-6 py-4 text-left border-b border-gray-200">Blog Title</th>
-                  <th className="w-36 px-6 py-4 text-center border-b border-gray-200">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {filteredBlogs.map((blog, index) => (
-                  <tr key={blog.id} className="hover:bg-gray-50/80 transition-colors group">
-                    <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                      {String(index + 1).padStart(2, '0')}
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100">
-                      <div className="font-bold text-gray-900 mb-1">{blog.title}</div>
-                      <div className="text-xs text-gray-500 italic">
-                        Created on: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN')}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-right border-b border-gray-100">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
-                          className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
-                          title="Edit"
-                        >
-                          <FaEdit size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(blog.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                          title="Delete"
-                        >
-                          <FaTrash size={16} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-fixed border-separate border-spacing-0">
+                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                  <tr>
+                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
+                    <th className="px-6 py-4 text-left border-b border-gray-200">Blog Title</th>
+                    <th className="w-36 px-6 py-4 text-center border-b border-gray-200">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white">
+                  {filteredBlogs.map((blog, index) => (
+                    <tr key={blog.id} className="hover:bg-gray-50/80 transition-colors group">
+                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                        {String(index + 1).padStart(2, '0')}
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 mb-1">{blog.title}</div>
+                        <div className="text-xs text-gray-500 italic">
+                          Created on: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN')}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-right border-b border-gray-100">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
+                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                            title="Edit"
+                          >
+                            <FaEdit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(blog.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                            title="Delete"
+                          >
+                            <FaTrash size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden p-4 space-y-4">
+              {filteredBlogs.map((blog, index) => (
+                <div key={blog.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                        {index + 1}
+                      </div>
+                      <div className="font-bold text-gray-900 truncate max-w-[200px]">{blog.title}</div>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-gray-500 italic">
+                    Created: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-gray-200">
+                    <button
+                      onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold"
+                    >
+                      <FaEdit /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(blog.id)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold"
+                    >
+                      <FaTrash size={14} /> Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

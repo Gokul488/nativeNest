@@ -6,12 +6,12 @@ import QuillTableBetter from 'quill-table-better';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
 import 'quill-table-better/dist/quill-table-better.css';
-import { 
-  FaArrowLeft, 
-  FaBlog, 
-  FaImage, 
-  FaExclamationTriangle, 
-  FaCheckCircle, 
+import {
+  FaArrowLeft,
+  FaBlog,
+  FaImage,
+  FaExclamationTriangle,
+  FaCheckCircle,
   FaCloudUploadAlt,
   FaEdit
 } from 'react-icons/fa';
@@ -167,21 +167,21 @@ const EditBlog = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
       {/* Top Header - Consistent with AddBlog Design */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
-          <Link 
-            to="/admin-dashboard/manage-blogs" 
+          <Link
+            to="/admin-dashboard/manage-blogs"
             className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600"
           >
             <FaArrowLeft />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Edit Blog Post</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight leading-tight">Edit Blog Post</h2>
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Modify existing content</p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
           <span className="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
             <FaEdit /> Editor Mode
           </span>
@@ -245,10 +245,10 @@ const EditBlog = () => {
 
               {previewUrl ? (
                 <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-48 group">
-                  <img 
-                    src={previewUrl} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-white text-xs font-bold uppercase tracking-widest">

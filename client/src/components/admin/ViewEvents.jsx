@@ -61,7 +61,7 @@ const ViewEvents = () => {
   const filteredAndSortedEvents = useMemo(() => {
     let result = [...events];
     if (searchQuery) {
-      result = result.filter(e => 
+      result = result.filter(e =>
         e.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.city.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -112,7 +112,7 @@ const ViewEvents = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
+      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Property Events</h2>
           <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
@@ -120,7 +120,7 @@ const ViewEvents = () => {
           </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-1 sm:w-64">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -163,70 +163,127 @@ const ViewEvents = () => {
         )}
 
         {!loading && !error && filteredAndSortedEvents.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-separate border-spacing-0">
-              <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                <tr>
-                  <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                  <th onClick={() => requestSort("event_name")} className="w-1/3 px-6 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center">Event Details {getSortIcon("event_name")}</div>
-                  </th>
-                  <th className="w-28 px-4 py-4 text-center border-b border-gray-200">Total Stalls</th>
-                  <th className="w-28 px-4 py-4 text-center border-b border-gray-200">Bookings</th>
-                  <th className="w-28 px-4 py-4 text-center border-b border-gray-200">Participants</th>
-                  <th className="w-36 px-6 py-4 text-center border-b border-gray-200">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {filteredAndSortedEvents.map((event, index) => (
-                  <tr key={event.id} className="hover:bg-gray-50/80 transition-colors group">
-                    <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                      {String(index + 1).padStart(2, '0')}
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100">
-                      <div className="font-bold text-gray-900 mb-1">{event.event_name}</div>
-                      <div className="flex items-center gap-4 text-xs">
-                        <span className="flex items-center gap-1 text-teal-600 font-medium">
-                          <FaMapMarkerAlt /> {event.city}
-                        </span>
-                        <span className="flex items-center gap-1 text-gray-500">
-                          <FaCalendarAlt /> {formatDateRange(event.start_date, event.end_date)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-5 text-center border-b border-gray-100">
-                      <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-xs font-bold hover:bg-teal-600 hover:text-white transition-all">
-                        <FaStore /> {event.stall_count || 0}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-5 text-center border-b border-gray-100">
-                      <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all">
-                        <FaTicketAlt /> {event.booked_stall_count || 0}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-5 text-center border-b border-gray-100">
-                      <Link to={`/admin-dashboard/events/${event.id}/participants`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-md text-xs font-bold hover:bg-purple-600 hover:text-white transition-all">
-                        <FaUserCheck /> View
-                      </Link>
-                    </td>
-                    <td className="px-6 py-5 text-right border-b border-gray-100">
-                      <div className="flex justify-end gap-1">
-                        <button onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Edit">
-                          <FaEdit size={18} />
-                        </button>
-                        <button onClick={() => openQR(event)} className="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition" title="Attendance QR">
-                          <FaQrcode size={18} />
-                        </button>
-                        <button onClick={() => handleDownload(event.id, event.event_name)} className="p-2 text-teal-500 hover:bg-teal-50 rounded-lg transition" title="Download Invitation">
-                          <FaDownload size={18} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden xl:block overflow-x-auto">
+              <table className="w-full table-fixed border-separate border-spacing-0">
+                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                  <tr>
+                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
+                    <th onClick={() => requestSort("event_name")} className="w-1/3 px-6 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center">Event Details {getSortIcon("event_name")}</div>
+                    </th>
+                    <th className="w-28 px-4 py-4 text-center border-b border-gray-200">Total Stalls</th>
+                    <th className="w-28 px-4 py-4 text-center border-b border-gray-200">Bookings</th>
+                    <th className="w-28 px-4 py-4 text-center border-b border-gray-200">Participants</th>
+                    <th className="w-36 px-6 py-4 text-center border-b border-gray-200">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white">
+                  {filteredAndSortedEvents.map((event, index) => (
+                    <tr key={event.id} className="hover:bg-gray-50/80 transition-colors group">
+                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                        {String(index + 1).padStart(2, '0')}
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 mb-1">{event.event_name}</div>
+                        <div className="flex items-center gap-4 text-xs">
+                          <span className="flex items-center gap-1 text-teal-600 font-medium">
+                            <FaMapMarkerAlt /> {event.city}
+                          </span>
+                          <span className="flex items-center gap-1 text-gray-500">
+                            <FaCalendarAlt /> {formatDateRange(event.start_date, event.end_date)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-5 text-center border-b border-gray-100">
+                        <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-xs font-bold hover:bg-teal-600 hover:text-white transition-all">
+                          <FaStore /> {event.stall_count || 0}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-5 text-center border-b border-gray-100">
+                        <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all">
+                          <FaTicketAlt /> {event.booked_stall_count || 0}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-5 text-center border-b border-gray-100">
+                        <Link to={`/admin-dashboard/events/${event.id}/participants`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-md text-xs font-bold hover:bg-purple-600 hover:text-white transition-all">
+                          <FaUserCheck /> View
+                        </Link>
+                      </td>
+                      <td className="px-6 py-5 text-right border-b border-gray-100">
+                        <div className="flex justify-end gap-1">
+                          <button onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Edit">
+                            <FaEdit size={18} />
+                          </button>
+                          <button onClick={() => openQR(event)} className="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition" title="Attendance QR">
+                            <FaQrcode size={18} />
+                          </button>
+                          <button onClick={() => handleDownload(event.id, event.event_name)} className="p-2 text-teal-500 hover:bg-teal-50 rounded-lg transition" title="Download Invitation">
+                            <FaDownload size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="xl:hidden p-4 space-y-4">
+              {filteredAndSortedEvents.map((event, index) => (
+                <div key={event.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-4">
+                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                        {index + 1}
+                      </div>
+                      <div className="font-bold text-gray-900 truncate max-w-[170px]">{event.event_name}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <FaMapMarkerAlt className="text-gray-400 text-xs" />
+                      <span className="text-teal-600 font-medium">{event.city}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <FaCalendarAlt className="text-gray-400 text-xs" />
+                      <span className="text-gray-500 text-xs">{formatDateRange(event.start_date, event.end_date)}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-gray-200">
+                      <FaStore className="text-teal-600" />
+                      <span className="text-[10px] font-bold text-gray-700">{event.stall_count || 0} Stalls</span>
+                    </Link>
+                    <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-gray-200">
+                      <FaTicketAlt className="text-indigo-600" />
+                      <span className="text-[10px] font-bold text-gray-700">{event.booked_stall_count || 0} Booked</span>
+                    </Link>
+                    <Link to={`/admin-dashboard/events/${event.id}/participants`} className="flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-gray-200">
+                      <FaUserCheck className="text-purple-600" />
+                      <span className="text-[10px] font-bold text-gray-700">View</span>
+                    </Link>
+                  </div>
+
+                  <div className="flex gap-1 pt-2 border-t border-gray-200">
+                    <button onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">
+                      <FaEdit /> Edit
+                    </button>
+                    <button onClick={() => openQR(event)} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-50 text-purple-600 rounded-lg text-xs font-bold">
+                      <FaQrcode /> QR
+                    </button>
+                    <button onClick={() => handleDownload(event.id, event.event_name)} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-teal-50 text-teal-600 rounded-lg text-xs font-bold">
+                      <FaDownload /> PDF
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

@@ -3,13 +3,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config.js";
-import { 
-  FaSearch, 
-  FaSpinner, 
-  FaExclamationTriangle, 
-  FaInfoCircle, 
-  FaSort, 
-  FaSortUp, 
+import {
+  FaSearch,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaInfoCircle,
+  FaSort,
+  FaSortUp,
   FaSortDown,
   FaUser,
   FaPhoneAlt,
@@ -121,53 +121,86 @@ const ManageUsers = () => {
         )}
 
         {!loading && !error && filteredAndSortedUsers.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-separate border-spacing-0">
-              <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                <tr>
-                  <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                  <th onClick={() => requestSort("name")} className="w-1/4 px-6 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center">Full Name {getSortIcon("name")}</div>
-                  </th>
-                  <th className="w-1/5 px-6 py-4 text-left border-b border-gray-200">Mobile</th>
-                  <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Email Address</th>
-                  <th onClick={() => requestSort("created_at")} className="w-40 px-6 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center justify-center">Joined Date {getSortIcon("created_at")}</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {filteredAndSortedUsers.map((user, index) => (
-                  <tr key={user.id || index} className="hover:bg-gray-50/80 transition-colors group">
-                    <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                      {String(index + 1).padStart(2, '0')}
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100">
-                      <div className="font-bold text-gray-900 flex items-center gap-2">
-                        <FaIdBadge className="text-teal-600 text-xs shrink-0" /> {user.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100 text-sm text-gray-700">
-                      <div className="flex items-center gap-2">
-                        <FaPhoneAlt className="text-[10px] text-gray-400 shrink-0" /> {user.mobile_number}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100 text-sm text-gray-500">
-                      <div className="flex items-center gap-2 truncate">
-                        <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> {user.email || "—"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center border-b border-gray-100">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                        <FaCalendarAlt className="text-[10px]" />
-                        {new Date(user.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </span>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-fixed border-separate border-spacing-0">
+                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                  <tr>
+                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
+                    <th onClick={() => requestSort("name")} className="w-1/4 px-6 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center">Full Name {getSortIcon("name")}</div>
+                    </th>
+                    <th className="w-1/5 px-6 py-4 text-left border-b border-gray-200">Mobile</th>
+                    <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Email Address</th>
+                    <th onClick={() => requestSort("created_at")} className="w-40 px-6 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center justify-center">Joined Date {getSortIcon("created_at")}</div>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white">
+                  {filteredAndSortedUsers.map((user, index) => (
+                    <tr key={user.id || index} className="hover:bg-gray-50/80 transition-colors group">
+                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                        {String(index + 1).padStart(2, '0')}
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 flex items-center gap-2">
+                          <FaIdBadge className="text-teal-600 text-xs shrink-0" /> {user.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100 text-sm text-gray-700">
+                        <div className="flex items-center gap-2">
+                          <FaPhoneAlt className="text-[10px] text-gray-400 shrink-0" /> {user.mobile_number}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100 text-sm text-gray-500">
+                        <div className="flex items-center gap-2 truncate">
+                          <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> {user.email || "—"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-center border-b border-gray-100">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                          <FaCalendarAlt className="text-[10px]" />
+                          {new Date(user.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden p-4 space-y-4">
+              {filteredAndSortedUsers.map((user, index) => (
+                <div key={user.id || index} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                        {index + 1}
+                      </div>
+                      <div className="font-bold text-gray-900">{user.name}</div>
+                    </div>
+                    <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-bold uppercase">
+                      {new Date(user.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <FaPhoneAlt className="text-gray-400 text-xs" />
+                      <span>{user.mobile_number}</span>
+                    </div>
+                    <div className="flex items-center gap-2 truncate">
+                      <FaEnvelope className="text-gray-400 text-xs" />
+                      <span className="truncate">{user.email || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

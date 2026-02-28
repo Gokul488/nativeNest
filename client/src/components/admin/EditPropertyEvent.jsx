@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { 
-  FaArrowLeft, 
-  FaCalendarAlt, 
-  FaExclamationTriangle, 
-  FaCheckCircle, 
-  FaCloudUploadAlt, 
+import {
+  FaArrowLeft,
+  FaCalendarAlt,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaCloudUploadAlt,
   FaImage,
   FaMapMarkerAlt,
   FaPhoneAlt,
@@ -80,9 +80,9 @@ const EditPropertyEvent = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ 
-        ...prev, 
-        [name]: name === "stall_count" ? parseInt(value) || 0 : value 
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "stall_count" ? parseInt(value) || 0 : value
     }));
   };
 
@@ -124,7 +124,7 @@ const EditPropertyEvent = () => {
         `${API_BASE_URL}/api/admin/events/${id}`,
         data,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
           },
@@ -154,21 +154,21 @@ const EditPropertyEvent = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
       {/* Top Header - Consistent Design */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
-          <Link 
-            to="/admin-dashboard/manage-events" 
+          <Link
+            to="/admin-dashboard/manage-events"
             className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600"
           >
             <FaArrowLeft />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Edit Event</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight leading-tight">Edit Event</h2>
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Event Management System</p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
           <span className="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
             <FaEdit /> Editor Mode
           </span>
@@ -224,49 +224,49 @@ const EditPropertyEvent = () => {
 
           {/* Section 2: Location Details */}
           <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-6">
-            <h3 className="text-gray-800 font-bold flex items-center gap-2"><FaMapMarkerAlt className="text-teal-600"/> Location Details</h3>
+            <h3 className="text-gray-800 font-bold flex items-center gap-2"><FaMapMarkerAlt className="text-teal-600" /> Location Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Venue Location</label>
-                    <input type="text" name="event_location" value={formData.event_location} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
-                </div>
-                <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">City</label>
-                    <input type="text" name="city" value={formData.city} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
-                </div>
-                <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">State</label>
-                    <input type="text" name="state" value={formData.state} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
-                </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Venue Location</label>
+                <input type="text" name="event_location" value={formData.event_location} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">City</label>
+                <input type="text" name="city" value={formData.city} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">State</label>
+                <input type="text" name="state" value={formData.state} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
+              </div>
             </div>
           </div>
 
           {/* Section 3: Date & Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
-               <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Schedule Dates</label>
-               <div className="grid grid-cols-2 gap-4">
-                  <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
-                  <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
-               </div>
+              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Schedule Dates</label>
+              <div className="grid grid-cols-2 gap-4">
+                <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
+                <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
+              </div>
             </div>
             <div className="space-y-4">
-               <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Timings</label>
-               <div className="grid grid-cols-2 gap-4">
-                  <input type="time" name="start_time" value={formData.start_time} onChange={handleChange} className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
-                  <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
-               </div>
+              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Timings</label>
+              <div className="grid grid-cols-2 gap-4">
+                <input type="time" name="start_time" value={formData.start_time} onChange={handleChange} className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
+                <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
+              </div>
             </div>
           </div>
 
           {/* Section 4: Contact & Capacity */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><FaUser/> Contact Person</label>
+              <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><FaUser /> Contact Person</label>
               <input type="text" name="contact_name" value={formData.contact_name} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><FaPhoneAlt/> Phone</label>
+              <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><FaPhoneAlt /> Phone</label>
               <input type="text" name="contact_phone" value={formData.contact_phone} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
             </div>
             <div className="space-y-2">
@@ -303,10 +303,10 @@ const EditPropertyEvent = () => {
               </div>
 
               <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-48 group bg-gray-50">
-                <img 
-                  src={previewUrl || currentBanner} 
-                  alt="Banner Preview" 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                <img
+                  src={previewUrl || currentBanner}
+                  alt="Banner Preview"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="text-white text-xs font-bold uppercase tracking-widest">

@@ -330,7 +330,7 @@ const PostProperty = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link
             to="/admin-dashboard/manage-properties"
@@ -339,16 +339,16 @@ const PostProperty = () => {
             <FaArrowLeft />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight leading-tight">
               Post New Property
             </h2>
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">
-              Property Management
+              Inventory Management System
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
           <span className="bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
             <FaHome /> Property Editor
           </span>
@@ -608,11 +608,10 @@ const PostProperty = () => {
                 <button
                   type="button"
                   onClick={() => setActiveMediaTab("cover")}
-                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeMediaTab === "cover"
+                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "cover"
                       ? "border-teal-500 text-teal-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                    }`}
                 >
                   <FaImage className="mr-2 h-5 w-5" />
                   Cover Image
@@ -621,11 +620,10 @@ const PostProperty = () => {
                 <button
                   type="button"
                   onClick={() => setActiveMediaTab("video")}
-                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeMediaTab === "video"
+                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "video"
                       ? "border-teal-500 text-teal-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                    }`}
                 >
                   <FaVideo className="mr-2 h-5 w-5" />
                   Video Tour
@@ -634,11 +632,10 @@ const PostProperty = () => {
                 <button
                   type="button"
                   onClick={() => setActiveMediaTab("gallery")}
-                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeMediaTab === "gallery"
+                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "gallery"
                       ? "border-teal-500 text-teal-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                    }`}
                 >
                   <FaImages className="mr-2 h-5 w-5" />
                   Gallery ({images.length + extraImageInputs.length}/10)

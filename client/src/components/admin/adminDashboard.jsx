@@ -101,7 +101,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex relative font-sans">
       {/* ================= SIDEBAR ================= */}
-      <div className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} bg-linear-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}>
+      <div className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} bg-gradient-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}>
         <div className="p-6 border-b border-teal-400/40">
           <h1 className="text-3xl font-bold text-white tracking-tight">NativeNest</h1>
           <p className="text-sm text-teal-100 mt-1 opacity-90 uppercase tracking-widest font-bold">Admin Portal</p>
@@ -140,6 +140,14 @@ const AdminDashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Backdrop for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
+          onClick={closeSidebar}
+        ></div>
+      )}
 
       {/* ================= MAIN CONTENT ================= */}
       <div className="flex-1 md:ml-72 transition-all duration-300">

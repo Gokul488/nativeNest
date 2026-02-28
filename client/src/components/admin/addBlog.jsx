@@ -127,21 +127,21 @@ const AddBlog = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
       {/* Top Header - Consistent with EventParticipants/BuilderInterests */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
-          <Link 
-            to="/admin-dashboard/manage-blogs" 
+          <Link
+            to="/admin-dashboard/manage-blogs"
             className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600"
           >
             <FaArrowLeft />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Add New Blog</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight leading-tight">Add New Blog</h2>
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Content Management System</p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
           <span className="bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
             <FaBlog /> Blog Editor
           </span>

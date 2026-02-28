@@ -3,13 +3,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config.js";
-import { 
-  FaSearch, 
-  FaSpinner, 
-  FaExclamationTriangle, 
-  FaInfoCircle, 
-  FaSort, 
-  FaSortUp, 
+import {
+  FaSearch,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaInfoCircle,
+  FaSort,
+  FaSortUp,
   FaSortDown,
   FaBuilding,
   FaUser,
@@ -148,13 +148,13 @@ const ManageBuilders = () => {
                     </td>
                     <td className="px-6 py-5 border-b border-gray-100">
                       <div className="font-bold text-gray-900 flex items-center gap-2">
-                        <FaBuilding className="text-teal-600 text-xs shrink-0" /> 
+                        <FaBuilding className="text-teal-600 text-xs shrink-0" />
                         <span className="truncate">{builder.name}</span>
                       </div>
                     </td>
                     <td className="px-6 py-5 border-b border-gray-100">
                       <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <FaUser className="text-gray-400 text-xs shrink-0" /> 
+                        <FaUser className="text-gray-400 text-xs shrink-0" />
                         <span className="truncate">{builder.contact_person || "—"}</span>
                       </div>
                     </td>

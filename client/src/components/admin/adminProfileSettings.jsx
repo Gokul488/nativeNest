@@ -10,7 +10,7 @@ const AdminProfileSettings = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -70,7 +70,7 @@ const AdminProfileSettings = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-8">
+    <div className="max-w-3xl mx-auto py-4 md:py-8 px-4 md:px-0">
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         {/* Header Section */}
         <div className="bg-gray-50 p-6 border-b border-gray-200">
@@ -79,13 +79,13 @@ const AdminProfileSettings = () => {
               <FiSettings size={20} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Admin Profile Settings</h2>
-              <p className="text-gray-500 text-sm">Update your personal information and security credentials</p>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800">Admin Profile Settings</h2>
+              <p className="text-gray-500 text-xs md:text-sm">Update your personal information and security credentials</p>
             </div>
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-6 md:p-8">
           {error && (
             <div className="bg-red-50 text-red-700 p-4 rounded-xl mb-6 border border-red-200 flex items-center gap-3">
               <FiAlertCircle className="shrink-0" />

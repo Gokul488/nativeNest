@@ -2,16 +2,16 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { 
-  FaArrowLeft, 
-  FaSearch, 
-  FaInfoCircle, 
-  FaExclamationTriangle, 
-  FaUser, 
-  FaPhoneAlt, 
-  FaEnvelope, 
-  FaCheckCircle, 
-  FaTimesCircle 
+import {
+  FaArrowLeft,
+  FaSearch,
+  FaInfoCircle,
+  FaExclamationTriangle,
+  FaUser,
+  FaPhoneAlt,
+  FaEnvelope,
+  FaCheckCircle,
+  FaTimesCircle
 } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
 
@@ -20,7 +20,7 @@ const EventParticipants = () => {
   const [participants, setParticipants] = useState([]);
   const [event, setEvent] = useState({ event_name: "Loading...", start_date: null });
   const [searchQuery, setSearchQuery] = useState("");
-  const [attendanceFilter, setAttendanceFilter] = useState("all"); 
+  const [attendanceFilter, setAttendanceFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -53,9 +53,9 @@ const EventParticipants = () => {
     return participants.filter(p => {
       const isAttended = p.is_attended === 1 || p.is_attended === "1" || p.is_attended === true;
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.phone.includes(searchQuery) ||
-                            (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+        p.phone.includes(searchQuery) ||
+        (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase()));
+
       if (attendanceFilter === "attended") return matchesSearch && isAttended;
       if (attendanceFilter === "not-attended") return matchesSearch && !isAttended;
       return matchesSearch;
@@ -102,8 +102,8 @@ const EventParticipants = () => {
       </div>
 
       {/* Sticky Filter Bar */}
-      <div className="p-6 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="relative flex-1 w-full lg:max-w-md">
+      <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
+        <div className="relative flex-1 w-full md:max-w-md">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -114,17 +114,17 @@ const EventParticipants = () => {
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full lg:w-auto">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <select
             value={attendanceFilter}
             onChange={(e) => setAttendanceFilter(e.target.value)}
-            className="w-full lg:w-48 border border-gray-300 bg-white px-4 py-2 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 outline-none"
+            className="w-full md:w-48 border border-gray-300 bg-white px-4 py-2 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 outline-none"
           >
             <option value="all">All Status</option>
             <option value="attended">Attended Only</option>
             <option value="not-attended">Absent Only</option>
           </select>
-          <span className="hidden lg:block bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold">
+          <span className="hidden md:block bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold">
             {filteredParticipants.length} Found
           </span>
         </div>
@@ -153,61 +153,110 @@ const EventParticipants = () => {
         )}
 
         {!loading && !error && filteredParticipants.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-separate border-spacing-0">
-              <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                <tr>
-                  <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                  <th className="w-1/3 px-6 py-4 text-left border-b border-gray-200">Participant Details</th>
-                  <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Contact Info</th>
-                  <th className="px-6 py-4 text-left border-b border-gray-200">Registration</th>
-                  <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Status</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {filteredParticipants.map((p, index) => {
-                  const isAttended = p.is_attended === 1 || p.is_attended === "1" || p.is_attended === true;
-                  return (
-                    <tr key={p.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                        {String(index + 1).padStart(2, '0')}
-                      </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 flex items-center gap-2">
-                          <FaUser className="text-teal-600 text-xs" /> {p.name}
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-fixed border-separate border-spacing-0">
+                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                  <tr>
+                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
+                    <th className="w-1/3 px-6 py-4 text-left border-b border-gray-200">Participant Details</th>
+                    <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Contact Info</th>
+                    <th className="px-6 py-4 text-left border-b border-gray-200">Registration</th>
+                    <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {filteredParticipants.map((p, index) => {
+                    const isAttended = p.is_attended === 1 || p.is_attended === "1" || p.is_attended === true;
+                    return (
+                      <tr key={p.id} className="hover:bg-gray-50/80 transition-colors group">
+                        <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                          {String(index + 1).padStart(2, '0')}
+                        </td>
+                        <td className="px-6 py-5 border-b border-gray-100">
+                          <div className="font-bold text-gray-900 flex items-center gap-2">
+                            <FaUser className="text-teal-600 text-xs" /> {p.name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 border-b border-gray-100 text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 mb-1">
+                            <FaPhoneAlt className="text-[10px] text-gray-400" /> {p.phone}
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-500 text-xs">
+                            <FaEnvelope className="text-[10px] text-gray-400" /> {p.email || "No Email"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 border-b border-gray-100 text-xs text-gray-500">
+                          {new Date(p.created_at).toLocaleString("en-IN", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })}
+                        </td>
+                        <td className="px-6 py-5 text-center border-b border-gray-100">
+                          {isAttended ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                              <FaCheckCircle /> Attended
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                              <FaTimesCircle /> Absent
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden p-4 space-y-4">
+              {filteredParticipants.map((p, index) => {
+                const isAttended = p.is_attended === 1 || p.is_attended === "1" || p.is_attended === true;
+                return (
+                  <div key={p.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                          {index + 1}
                         </div>
-                      </td>
-                      <td className="px-6 py-5 border-b border-gray-100 text-sm">
-                        <div className="flex items-center gap-2 text-gray-700 mb-1">
-                          <FaPhoneAlt className="text-[10px] text-gray-400" /> {p.phone}
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-500 text-xs">
-                          <FaEnvelope className="text-[10px] text-gray-400" /> {p.email || "No Email"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 border-b border-gray-100 text-xs text-gray-500">
-                        {new Date(p.created_at).toLocaleString("en-IN", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </td>
-                      <td className="px-6 py-5 text-center border-b border-gray-100">
+                        <div className="font-bold text-gray-900 truncate max-w-[150px]">{p.name}</div>
+                      </div>
+                      <div>
                         {isAttended ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                            <FaCheckCircle /> Attended
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[9px] font-bold uppercase">
+                            <FaCheckCircle /> Yes
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                            <FaTimesCircle /> Absent
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full text-[9px] font-bold uppercase">
+                            <FaTimesCircle /> No
                           </span>
                         )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div className="flex items-center gap-2 text-xs">
+                        <FaPhoneAlt className="text-gray-400 text-[10px]" />
+                        <span>{p.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <FaEnvelope className="text-gray-400 text-[10px]" />
+                        <span className="truncate">{p.email || "No Email"}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400 font-semibold italic">
+                      <span>Registered</span>
+                      <span>{new Date(p.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>

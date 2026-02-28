@@ -1,14 +1,14 @@
 // src/components/ViewEnquiries.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { 
-  FaSearch, 
-  FaTrash, 
-  FaInfoCircle, 
-  FaExclamationTriangle, 
-  FaUser, 
-  FaEnvelope, 
-  FaClock 
+import {
+  FaSearch,
+  FaTrash,
+  FaInfoCircle,
+  FaExclamationTriangle,
+  FaUser,
+  FaEnvelope,
+  FaClock
 } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
 
@@ -72,7 +72,7 @@ const ViewEnquiries = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
       {/* Header - Aligned with ViewEvents Style */}
-      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
+      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Contact Enquiries</h2>
           <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
@@ -80,7 +80,7 @@ const ViewEnquiries = () => {
           </span>
         </div>
 
-        <div className="relative w-full lg:w-72">
+        <div className="relative w-full md:w-72">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -114,55 +114,93 @@ const ViewEnquiries = () => {
         )}
 
         {!loading && !error && filteredEnquiries.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-separate border-spacing-0">
-              <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                <tr>
-                  <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                  <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">User Details</th>
-                  <th className="px-6 py-4 text-left border-b border-gray-200">Message Content</th>
-                  <th className="w-40 px-6 py-4 text-right border-b border-gray-200">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {paginatedEnquiries.map((enquiry, index) => (
-                  <tr key={enquiry.id} className="hover:bg-gray-50/80 transition-colors group">
-                    <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                      {String(startIndex + index + 1).padStart(2, '0')}
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100">
-                      <div className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-                        <FaUser className="text-teal-600 text-[10px]" /> {enquiry.name}
-                      </div>
-                      <div className="text-xs text-gray-500 flex items-center gap-2">
-                        <FaEnvelope className="text-[10px]" /> {enquiry.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100">
-                      <div className="text-sm text-gray-700 line-clamp-2 italic mb-2">"{enquiry.message}"</div>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold">
-                        <FaClock /> {new Date(enquiry.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-right border-b border-gray-100">
-                      <button
-                        onClick={() => handleDelete(enquiry.id)}
-                        disabled={deletingId === enquiry.id}
-                        className={`p-2 rounded-lg transition-all ${
-                          deletingId === enquiry.id
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-fixed border-separate border-spacing-0">
+                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                  <tr>
+                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
+                    <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">User Details</th>
+                    <th className="px-6 py-4 text-left border-b border-gray-200">Message Content</th>
+                    <th className="w-40 px-6 py-4 text-right border-b border-gray-200">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {paginatedEnquiries.map((enquiry, index) => (
+                    <tr key={enquiry.id} className="hover:bg-gray-50/80 transition-colors group">
+                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                        {String(startIndex + index + 1).padStart(2, '0')}
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                          <FaUser className="text-teal-600 text-[10px]" /> {enquiry.name}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center gap-2">
+                          <FaEnvelope className="text-[10px]" /> {enquiry.email}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100">
+                        <div className="text-sm text-gray-700 line-clamp-2 italic mb-2">"{enquiry.message}"</div>
+                        <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold">
+                          <FaClock /> {new Date(enquiry.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-right border-b border-gray-100">
+                        <button
+                          onClick={() => handleDelete(enquiry.id)}
+                          disabled={deletingId === enquiry.id}
+                          className={`p-2 rounded-lg transition-all ${deletingId === enquiry.id
                             ? "opacity-50 cursor-not-allowed"
                             : "text-red-500 hover:bg-red-50"
-                        }`}
-                        title="Delete Enquiry"
-                      >
-                        <FaTrash size={16} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                            }`}
+                          title="Delete Enquiry"
+                        >
+                          <FaTrash size={16} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden p-4 space-y-4">
+              {paginatedEnquiries.map((enquiry, index) => (
+                <div key={enquiry.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" title="Enquiry Number">
+                        {startIndex + index + 1}
+                      </div>
+                      <div className="font-bold text-gray-900 truncate max-w-[150px]">{enquiry.name}</div>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(enquiry.id)}
+                      disabled={deletingId === enquiry.id}
+                      className="text-red-500 hover:bg-red-50 p-1 rounded-md transition"
+                    >
+                      <FaTrash size={14} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
+                    </button>
+                  </div>
+
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <div className="flex items-center gap-2 text-xs">
+                      <FaEnvelope className="text-gray-400" />
+                      <span className="truncate">{enquiry.email}</span>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg border border-gray-200 text-sm italic py-2">
+                      "{enquiry.message}"
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold justify-end">
+                      <FaClock /> {new Date(enquiry.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

@@ -54,19 +54,19 @@ const MostViewedProperties = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* HEADER SECTION */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-5">
-          <div className="p-4 bg-teal-50 text-teal-600 rounded-2xl text-3xl">
+      <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex items-center gap-4 md:gap-5 w-full md:w-auto">
+          <div className="p-3 md:p-4 bg-teal-50 text-teal-600 rounded-2xl text-2xl md:text-3xl">
             <FaChartLine />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-gray-800 tracking-tight">Property Analytics</h2>
-            <p className="text-gray-500 font-medium">Tracking the most engaging listings across NativeNest</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight leading-tight">Property Analytics</h2>
+            <p className="text-gray-500 font-medium text-sm">Tracking the most engaging listings</p>
           </div>
         </div>
-        <div className="bg-teal-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-200">
-          <span className="text-sm font-bold uppercase tracking-wider opacity-80">Total Tracked</span>
-          <div className="text-2xl font-bold">{properties.length} Listings</div>
+        <div className="bg-teal-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-200 w-full md:w-auto text-center md:text-left">
+          <span className="text-xs md:text-sm font-bold uppercase tracking-wider opacity-80">Total Tracked</span>
+          <div className="text-xl md:text-2xl font-bold">{properties.length} Listings</div>
         </div>
       </div>
 
