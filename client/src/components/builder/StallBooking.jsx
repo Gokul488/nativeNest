@@ -1,12 +1,12 @@
 // src/components/StallBooking.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  FaArrowLeft, 
-  FaTicketAlt, 
-  FaCheckCircle, 
-  FaExclamationCircle, 
-  FaTag, 
+import {
+  FaArrowLeft,
+  FaTicketAlt,
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaTag,
   FaInfoCircle,
   FaLayerGroup
 } from 'react-icons/fa';
@@ -63,7 +63,7 @@ const StallBooking = () => {
       if (!res.ok) throw new Error(data.error || 'Booking failed');
 
       alert('Stall booked successfully!');
-      fetchStallTypes(); 
+      fetchStallTypes();
     } catch (err) {
       alert(err.message);
     }
@@ -80,10 +80,10 @@ const StallBooking = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      
+
       {/* Navigation */}
       <div className="mb-4">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-600 hover:text-teal-600 transition-colors font-medium text-sm"
         >
@@ -93,17 +93,17 @@ const StallBooking = () => {
 
       {/* Header Section */}
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mb-8">
-        <div className="bg-gray-50 p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-teal-600 text-white rounded-lg shadow-teal-200 shadow-lg">
+        <div className="bg-gray-50 p-4 sm:p-6 border-b border-gray-200 flex flex-col items-center sm:flex-row justify-between gap-4 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="p-3 bg-teal-600 text-white rounded-lg shadow-teal-200 shadow-lg shrink-0">
               <FaLayerGroup size={20} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Select Stall Type</h2>
-              <p className="text-gray-500 text-sm">Event ID: #{eventId} • Choose your desired configuration</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Select Stall Type</h2>
+              <p className="text-gray-500 text-xs sm:text-sm truncate">Event ID: #{eventId} • Choose your desired configuration</p>
             </div>
           </div>
-          <div className="bg-teal-100 text-teal-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+          <div className="bg-teal-100 text-teal-700 px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-sm font-bold flex items-center gap-2">
             <FaTicketAlt size={14} />
             {stallTypes.length} Categories Available
           </div>
@@ -136,19 +136,17 @@ const StallBooking = () => {
               {stallTypes.map((type) => (
                 <div
                   key={type.stall_type_id}
-                  className={`relative bg-white p-6 rounded-2xl border transition-all duration-300 flex flex-col ${
-                    type.available_count > 0
+                  className={`relative bg-white p-6 rounded-2xl border transition-all duration-300 flex flex-col ${type.available_count > 0
                       ? 'border-gray-200 hover:border-teal-500 hover:shadow-xl'
                       : 'opacity-70 bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className={`p-2 rounded-lg ${type.available_count > 0 ? 'bg-teal-50 text-teal-600' : 'bg-gray-200 text-gray-500'}`}>
                       <FaTag size={16} />
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      type.available_count > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-                    }`}>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${type.available_count > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                      }`}>
                       {type.available_count > 0 ? 'Available' : 'Sold Out'}
                     </span>
                   </div>
@@ -170,7 +168,7 @@ const StallBooking = () => {
                       </span>
                     </div>
                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className={`h-full transition-all duration-1000 ${type.available_count > 0 ? 'bg-teal-500' : 'bg-gray-300'}`}
                         style={{ width: `${(type.available_count / type.total_stalls) * 100}%` }}
                       ></div>

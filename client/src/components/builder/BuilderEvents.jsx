@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { format, isSameMonth, isSameYear } from "date-fns";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  FaCalendarAlt, 
-  FaMapMarkerAlt, 
-  FaSearch, 
-  FaExclamationTriangle, 
+import {
+  FaCalendarAlt,
+  FaMapMarkerAlt,
+  FaSearch,
+  FaExclamationTriangle,
   FaInfoCircle,
   FaSort,
   FaSortUp,
@@ -21,7 +21,7 @@ import axios from "axios";
 const formatDateRange = (start, end) => {
   if (!start) return "TBD";
   if (!end || start === end) return format(new Date(start), "dd MMM yyyy");
-  
+
   const startDate = new Date(start);
   const endDate = new Date(end);
 
@@ -67,7 +67,7 @@ const BuilderEvents = () => {
   const filteredAndSortedEvents = useMemo(() => {
     let result = [...events];
     if (searchQuery) {
-      result = result.filter(e => 
+      result = result.filter(e =>
         e.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.city?.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -97,7 +97,7 @@ const BuilderEvents = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
-      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
+      <div className="p-6 border-b border-gray-200 flex flex-col xl:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Property Exhibitions</h2>
@@ -108,7 +108,7 @@ const BuilderEvents = () => {
           <p className="text-gray-500 text-sm mt-1">Select an exhibition to reserve your stall space or view leads</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
           <div className="relative flex-1 sm:w-80">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -131,7 +131,7 @@ const BuilderEvents = () => {
         )}
 
         {error && (
-          <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2 text-sm">
+          <div className="m-4 sm:m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2 text-sm">
             <FaExclamationTriangle /> {error}
           </div>
         )}
@@ -144,68 +144,109 @@ const BuilderEvents = () => {
         )}
 
         {!loading && !error && filteredAndSortedEvents.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-separate border-spacing-0">
-              <thead className="bg-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                <tr>
-                  <th className="w-16 px-6 py-4 text-left border-b border-gray-200">#</th>
-                  <th onClick={() => requestSort("event_name")} className="w-1/3 px-6 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center">Exhibition Details {getSortIcon("event_name")}</div>
-                  </th>
-                  <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Schedule</th>
-                  <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Leads</th>
-                  <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Book Stall</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {filteredAndSortedEvents.map((event, index) => (
-                  <tr key={event.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                      {String(index + 1).padStart(2, '0')}
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100">
-                      <div className="font-bold text-gray-900 mb-1 group-hover:text-teal-600 transition-colors cursor-default">
-                        {event.event_name}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="flex items-center gap-1 text-teal-600 font-medium bg-teal-50 px-1.5 py-0.5 rounded">
-                          <FaMapMarkerAlt className="text-[10px]" /> {event.city || "N/A"}
+          <>
+            {/* Desktop View Table */}
+            <div className="hidden xl:block overflow-x-auto">
+              <table className="w-full table-fixed border-separate border-spacing-0">
+                <thead className="bg-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  <tr>
+                    <th className="w-16 px-6 py-4 text-left border-b border-gray-200">#</th>
+                    <th onClick={() => requestSort("event_name")} className="w-1/3 px-6 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center">Exhibition Details {getSortIcon("event_name")}</div>
+                    </th>
+                    <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Schedule</th>
+                    <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Leads</th>
+                    <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Book Stall</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {filteredAndSortedEvents.map((event, index) => (
+                    <tr key={event.id} className="hover:bg-gray-50 transition-colors group">
+                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                        {String(index + 1).padStart(2, '0')}
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 mb-1 group-hover:text-teal-600 transition-colors cursor-default">
+                          {event.event_name}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="flex items-center gap-1 text-teal-600 font-medium bg-teal-50 px-1.5 py-0.5 rounded">
+                            <FaMapMarkerAlt className="text-[10px]" /> {event.city || "N/A"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 border-b border-gray-100">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-800 font-semibold">
+                            <FaCalendarAlt className="text-gray-400 text-[11px]" />
+                            {formatDateRange(event.start_date, event.end_date)}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-center border-b border-gray-100">
+                        <Link
+                          to={`/builder-dashboard/interests?eventId=${event.id}`}
+                          className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white transition-all shadow-sm group/btn active:scale-90"
+                          title="View Buyer Interests"
+                        >
+                          <FaUsers size={18} />
+                        </Link>
+                      </td>
+                      <td className="px-6 py-5 text-center border-b border-gray-100">
+                        <Link
+                          to={`/builder-dashboard/stall-booking/${event.id}`}
+                          className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all shadow-sm group/btn active:scale-90"
+                          title="Proceed to Booking"
+                        >
+                          <FaStoreAlt size={18} className="group-hover/btn:hidden" />
+                          <FaChevronRight size={16} className="hidden group-hover/btn:block" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile/Tablet View Cards */}
+            <div className="xl:hidden grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+              {filteredAndSortedEvents.map((event, index) => (
+                <div key={event.id} className="bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-sm space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono text-[10px] text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100">#{String(index + 1).padStart(2, '0')}</span>
+                        <span className="flex items-center gap-1 text-[10px] text-teal-600 font-bold bg-teal-50 px-2 py-0.5 rounded uppercase uppercase tracking-wider">
+                          <FaMapMarkerAlt size={8} /> {event.city || "N/A"}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-5 border-b border-gray-100">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-800 font-semibold">
-                          <FaCalendarAlt className="text-gray-400 text-[11px]" />
-                          {formatDateRange(event.start_date, event.end_date)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center border-b border-gray-100">
-                      <Link
-                        // Change this to use the ID as a query param
-                        to={`/builder-dashboard/interests?eventId=${event.id}`}
-                        className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white transition-all shadow-sm group/btn active:scale-90"
-                        title="View Buyer Interests"
-                      >
-                        <FaUsers size={18} />
-                      </Link>
-                    </td>
-                    <td className="px-6 py-5 text-center border-b border-gray-100">
-                      <Link
-                        to={`/builder-dashboard/stall-booking/${event.id}`}
-                        className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all shadow-sm group/btn active:scale-90"
-                        title="Proceed to Booking"
-                      >
-                        <FaStoreAlt size={18} className="group-hover/btn:hidden" />
-                        <FaChevronRight size={16} className="hidden group-hover/btn:block" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <h4 className="font-bold text-gray-900 leading-tight">{event.event_name}</h4>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-gray-600 bg-white p-2 rounded-lg border border-gray-100">
+                    <FaCalendarAlt className="text-teal-500" />
+                    <span className="font-semibold">{formatDateRange(event.start_date, event.end_date)}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <Link
+                      to={`/builder-dashboard/interests?eventId=${event.id}`}
+                      className="flex items-center justify-center gap-2 py-2.5 bg-orange-50 text-orange-600 rounded-xl font-bold text-xs border border-orange-100 active:scale-95 transition-transform"
+                    >
+                      <FaUsers size={14} /> Leads
+                    </Link>
+                    <Link
+                      to={`/builder-dashboard/stall-booking/${event.id}`}
+                      className="flex items-center justify-center gap-2 py-2.5 bg-teal-600 text-white rounded-xl font-bold text-xs shadow-md shadow-teal-100 active:scale-95 transition-transform"
+                    >
+                      <FaStoreAlt size={14} /> Book Stall
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

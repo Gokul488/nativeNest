@@ -86,10 +86,15 @@ const BuyerDashboard = () => {
     navigate("/login", { replace: true });
   };
 
-  const isActive = (path) =>
-    location.pathname === path || (path !== "/buyer-dashboard" && location.pathname.startsWith(path))
-      ? "bg-teal-700 shadow-inner"
-      : "";
+  const isActive = (path) => {
+    const isRoot = path === "/buyer-dashboard" || path === "/buyer-dashboard/";
+    if (isRoot) {
+      return (location.pathname === "/buyer-dashboard" || location.pathname === "/buyer-dashboard/")
+        ? "bg-teal-700 shadow-inner"
+        : "";
+    }
+    return location.pathname.startsWith(path) ? "bg-teal-700 shadow-inner" : "";
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex relative font-sans">
@@ -97,7 +102,7 @@ const BuyerDashboard = () => {
       <div
         className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          bg-linear-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}
+          bg-gradient-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}
       >
         <div className="p-6 border-b border-teal-400/40">
           <h1 className="text-3xl font-bold text-white tracking-tight">NativeNest</h1>
@@ -127,7 +132,7 @@ const BuyerDashboard = () => {
         <div className="p-4 mt-auto border-t border-teal-400/40">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full py-3 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded-lg transition font-medium shadow-sm"
+            className="flex items-center gap-3 w-full py-3 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded-lg transition font-bold shadow-sm"
           >
             <span className="material-symbols-outlined text-xl">logout</span>
             <span>Logout</span>
@@ -138,26 +143,26 @@ const BuyerDashboard = () => {
       {/* MOBILE OVERLAY */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300"
           onClick={closeSidebar}
         />
       )}
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="flex-1 md:ml-72 transition-all duration-300">
-        <header className="bg-white shadow p-4 flex justify-between items-center sticky top-0 z-30">
+      <div className="flex-1 md:ml-72 transition-all duration-300 flex flex-col min-h-screen">
+        <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-200">
           <div className="flex items-center gap-4">
             <button
               onClick={toggleSidebar}
-              className="text-teal-600 md:hidden"
+              className="text-teal-600 md:hidden p-2 hover:bg-teal-50 rounded-lg"
             >
               <FaBars className="w-6 h-6" />
             </button>
           </div>
 
-          <div className="flex items-center gap-3 bg-teal-50 py-2 px-4 rounded-full">
-            <FaUser className="text-teal-600 w-5 h-5" />
-            <span className="text-teal-800 font-bold text-sm uppercase">
+          <div className="flex items-center gap-2 sm:gap-3 bg-teal-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-full border border-teal-100">
+            <FaUser className="text-teal-600 text-sm sm:text-base" />
+            <span className="text-teal-800 font-bold text-xs sm:text-sm uppercase truncate max-w-[120px] sm:max-w-none">
               Welcome, {user.name || "Buyer"}
             </span>
           </div>
@@ -172,33 +177,33 @@ const BuyerDashboard = () => {
                   {/* Statistics Cards - Integrated with StatCounter logic */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[
-                      { 
-                        label: "Registered Events", 
-                        val: stats.myEvents, 
-                        icon: <FaCalendarCheck />, 
-                        color: "text-blue-600", 
+                      {
+                        label: "Registered Events",
+                        val: stats.myEvents,
+                        icon: <FaCalendarCheck />,
+                        color: "text-blue-600",
                         bg: "bg-blue-50",
-                        path: "/buyer-dashboard/my-events" 
+                        path: "/buyer-dashboard/my-events"
                       },
-                      { 
-                        label: "Available Events", 
-                        val: stats.totalEvents, 
-                        icon: <FaCalendarAlt />, 
-                        color: "text-orange-600", 
+                      {
+                        label: "Available Events",
+                        val: stats.totalEvents,
+                        icon: <FaCalendarAlt />,
+                        color: "text-orange-600",
                         bg: "bg-orange-50",
-                        path: "/buyer-dashboard/events" 
+                        path: "/buyer-dashboard/events"
                       },
-                      { 
-                        label: "Saved Properties", 
-                        val: stats.bookmarks, 
-                        icon: <FaBookmark />, 
-                        color: "text-teal-600", 
+                      {
+                        label: "Saved Properties",
+                        val: stats.bookmarks,
+                        icon: <FaBookmark />,
+                        color: "text-teal-600",
                         bg: "bg-teal-50",
-                        path: "/buyer-dashboard/bookmarks" 
+                        path: "/buyer-dashboard/bookmarks"
                       },
                     ].map((card, idx) => (
-                      <Link 
-                        key={idx} 
+                      <Link
+                        key={idx}
                         to={card.path}
                         className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:border-teal-200 group"
                       >
@@ -226,7 +231,7 @@ const BuyerDashboard = () => {
                         Great to see you, {user.name}!
                       </h3>
                       <p className="text-gray-600 leading-relaxed mb-6">
-                        Stay ahead in your property search. Here you can track all the events you've registered for, 
+                        Stay ahead in your property search. Here you can track all the events you've registered for,
                         manage your saved properties, and discover new opportunities across NativeNest.
                       </p>
                       <div className="bg-teal-50 border-l-4 border-teal-500 p-4 rounded-r-xl">
@@ -252,10 +257,10 @@ const BuyerDashboard = () => {
                       </div>
 
                       <div className="bg-linear-to-br from-teal-600 to-teal-700 p-6 rounded-2xl text-white shadow-lg">
-                         <h4 className="font-bold flex items-center gap-2 mb-2"><FaChartBar /> Dashboard Tip</h4>
-                         <p className="text-sm text-teal-50 leading-relaxed">
-                           Use the "Saved Properties" section to keep track of listings you liked during events. It makes comparing options much easier later!
-                         </p>
+                        <h4 className="font-bold flex items-center gap-2 mb-2"><FaChartBar /> Dashboard Tip</h4>
+                        <p className="text-sm text-teal-50 leading-relaxed">
+                          Use the "Saved Properties" section to keep track of listings you liked during events. It makes comparing options much easier later!
+                        </p>
                       </div>
                     </div>
                   </div>

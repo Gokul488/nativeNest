@@ -49,11 +49,11 @@ const StallCheckIn = () => {
 
   if (status === "success") {
     return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-3xl shadow-xl text-center border border-teal-100">
-        <FaCheckCircle className="text-teal-500 text-6xl mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Check-in Complete</h2>
-        <p className="text-gray-600">{message}</p>
-        <div className="mt-4 p-4 bg-teal-50 rounded-xl text-sm text-teal-800">
+      <div className="max-w-md mx-auto mt-10 sm:mt-20 p-6 sm:p-8 bg-white rounded-3xl shadow-xl text-center border border-teal-100 mx-4">
+        <FaCheckCircle className="text-teal-500 text-5xl sm:text-6xl mx-auto mb-4" />
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Check-in Complete</h2>
+        <p className="text-gray-600 text-sm sm:text-base">{message}</p>
+        <div className="mt-4 p-4 bg-teal-50 rounded-xl text-xs sm:text-sm text-teal-800">
           Logged for Stall #{stallInfo?.stall_number}
         </div>
       </div>
@@ -61,13 +61,13 @@ const StallCheckIn = () => {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-3xl shadow-xl border border-gray-100">
+    <div className="max-w-md mx-auto mt-10 sm:mt-20 p-6 sm:p-8 bg-white rounded-3xl shadow-xl border border-gray-100 mx-4">
       <div className="text-center mb-8">
         <div className="bg-teal-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <FaStoreAlt className="text-teal-600 text-2xl" />
         </div>
         <h2 className="text-2xl font-bold text-gray-800">Stall Check-In</h2>
-        
+
         {stallInfo && (
           <div className="mt-4 space-y-1">
             <p className="text-teal-700 font-bold text-lg">{stallInfo.event_name}</p>
@@ -76,7 +76,7 @@ const StallCheckIn = () => {
               <span className="bg-gray-100 px-2 py-1 rounded">{stallInfo.stall_type_name}</span>
             </div>
             {stallInfo.builder_name && (
-               <p className="text-xs text-gray-400 mt-2 italic">Exhibitor: {stallInfo.builder_name}</p>
+              <p className="text-xs text-gray-400 mt-2 italic">Exhibitor: {stallInfo.builder_name}</p>
             )}
           </div>
         )}
@@ -94,15 +94,15 @@ const StallCheckIn = () => {
             onChange={(e) => setMobile(e.target.value)}
           />
         </div>
-        
+
         {status === "error" && (
           <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-xl border border-red-100">
             <FaInfoCircle /> {message}
           </div>
         )}
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={status === "submitting"}
           className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold hover:bg-teal-700 transition-all active:scale-95 disabled:bg-gray-400"
         >

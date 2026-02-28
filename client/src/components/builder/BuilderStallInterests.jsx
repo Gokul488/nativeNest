@@ -1,11 +1,11 @@
 // src/components/BuilderStallInterests.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { useLocation, Link } from "react-router-dom"; 
-import { 
-  FaSearch, FaUser, FaPhoneAlt, FaEnvelope, FaLayerGroup, 
+import { useLocation, Link } from "react-router-dom";
+import {
+  FaSearch, FaUser, FaPhoneAlt, FaEnvelope, FaLayerGroup,
   FaInfoCircle, FaExclamationTriangle, FaMapMarkerAlt,
-  FaTimes, FaArrowLeft, FaCheckCircle, FaTimesCircle 
+  FaTimes, FaArrowLeft, FaCheckCircle, FaTimesCircle
 } from "react-icons/fa";
 import API_BASE_URL from "../../config.js";
 import { format } from "date-fns";
@@ -13,11 +13,11 @@ import { format } from "date-fns";
 const BuilderStallInterests = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const eventId = queryParams.get("eventId"); 
+  const eventId = queryParams.get("eventId");
   const eventNameHint = queryParams.get("event") || "";
 
   const [interests, setInterests] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [searchQuery, setSearchQuery] = useState("");
   const [attendanceFilter, setAttendanceFilter] = useState("all"); // New State
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,11 +43,11 @@ const BuilderStallInterests = () => {
   const filteredInterests = useMemo(() => {
     return interests.filter(item => {
       const isAttended = item.is_attended === 1 || item.is_attended === true;
-      const matchesSearch = 
+      const matchesSearch =
         item.buyer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.event_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.stall_type_name?.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       if (attendanceFilter === "attended") return matchesSearch && isAttended;
       if (attendanceFilter === "not-attended") return matchesSearch && !isAttended;
       return matchesSearch;
@@ -63,37 +63,37 @@ const BuilderStallInterests = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
       {/* Top Header - Stats Section (Matching EventParticipants design) */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col items-start gap-4">
+        <div className="flex items-center gap-4 w-full">
           <Link to="/builder-dashboard/events" className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600">
             <FaArrowLeft />
           </Link>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+          <div className="flex-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight truncate">
               {eventNameHint ? `${eventNameHint} Leads` : "Buyer Interests"}
             </h2>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Stall Visit Management</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Stall Visit Management</p>
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <div className="text-center px-4 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="text-xs text-gray-400 font-bold uppercase italic">Total Leads</div>
-            <div className="text-lg font-black text-gray-800">{stats.total}</div>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full">
+          <div className="text-center p-2 sm:px-4 sm:py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="text-[8px] sm:text-xs text-gray-400 font-bold uppercase italic truncate">Total Leads</div>
+            <div className="text-base sm:text-lg font-black text-gray-800">{stats.total}</div>
           </div>
-          <div className="text-center px-4 py-2 bg-green-50 rounded-lg border border-green-100 shadow-sm">
-            <div className="text-xs text-green-600 font-bold uppercase italic">Visited</div>
-            <div className="text-lg font-black text-green-700">{stats.attended}</div>
+          <div className="text-center p-2 sm:px-4 sm:py-2 bg-green-50 rounded-lg border border-green-100 shadow-sm">
+            <div className="text-[8px] sm:text-xs text-green-600 font-bold uppercase italic truncate">Visited</div>
+            <div className="text-base sm:text-lg font-black text-green-700">{stats.attended}</div>
           </div>
-          <div className="text-center px-4 py-2 bg-red-50 rounded-lg border border-red-100 shadow-sm">
-            <div className="text-xs text-red-500 font-bold uppercase italic">Absent</div>
-            <div className="text-lg font-black text-red-600">{stats.absent}</div>
+          <div className="text-center p-2 sm:px-4 sm:py-2 bg-red-50 rounded-lg border border-red-100 shadow-sm">
+            <div className="text-[8px] sm:text-xs text-red-500 font-bold uppercase italic truncate">Absent</div>
+            <div className="text-base sm:text-lg font-black text-red-600">{stats.absent}</div>
           </div>
         </div>
       </div>
 
       {/* Sticky Filter Bar */}
-      <div className="p-6 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
+      <div className="p-6 border-b border-gray-100 flex flex-col xl:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
         <div className="relative flex-1 w-full lg:max-w-md">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -105,17 +105,17 @@ const BuilderStallInterests = () => {
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full lg:w-auto">
+        <div className="flex items-center gap-3 w-full xl:w-auto">
           <select
             value={attendanceFilter}
             onChange={(e) => setAttendanceFilter(e.target.value)}
-            className="w-full lg:w-48 border border-gray-300 bg-white px-4 py-2 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 outline-none"
+            className="w-full xl:w-48 border border-gray-300 bg-white px-4 py-2 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 outline-none"
           >
             <option value="all">All Status</option>
             <option value="attended">Visited Stall</option>
             <option value="not-attended">Not Visited</option>
           </select>
-          <span className="hidden lg:block bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold">
+          <span className="hidden xl:block bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold">
             {filteredInterests.length} Leads Found
           </span>
         </div>
@@ -135,7 +135,8 @@ const BuilderStallInterests = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-separate border-spacing-0">
+            {/* Desktop View Table */}
+            <table className="hidden xl:table w-full table-fixed border-separate border-spacing-0">
               <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                 <tr>
                   <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
@@ -169,8 +170,8 @@ const BuilderStallInterests = () => {
                       </td>
                       <td className="px-6 py-5 border-b border-gray-100 text-center">
                         <div className="flex flex-col items-center gap-1 text-xs">
-                          <span className="font-medium text-gray-700"><FaPhoneAlt size={10} className="inline mr-1 text-teal-500"/>{item.buyer_mobile}</span>
-                          {item.buyer_email && <span className="text-gray-400"><FaEnvelope size={10} className="inline mr-1"/>{item.buyer_email}</span>}
+                          <span className="font-medium text-gray-700"><FaPhoneAlt size={10} className="inline mr-1 text-teal-500" />{item.buyer_mobile}</span>
+                          {item.buyer_email && <span className="text-gray-400"><FaEnvelope size={10} className="inline mr-1" />{item.buyer_email}</span>}
                         </div>
                       </td>
                       <td className="px-6 py-5 text-center border-b border-gray-100">
@@ -189,6 +190,54 @@ const BuilderStallInterests = () => {
                 })}
               </tbody>
             </table>
+
+            {/* Mobile/Tablet View Cards */}
+            <div className="xl:hidden grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+              {filteredInterests.map((item, index) => {
+                const isAttended = item.is_attended === 1 || item.is_attended === true;
+                return (
+                  <div key={item.id} className="bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-sm space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100">#{String(index + 1).padStart(2, '0')}</span>
+                        <h4 className="font-bold text-gray-900">{item.buyer_name}</h4>
+                      </div>
+                      {isAttended ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[9px] font-bold uppercase">
+                          <FaCheckCircle /> Visited
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full text-[9px] font-bold uppercase">
+                          <FaTimesCircle /> Absent
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="space-y-1">
+                        <p className="text-gray-400 uppercase font-bold text-[9px]">Location</p>
+                        <p className="text-gray-700 font-medium truncate">{item.city}, {item.state}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-gray-400 uppercase font-bold text-[9px]">Stall Type</p>
+                        <p className="text-teal-600 font-bold truncate">{item.stall_type_name}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-200 flex flex-wrap gap-x-4 gap-y-1 items-center">
+                      <a href={`tel:${item.buyer_mobile}`} className="flex items-center gap-1.5 text-xs font-bold text-teal-600">
+                        <FaPhoneAlt size={10} /> {item.buyer_mobile}
+                      </a>
+                      {item.buyer_email && (
+                        <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <FaEnvelope size={10} /> {item.buyer_email}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

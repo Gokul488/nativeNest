@@ -73,21 +73,21 @@ const BuilderProfileSettings = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-8">
+    <div className="max-w-3xl mx-auto py-4 sm:py-8 lg:py-12">
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         <div className="bg-gray-50 p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <div className="p-3 bg-teal-600 text-white rounded-lg shadow-teal-200 shadow-lg">
               <FiSettings size={20} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Builder Profile Settings</h2>
-              <p className="text-gray-500 text-sm">Manage your company profile and contact information</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Builder Profile Settings</h2>
+              <p className="text-gray-500 text-xs sm:text-sm">Manage your company profile and contact information</p>
             </div>
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-6 sm:p-8">
           {error && (
             <div className="bg-red-50 text-red-700 p-4 rounded-xl mb-6 border border-red-200 flex items-center gap-3">
               <FiAlertCircle className="shrink-0" />
@@ -102,7 +102,7 @@ const BuilderProfileSettings = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div className="group">
                 <label className="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-teal-600">Company Name</label>
                 <div className="relative">

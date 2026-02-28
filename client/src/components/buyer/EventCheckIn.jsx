@@ -28,16 +28,16 @@ const EventCheckIn = () => {
 
   if (status === "success") {
     return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-3xl shadow-xl text-center border border-green-100">
-        <FaCheckCircle className="text-green-500 text-6xl mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Verified!</h2>
-        <p className="text-gray-600">{message}</p>
+      <div className="max-w-md mx-auto mt-10 sm:mt-20 p-6 sm:p-8 bg-white rounded-3xl shadow-xl text-center border border-green-100 mx-4">
+        <FaCheckCircle className="text-green-500 text-5xl sm:text-6xl mx-auto mb-4" />
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Verified!</h2>
+        <p className="text-gray-600 text-sm sm:text-base">{message}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-3xl shadow-xl border border-gray-100">
+    <div className="max-w-md mx-auto mt-10 sm:mt-20 p-6 sm:p-8 bg-white rounded-3xl shadow-xl border border-gray-100 mx-4">
       <div className="text-center mb-8">
         <div className="bg-teal-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <FaUserCheck className="text-teal-600 text-2xl" />

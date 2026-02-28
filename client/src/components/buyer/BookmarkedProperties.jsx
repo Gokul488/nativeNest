@@ -62,19 +62,19 @@ const BookmarkedProperties = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 p-4 sm:p-8">
       {/* HEADER SECTION - Styled like MostViewedProperties */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-5">
-          <div className="p-4 bg-teal-50 text-teal-600 rounded-2xl text-3xl">
+      <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+        <div className="flex flex-col sm:flex-row items-center gap-5">
+          <div className="p-4 bg-teal-50 text-teal-600 rounded-2xl text-2xl sm:text-3xl shrink-0">
             <FaBookmark />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-gray-800 tracking-tight">Saved Listings</h2>
-            <p className="text-gray-500 font-medium">Your curated collection of properties on NativeNest</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight">Saved Listings</h2>
+            <p className="text-gray-500 font-medium text-sm sm:text-base">Your curated collection of properties on NativeNest</p>
           </div>
         </div>
-        <div className="bg-teal-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-200">
-          <span className="text-sm font-bold uppercase tracking-wider opacity-80">Total Saved</span>
-          <div className="text-2xl font-bold">{properties.length} Properties</div>
+        <div className="bg-teal-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-200 w-full sm:w-auto">
+          <span className="text-xs font-bold uppercase tracking-wider opacity-80">Total Saved</span>
+          <div className="text-xl sm:text-2xl font-bold">{properties.length} Properties</div>
         </div>
       </div>
 
@@ -86,7 +86,7 @@ const BookmarkedProperties = () => {
         <div className="bg-white rounded-2xl p-20 text-center border-2 border-dashed border-gray-100">
           <FaBookmark className="mx-auto text-6xl text-gray-200 mb-4" />
           <p className="text-gray-500 text-lg">You haven't bookmarked any properties yet.</p>
-          <button 
+          <button
             onClick={() => navigate('/properties')}
             className="mt-4 text-teal-600 font-bold hover:underline"
           >
@@ -128,7 +128,7 @@ const BookmarkedProperties = () => {
                 <h3 className="font-bold text-gray-800 mb-1 line-clamp-1 group-hover:text-teal-600 transition-colors">
                   {prop.title}
                 </h3>
-                
+
                 <div className="flex flex-col gap-1 mb-4">
                   <p className="text-sm text-gray-500 flex items-center gap-1">
                     <FaMapMarkerAlt className="text-teal-500 text-xs" /> {prop.city}

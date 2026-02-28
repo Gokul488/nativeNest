@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, Routes, Route, useLocation } from "react-router-dom";
 import axios from "axios";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import {
-  FaBars, FaUser, FaHome, FaBuilding, FaCalendarAlt, FaCog, 
+  FaBars, FaUser, FaHome, FaBuilding, FaCalendarAlt, FaCog,
   FaEnvelope, FaPlusCircle, FaFireAlt, FaArrowRight, FaChartLine, FaSpinner
 } from "react-icons/fa";
 import { isAfter, isBefore, addDays } from "date-fns";
@@ -16,8 +16,8 @@ import API_BASE_URL from "../../config.js";
 import BuilderProfileSettings from "./builderProfileSettings";
 import BuilderEvents from "./BuilderEvents";
 import BuilderProperties from "./BuilderProperties";
-import PostProperty from "../admin/postProperty"; 
-import EditProperty from "../admin/editProperty";     
+import PostProperty from "../admin/postProperty";
+import EditProperty from "../admin/editProperty";
 import StallBooking from "./StallBooking";
 import BuilderStallInterests from "./BuilderStallInterests";
 
@@ -111,6 +111,14 @@ const BuilderDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex relative font-sans">
       {/* ================= SIDEBAR ================= */}
+      {/* Backdrop for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300"
+          onClick={closeSidebar}
+        />
+      )}
+
       <div className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} bg-linear-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}>
         <div className="p-6 border-b border-teal-400/40">
           <h1 className="text-3xl font-bold text-white tracking-tight">NativeNest</h1>
@@ -145,20 +153,22 @@ const BuilderDashboard = () => {
       </div>
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="flex-1 md:ml-72 transition-all duration-300">
+      <div className="flex-1 md:ml-72 transition-all duration-300 flex flex-col min-h-screen">
         <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-200">
           <div className="flex items-center gap-4">
-            <button onClick={toggleSidebar} className="text-teal-600 md:hidden">
+            <button onClick={toggleSidebar} className="text-teal-600 md:hidden p-2 hover:bg-teal-50 rounded-lg">
               <FaBars className="w-6 h-6" />
             </button>
           </div>
-          <div className="flex items-center gap-3 bg-teal-50 py-2 px-4 rounded-full border border-teal-100">
-            <FaUser className="text-teal-600" />
-            <span className="text-teal-800 font-bold text-sm uppercase">Welcome, {user.name || "Builder"}</span>
+          <div className="flex items-center gap-2 sm:gap-3 bg-teal-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-full border border-teal-100">
+            <FaUser className="text-teal-600 text-sm sm:text-base" />
+            <span className="text-teal-800 font-bold text-xs sm:text-sm uppercase truncate max-w-[120px] sm:max-w-none">
+              {user.name || "Builder"}
+            </span>
           </div>
         </header>
 
-        <main className="p-6 max-w-7xl mx-auto">
+        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
           <Routes>
             <Route path="/" element={
               <div className="space-y-8">
@@ -166,25 +176,25 @@ const BuilderDashboard = () => {
                 {/* Statistics Cards - Standardized Size & Stat Counter (Buyer Interest Count Removed) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                   {[
-                    { 
-                      label: "Total Properties", 
-                      val: stats?.totals.properties, 
-                      icon: <FaBuilding />, 
-                      color: "text-teal-600", 
+                    {
+                      label: "Total Properties",
+                      val: stats?.totals.properties,
+                      icon: <FaBuilding />,
+                      color: "text-teal-600",
                       bg: "bg-teal-50",
-                      path: "/builder-dashboard/my-properties" 
+                      path: "/builder-dashboard/my-properties"
                     },
-                    { 
-                      label: "Events Attended", 
-                      val: stats?.totals.eventsAttended, 
-                      icon: <FaCalendarAlt />, 
-                      color: "text-orange-600", 
+                    {
+                      label: "Events Attended",
+                      val: stats?.totals.eventsAttended,
+                      icon: <FaCalendarAlt />,
+                      color: "text-orange-600",
                       bg: "bg-orange-50",
                       path: "/builder-dashboard/events"
                     },
                   ].map((card, idx) => (
-                    <Link 
-                      key={idx} 
+                    <Link
+                      key={idx}
                       to={card.path}
                       className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:border-teal-200 group"
                     >
@@ -223,9 +233,9 @@ const BuilderDashboard = () => {
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stats?.monthlyStats}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
-                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
-                            <Tooltip cursor={{fill: '#f9fafb'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                            <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
                             <Bar dataKey="count" name="Properties" fill="#0d9488" radius={[6, 6, 0, 0]} barSize={35}>
                               {stats?.monthlyStats.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={index === stats.monthlyStats.length - 1 ? '#0d9488' : '#99f6e4'} />

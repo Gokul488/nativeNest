@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, Routes, Route, useLocation } from "react-router-dom";
 import axios from "axios";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import API_BASE_URL from "../../config.js";
 
@@ -29,7 +29,7 @@ import ManageBuilders from "./ManageBuilders";
 import AddEditStallType from "./AddEditStallType";
 
 import {
-  FaBars, FaChartBar, FaUser, FaHome, FaUsers, FaBuilding, 
+  FaBars, FaChartBar, FaUser, FaHome, FaUsers, FaBuilding,
   FaBlog, FaCog, FaCalendarAlt, FaEnvelope, FaSpinner, FaPlusCircle
 } from "react-icons/fa";
 
@@ -162,43 +162,43 @@ const AdminDashboard = () => {
                 {/* Statistics Cards - Enhanced with Stat Counters */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    { 
-                        label: "Total Properties", 
-                        val: stats?.totals.properties, 
-                        icon: <FaBuilding />, 
-                        color: "text-blue-600", 
-                        bg: "bg-blue-50",
-                        path: "/admin-dashboard/manage-properties" 
+                    {
+                      label: "Total Properties",
+                      val: stats?.totals.properties,
+                      icon: <FaBuilding />,
+                      color: "text-blue-600",
+                      bg: "bg-blue-50",
+                      path: "/admin-dashboard/manage-properties"
                     },
-                    { 
-                        label: "Registered Users", 
-                        val: stats?.totals.users, 
-                        icon: <FaUsers />, 
-                        color: "text-teal-600", 
-                        bg: "bg-teal-50",
-                        path: "/admin-dashboard/manage-users" 
+                    {
+                      label: "Registered Users",
+                      val: stats?.totals.users,
+                      icon: <FaUsers />,
+                      color: "text-teal-600",
+                      bg: "bg-teal-50",
+                      path: "/admin-dashboard/manage-users"
                     },
-                    { 
-                        label: "Active Builders", 
-                        val: stats?.totals.builders, 
-                        icon: <FaBuilding />, 
-                        color: "text-purple-600", 
-                        bg: "bg-purple-50",
-                        path: "/admin-dashboard/manage-builders" 
+                    {
+                      label: "Active Builders",
+                      val: stats?.totals.builders,
+                      icon: <FaBuilding />,
+                      color: "text-purple-600",
+                      bg: "bg-purple-50",
+                      path: "/admin-dashboard/manage-builders"
                     },
-                    { 
-                        label: "Planned Events", 
-                        val: stats?.totals.events, 
-                        icon: <FaCalendarAlt />, 
-                        color: "text-orange-600", 
-                        bg: "bg-orange-50",
-                        path: "/admin-dashboard/manage-events" 
+                    {
+                      label: "Planned Events",
+                      val: stats?.totals.events,
+                      icon: <FaCalendarAlt />,
+                      color: "text-orange-600",
+                      bg: "bg-orange-50",
+                      path: "/admin-dashboard/manage-events"
                     },
                   ].map((card, idx) => (
-                    <Link 
-                        key={idx} 
-                        to={card.path}
-                        className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:border-teal-200 group"
+                    <Link
+                      key={idx}
+                      to={card.path}
+                      className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:border-teal-200 group"
                     >
                       <div>
                         <p className="text-sm font-medium text-gray-500 uppercase tracking-wide group-hover:text-teal-600">{card.label}</p>
@@ -223,15 +223,15 @@ const AdminDashboard = () => {
                     <h3 className="text-lg font-bold text-gray-800 mb-6">Registration Growth (Last 6 Months)</h3>
                     <div className="h-80 w-full">
                       {loadingStats ? (
-                         <div className="h-full flex items-center justify-center"><FaSpinner className="animate-spin text-teal-500 text-3xl" /></div>
+                        <div className="h-full flex items-center justify-center"><FaSpinner className="animate-spin text-teal-500 text-3xl" /></div>
                       ) : (
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stats?.monthlyStats}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
-                            <Tooltip cursor={{fill: '#f9fafb'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
-                            <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
+                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                            <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                            <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
                             <Bar dataKey="properties" name="Properties" fill="#0d9488" radius={[4, 4, 0, 0]} barSize={24} />
                             <Bar dataKey="buyers" name="Users" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={24} />
                           </BarChart>
@@ -260,8 +260,8 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="bg-linear-to-br from-teal-600 to-teal-700 p-6 rounded-2xl text-white shadow-lg">
-                       <h4 className="font-bold flex items-center gap-2 mb-2"><FaChartBar /> Analytics Tip</h4>
-                       <p className="text-sm text-teal-50 leading-relaxed">Check the "Analytics" tab regularly to identify which property types are gaining the most traction in specific cities.</p>
+                      <h4 className="font-bold flex items-center gap-2 mb-2"><FaChartBar /> Analytics Tip</h4>
+                      <p className="text-sm text-teal-50 leading-relaxed">Check the "Analytics" tab regularly to identify which property types are gaining the most traction in specific cities.</p>
                     </div>
                   </div>
                 </div>

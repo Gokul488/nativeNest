@@ -68,21 +68,21 @@ const ProfileSettings = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-8">
+    <div className="max-w-3xl mx-auto py-4 sm:py-8 px-4">
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-        <div className="bg-gray-50 p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-teal-600 text-white rounded-lg shadow-teal-200 shadow-lg">
+        <div className="bg-gray-50 p-4 sm:p-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+            <div className="p-3 bg-teal-600 text-white rounded-lg shadow-teal-200 shadow-lg shrink-0">
               <FiSettings size={20} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Profile Settings</h2>
-              <p className="text-gray-500 text-sm">Update your account details and security settings</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Profile Settings</h2>
+              <p className="text-gray-500 text-xs sm:text-sm">Update your account details and security settings</p>
             </div>
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-5 sm:p-8">
           {error && (
             <div className="bg-red-50 text-red-700 p-4 rounded-xl mb-6 border border-red-200 flex items-center gap-3">
               <FiAlertCircle className="shrink-0" />
