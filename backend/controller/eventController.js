@@ -27,8 +27,25 @@ const createEvent = async (req, res) => {
       description,
       contact_name,
       contact_phone,
-      stall_count
+      stall_count,
+      notify_builders,
+      notify_buyers,
+      selected_builders,
+      selected_buyers
     } = req.body;
+
+    const shouldNotifyBuilders = notify_builders === 'true' || notify_builders === true;
+    const shouldNotifyBuyers = notify_buyers === 'true' || notify_buyers === true;
+
+    // Parse selected IDs (if any)
+    let builderIds = [];
+    let buyerIds = [];
+    try {
+      if (selected_builders) builderIds = JSON.parse(selected_builders);
+      if (selected_buyers) buyerIds = JSON.parse(selected_buyers);
+    } catch (e) {
+      console.error("Error parsing selected IDs:", e);
+    }
 
     if (!event_name || !event_location || !city || !state || !start_date || !end_date) {
       return res.status(400).json({ error: 'Required fields missing' });
@@ -65,33 +82,33 @@ const createEvent = async (req, res) => {
     const eventId = result.insertId;
 
     const eventForPDF = {
-  id: eventId,
-  event_name,
-  event_type,
-  event_location,
-  city,
-  state,
-  start_date,
-  end_date,
-  start_time,
-  end_time,
-  description,
-  contact_name,
-  contact_phone,
-  banner_image: bannerImage
-};
+      id: eventId,
+      event_name,
+      event_type,
+      event_location,
+      city,
+      state,
+      start_date,
+      end_date,
+      start_time,
+      end_time,
+      description,
+      contact_name,
+      contact_phone,
+      banner_image: bannerImage
+    };
 
-// Generate PDF buffer
-let invitationPDF;
-try {
-  invitationPDF = await generateEventInvitationPDF(eventForPDF);
-} catch (pdfErr) {
-  console.error('PDF generation failed:', pdfErr);
-  // continue anyway — don't fail event creation
-}
+    // Generate PDF buffer
+    let invitationPDF;
+    try {
+      invitationPDF = await generateEventInvitationPDF(eventForPDF);
+    } catch (pdfErr) {
+      console.error('PDF generation failed:', pdfErr);
+      // continue anyway — don't fail event creation
+    }
 
 
-    const formatDate = (date) => 
+    const formatDate = (date) =>
       new Date(date).toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'long',
@@ -101,20 +118,30 @@ try {
     const formatTime = (time) => time ? time.slice(0, 5) : 'N/A';
 
     const eventDateStr = `${formatDate(start_date)}${end_date && start_date !== end_date ? ' – ' + formatDate(end_date) : ''}`;
+
     // ────────────────────────────────────────────────
-    //     Notify ALL BUILDERS (existing code)
+    //     Notify ALL BUILDERS
     // ────────────────────────────────────────────────
-    const [builders] = await pool.query(
-      `SELECT name, email FROM builders WHERE email IS NOT NULL AND email != ''`
-    );
+    if (shouldNotifyBuilders) {
+      let builders;
+      if (builderIds && builderIds.length > 0) {
+        [builders] = await pool.query(
+          `SELECT name, email FROM builders WHERE id IN (?) AND email IS NOT NULL AND email != ''`,
+          [builderIds]
+        );
+      } else {
+        [builders] = await pool.query(
+          `SELECT name, email FROM builders WHERE email IS NOT NULL AND email != ''`
+        );
+      }
 
-    if (builders.length > 0) {
-      const builderEmails = builders.map(b => b.email).filter(Boolean);
+      if (builders.length > 0) {
+        const builderEmails = builders.map(b => b.email).filter(Boolean);
 
-      if (builderEmails.length > 0) {
-        const subject = `New Property Event Announced: ${event_name}`;
+        if (builderEmails.length > 0) {
+          const subject = `New Property Event Announced: ${event_name}`;
 
-        const html = `
+          const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <h2 style="color: #2e6171; text-align: center;">New Event Alert – NativeNest</h2>
             
@@ -146,38 +173,48 @@ try {
           </div>
         `;
 
-      try {
-          await sendEmail({
-            to: builderEmails.join(', '),
-            subject,
-            html,
-            attachments: invitationPDF ? [{
-              filename: `Invitation-${event_name.replace(/[^a-zA-Z0-9]/g, '-')}-${eventId}.pdf`,
-              content: invitationPDF,
-              contentType: 'application/pdf'
-            }] : []
-          });
-          console.log(`Invitation with PDF sent to ${builderEmails.length} builders`);
-        } catch (emailErr) {
-          console.error('Builder email+PDF failed:', emailErr);
+          try {
+            await sendEmail({
+              to: builderEmails.join(', '),
+              subject,
+              html,
+              attachments: invitationPDF ? [{
+                filename: `Invitation-${event_name.replace(/[^a-zA-Z0-9]/g, '-')}-${eventId}.pdf`,
+                content: invitationPDF,
+                contentType: 'application/pdf'
+              }] : []
+            });
+            console.log(`Invitation with PDF sent to ${builderEmails.length} builders`);
+          } catch (emailErr) {
+            console.error('Builder email+PDF failed:', emailErr);
+          }
         }
       }
     }
 
     // ────────────────────────────────────────────────
-    //     NEW: Notify ALL BUYERS
+    //     Notify ALL BUYERS
     // ────────────────────────────────────────────────
-    const [buyers] = await pool.query(
-      `SELECT name, email FROM buyers WHERE email IS NOT NULL AND email != ''`
-    );
+    if (shouldNotifyBuyers) {
+      let buyers;
+      if (buyerIds && buyerIds.length > 0) {
+        [buyers] = await pool.query(
+          `SELECT name, email FROM buyers WHERE id IN (?) AND email IS NOT NULL AND email != ''`,
+          [buyerIds]
+        );
+      } else {
+        [buyers] = await pool.query(
+          `SELECT name, email FROM buyers WHERE email IS NOT NULL AND email != ''`
+        );
+      }
 
-    if (buyers.length > 0) {
-      const buyerEmails = buyers.map(b => b.email).filter(Boolean);
+      if (buyers.length > 0) {
+        const buyerEmails = buyers.map(b => b.email).filter(Boolean);
 
-      if (buyerEmails.length > 0) {
-        const subject = `Join Us at ${event_name}!`;
+        if (buyerEmails.length > 0) {
+          const subject = `Join Us at ${event_name}!`;
 
-        const buyerHtml = `
+          const buyerHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <h2 style="color: #2e6171; text-align: center;">Exciting Property Event Invitation – NativeNest</h2>
             
@@ -209,26 +246,28 @@ try {
           </div>
         `;
 
-        try {
-          await sendEmail({
-            to: buyerEmails.join(', '),
-            subject,
-            html,
-            attachments: invitationPDF ? [{
-              filename: `Invitation-${event_name.replace(/[^a-zA-Z0-9]/g, '-')}-${eventId}.pdf`,
-              content: invitationPDF,
-              contentType: 'application/pdf'
-            }] : []
-          });
-          console.log(`Invitation with PDF sent to ${buyerEmails.length} buyers`);
-        } catch (emailErr) {
-          console.error('Buyer email+PDF failed:', emailErr);
+          try {
+            await sendEmail({
+              to: buyerEmails.join(', '),
+              subject,
+              html: buyerHtml,
+              attachments: invitationPDF ? [{
+                filename: `Invitation-${event_name.replace(/[^a-zA-Z0-9]/g, '-')}-${eventId}.pdf`,
+                content: invitationPDF,
+                contentType: 'application/pdf'
+              }] : []
+            });
+            console.log(`Invitation with PDF sent to ${buyerEmails.length} buyers`);
+          } catch (emailErr) {
+            console.error('Buyer email+PDF failed:', emailErr);
+          }
         }
       }
     }
-    res.status(201).json({ 
+
+    res.status(201).json({
       message: 'Event created successfully',
-      eventId 
+      eventId
     });
 
   } catch (error) {
@@ -284,8 +323,8 @@ const getEventById = async (req, res) => {
     }
 
     const event = rows[0];
-    event.banner_image = event.banner_image 
-      ? `data:image/jpeg;base64,${Buffer.from(event.banner_image).toString('base64')}` 
+    event.banner_image = event.banner_image
+      ? `data:image/jpeg;base64,${Buffer.from(event.banner_image).toString('base64')}`
       : null;
 
     res.status(200).json(event);
@@ -309,8 +348,22 @@ const updateEvent = async (req, res) => {
     const {
       event_name, event_type, event_location, city, state,
       start_date, end_date, start_time, end_time, description,
-      contact_name, contact_phone, stall_count
+      contact_name, contact_phone, stall_count,
+      notify_builders, notify_buyers, selected_builders, selected_buyers
     } = req.body;
+
+    const shouldNotifyBuilders = notify_builders === 'true' || notify_builders === true;
+    const shouldNotifyBuyers = notify_buyers === 'true' || notify_buyers === true;
+
+    // Parse selected IDs (if any)
+    let builderIds = [];
+    let buyerIds = [];
+    try {
+      if (selected_builders) builderIds = JSON.parse(selected_builders);
+      if (selected_buyers) buyerIds = JSON.parse(selected_buyers);
+    } catch (e) {
+      console.error("Error parsing selected IDs:", e);
+    }
 
     if (!event_name || !event_location || !city || !state || !start_date || !end_date) {
       return res.status(400).json({ error: 'Required fields missing' });
@@ -335,6 +388,136 @@ const updateEvent = async (req, res) => {
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // If notifications are requested, send them
+    if (shouldNotifyBuilders || shouldNotifyBuyers) {
+      // Get current event to ensure we have all data (including banner if not just uploaded)
+      const [rows] = await pool.query('SELECT * FROM property_events WHERE id = ?', [id]);
+      const event = rows[0];
+
+      const eventForPDF = {
+        ...event,
+        banner_image: bannerImage || event.banner_image
+      };
+
+      let invitationPDF;
+      try {
+        invitationPDF = await generateEventInvitationPDF(eventForPDF);
+      } catch (pdfErr) {
+        console.error('PDF generation failed in update:', pdfErr);
+      }
+
+      const formatDate = (date) =>
+        new Date(date).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+
+      const formatTime = (time) => time ? time.slice(0, 5) : 'N/A';
+      const eventDateStr = `${formatDate(start_date)}${end_date && start_date !== end_date ? ' – ' + formatDate(end_date) : ''}`;
+
+      if (shouldNotifyBuilders) {
+        let builders;
+        if (builderIds && builderIds.length > 0) {
+          [builders] = await pool.query(
+            `SELECT name, email FROM builders WHERE id IN (?) AND email IS NOT NULL AND email != ''`,
+            [builderIds]
+          );
+        } else {
+          [builders] = await pool.query(
+            `SELECT name, email FROM builders WHERE email IS NOT NULL AND email != ''`
+          );
+        }
+
+        if (builders.length > 0) {
+          const builderEmails = builders.map(b => b.email).filter(Boolean);
+          const subject = `Event Update: ${event_name}`;
+          const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+              <h2 style="color: #2e6171; text-align: center;">Event Updated – NativeNest</h2>
+              <p style="font-size: 16px;">Dear Builder,</p>
+              <p>The following property event has been updated on the platform:</p>
+              <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr><td style="padding: 8px 0; font-weight: bold; width: 140px;">Event Name:</td><td>${event_name}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Type:</td><td>${event_type}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${city}, ${state}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Date:</td><td>${eventDateStr}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Time:</td><td>${formatTime(start_time)} – ${formatTime(end_time)}</td></tr>
+                ${description ? `<tr><td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Description:</td><td>${description.replace(/\n/g, '<br>')}</td></tr>` : ''}
+              </table>
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="https://yoursite.com/events/${id}" style="background: #2e6171; color: white; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Updated Details</a>
+              </p>
+              <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">Regards,<br><strong>NativeNest Team</strong></p>
+            </div>`;
+
+          try {
+            await sendEmail({
+              to: builderEmails.join(', '),
+              subject,
+              html,
+              attachments: invitationPDF ? [{
+                filename: `Invitation-${event_name.replace(/[^a-zA-Z0-9]/g, '-')}-${id}.pdf`,
+                content: invitationPDF,
+                contentType: 'application/pdf'
+              }] : []
+            });
+          } catch (emailErr) {
+            console.error('Update builder email failed:', emailErr);
+          }
+        }
+      }
+
+      if (shouldNotifyBuyers) {
+        let buyers;
+        if (buyerIds && buyerIds.length > 0) {
+          [buyers] = await pool.query(
+            `SELECT name, email FROM buyers WHERE id IN (?) AND email IS NOT NULL AND email != ''`,
+            [buyerIds]
+          );
+        } else {
+          [buyers] = await pool.query(
+            `SELECT name, email FROM buyers WHERE email IS NOT NULL AND email != ''`
+          );
+        }
+
+        if (buyers.length > 0) {
+          const buyerEmails = buyers.map(b => b.email).filter(Boolean);
+          const subject = `Update regarding ${event_name}`;
+          const buyerHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+              <h2 style="color: #2e6171; text-align: center;">Event Update – NativeNest</h2>
+              <p style="font-size: 16px;">Dear Buyer,</p>
+              <p>There has been an update to an upcoming property event:</p>
+              <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr><td style="padding: 8px 0; font-weight: bold; width: 140px;">Event Name:</td><td>${event_name}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${city}, ${state}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Date:</td><td>${eventDateStr}</td></tr>
+              </table>
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="https://yoursite.com/events/${id}" style="background: #2e6171; color: white; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Details</a>
+              </p>
+              <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">Regards,<br><strong>NativeNest Team</strong></p>
+            </div>`;
+
+          try {
+            await sendEmail({
+              to: buyerEmails.join(', '),
+              subject,
+              html: buyerHtml,
+              attachments: invitationPDF ? [{
+                filename: `Invitation-${event_name.replace(/[^a-zA-Z0-9]/g, '-')}-${id}.pdf`,
+                content: invitationPDF,
+                contentType: 'application/pdf'
+              }] : []
+            });
+          } catch (emailErr) {
+            console.error('Update buyer email failed:', emailErr);
+          }
+        }
+      }
     }
 
     res.status(200).json({ message: 'Event updated successfully' });
@@ -400,7 +583,7 @@ const getEventInvitationPDF = async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="Invitation-${event.event_name.replace(/[^a-zA-Z0-9]/g,'-')}-${event.id}.pdf"`
+      `attachment; filename="Invitation-${event.event_name.replace(/[^a-zA-Z0-9]/g, '-')}-${event.id}.pdf"`
     );
 
     res.send(pdfBuffer);

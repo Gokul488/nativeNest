@@ -18,9 +18,11 @@ const BuilderStallInterests = () => {
 
   const [interests, setInterests] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [attendanceFilter, setAttendanceFilter] = useState("all"); // New State
+  const [attendanceFilter, setAttendanceFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const displayEventName = eventNameHint || (interests.length > 0 ? interests[0].event_name : "");
 
   useEffect(() => {
     const fetchInterests = async () => {
@@ -65,20 +67,24 @@ const BuilderStallInterests = () => {
       {/* Top Header - Stats Section (Matching EventParticipants design) */}
       <div className="p-4 sm:p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col items-start gap-4">
         <div className="flex items-center gap-4 w-full">
-          <Link to="/builder-dashboard/events" className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600">
+          <Link to="/builder-dashboard/events" className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600 shrink-0">
             <FaArrowLeft />
           </Link>
-          <div className="flex-1">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight truncate">
-              {eventNameHint ? `${eventNameHint} Leads` : "Buyer Interests"}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight">
+              Buyer Interests
             </h2>
-            <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Stall Visit Management</p>
+            {displayEventName && (
+              <p className="text-teal-600 font-bold flex items-center gap-2 text-sm sm:text-base mt-0.5 truncate uppercase tracking-tight italic">
+                {displayEventName}
+              </p>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full">
           <div className="text-center p-2 sm:px-4 sm:py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="text-[8px] sm:text-xs text-gray-400 font-bold uppercase italic truncate">Total Leads</div>
+            <div className="text-[8px] sm:text-xs text-gray-400 font-bold uppercase italic truncate">Total Visitors</div>
             <div className="text-base sm:text-lg font-black text-gray-800">{stats.total}</div>
           </div>
           <div className="text-center p-2 sm:px-4 sm:py-2 bg-green-50 rounded-lg border border-green-100 shadow-sm">
@@ -111,12 +117,12 @@ const BuilderStallInterests = () => {
             onChange={(e) => setAttendanceFilter(e.target.value)}
             className="w-full xl:w-48 border border-gray-300 bg-white px-4 py-2 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 outline-none"
           >
-            <option value="all">All Status</option>
+            <option value="all">All Visitors</option>
             <option value="attended">Visited Stall</option>
             <option value="not-attended">Not Visited</option>
           </select>
           <span className="hidden xl:block bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold">
-            {filteredInterests.length} Leads Found
+            {filteredInterests.length} Visitors Found
           </span>
         </div>
       </div>
@@ -126,12 +132,12 @@ const BuilderStallInterests = () => {
         {loading ? (
           <div className="absolute inset-0 bg-white/80 z-20 flex justify-center items-center gap-3 text-gray-500">
             <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
-            Loading Leads...
+            Loading Visitors...
           </div>
         ) : filteredInterests.length === 0 ? (
           <div className="py-20 text-center text-gray-500 flex flex-col items-center gap-3">
             <FaInfoCircle className="text-4xl opacity-50" />
-            <p className="text-lg">No leads match your criteria.</p>
+            <p className="text-lg">No Visitors match your criteria.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

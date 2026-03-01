@@ -105,7 +105,7 @@ const BuilderEvents = () => {
               {events.length} Live Events
             </span>
           </div>
-          <p className="text-gray-500 text-sm mt-1">Select an exhibition to reserve your stall space or view leads</p>
+          <p className="text-gray-500 text-sm mt-1">Select an exhibition to reserve your stall space</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
@@ -155,7 +155,7 @@ const BuilderEvents = () => {
                       <div className="flex items-center">Exhibition Details {getSortIcon("event_name")}</div>
                     </th>
                     <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Schedule</th>
-                    <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Leads</th>
+                    <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Visitors</th>
                     <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Book Stall</th>
                   </tr>
                 </thead>
@@ -234,7 +234,7 @@ const BuilderEvents = () => {
                       to={`/builder-dashboard/interests?eventId=${event.id}`}
                       className="flex items-center justify-center gap-2 py-2.5 bg-orange-50 text-orange-600 rounded-xl font-bold text-xs border border-orange-100 active:scale-95 transition-transform"
                     >
-                      <FaUsers size={14} /> Leads
+                      <FaUsers size={14} /> Visitors
                     </Link>
                     <Link
                       to={`/builder-dashboard/stall-booking/${event.id}`}

@@ -96,6 +96,11 @@ const getStallTypesWithAvailabilityForEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
 
+    const [[event]] = await pool.query(
+      'SELECT event_name FROM property_events WHERE id = ?',
+      [eventId]
+    );
+
     const [types] = await pool.query(`
       SELECT 
         st.stall_type_id,
@@ -114,7 +119,10 @@ const getStallTypesWithAvailabilityForEvent = async (req, res) => {
       ORDER BY st.stall_price ASC
     `, [eventId]);
 
-    res.json({ stallTypes: types || [] });
+    res.json({
+      eventName: event ? event.event_name : 'Unknown Event',
+      stallTypes: types || []
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to load stall types' });

@@ -17,6 +17,7 @@ const StallBooking = () => {
   const navigate = useNavigate();
 
   const [stallTypes, setStallTypes] = useState([]);
+  const [eventName, setEventName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -36,7 +37,8 @@ const StallBooking = () => {
         throw new Error(err.error || 'Failed to load stall types');
       }
 
-      const { stallTypes } = await res.json();
+      const { eventName, stallTypes } = await res.json();
+      setEventName(eventName);
       setStallTypes(stallTypes);
     } catch (err) {
       setError(err.message);
@@ -100,7 +102,7 @@ const StallBooking = () => {
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Select Stall Type</h2>
-              <p className="text-gray-500 text-xs sm:text-sm truncate">Event ID: #{eventId} • Choose your desired configuration</p>
+              <p className="text-teal-600 font-bold flex items-center gap-2 text-sm sm:text-base mt-0.5 truncate uppercase tracking-tight italic">{eventName || `ID: #${eventId}`} </p>
             </div>
           </div>
           <div className="bg-teal-100 text-teal-700 px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-sm font-bold flex items-center gap-2">
@@ -137,8 +139,8 @@ const StallBooking = () => {
                 <div
                   key={type.stall_type_id}
                   className={`relative bg-white p-6 rounded-2xl border transition-all duration-300 flex flex-col ${type.available_count > 0
-                      ? 'border-gray-200 hover:border-teal-500 hover:shadow-xl'
-                      : 'opacity-70 bg-gray-50'
+                    ? 'border-gray-200 hover:border-teal-500 hover:shadow-xl'
+                    : 'opacity-70 bg-gray-50'
                     }`}
                 >
                   <div className="flex justify-between items-start mb-4">

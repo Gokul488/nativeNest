@@ -34,7 +34,16 @@ const EditPropertyEvent = () => {
     contact_name: "",
     contact_phone: "",
     stall_count: 0,
+    notify_builders: false,
+    notify_buyers: false,
   });
+
+  const [allBuilders, setAllBuilders] = useState([]);
+  const [allBuyers, setAllBuyers] = useState([]);
+  const [selectedBuilderIds, setSelectedBuilderIds] = useState([]);
+  const [selectedBuyerIds, setSelectedBuyerIds] = useState([]);
+  const [searchTermBuilders, setSearchTermBuilders] = useState("");
+  const [searchTermBuyers, setSearchTermBuyers] = useState("");
 
   const [bannerImage, setBannerImage] = useState(null);
   const [currentBanner, setCurrentBanner] = useState(null);
@@ -75,14 +84,45 @@ const EditPropertyEvent = () => {
       }
     };
 
+    const fetchUsersAndBuilders = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const [buildersRes, buyersRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/admin/builders`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_BASE_URL}/api/admin/users`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+        setAllBuilders(buildersRes.data);
+        setAllBuyers(buyersRes.data);
+      } catch (err) {
+        console.error("Failed to fetch users/builders", err);
+      }
+    };
+
     fetchEvent();
+    fetchUsersAndBuilders();
   }, [id]);
 
+  const toggleBuilderSelection = (id) => {
+    setSelectedBuilderIds(prev =>
+      prev.includes(id) ? prev.filter(bId => bId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleBuyerSelection = (id) => {
+    setSelectedBuyerIds(prev =>
+      prev.includes(id) ? prev.filter(bId => bId !== id) : [...prev, id]
+    );
+  };
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "stall_count" ? parseInt(value) || 0 : value
+      [name]: type === "checkbox" ? checked : (name === "stall_count" ? parseInt(value) || 0 : value)
     }));
   };
 
@@ -116,6 +156,10 @@ const EditPropertyEvent = () => {
       for (const key in formData) {
         data.append(key, formData[key]);
       }
+
+      data.append('selected_builders', JSON.stringify(selectedBuilderIds));
+      data.append('selected_buyers', JSON.stringify(selectedBuyerIds));
+
       if (bannerImage) {
         data.append('banner_image', bannerImage);
       }
@@ -315,6 +359,128 @@ const EditPropertyEvent = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Section 7: Notifications Settings */}
+          <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50 space-y-6">
+            <h3 className="text-gray-800 font-bold flex items-center gap-2">
+              <FaCheckCircle className="text-blue-600" /> Notifications Settings
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">You can selectively notify users about this event update:</p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Builders Section */}
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    name="notify_builders"
+                    checked={formData.notify_builders}
+                    onChange={handleChange}
+                    className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500 transition-all cursor-pointer"
+                  />
+                  <span className="text-sm font-bold text-gray-800 group-hover:text-teal-700 transition-colors uppercase tracking-wide">Notify Builders</span>
+                </label>
+
+                {formData.notify_builders && (
+                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="p-3 bg-gray-50 border-b border-gray-200">
+                      <input
+                        type="text"
+                        placeholder="Search builders..."
+                        value={searchTermBuilders}
+                        onChange={(e) => setSearchTermBuilders(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-teal-500"
+                      />
+                      <div className="mt-2 flex justify-between items-center text-[10px] font-bold uppercase text-gray-400">
+                        <span>{selectedBuilderIds.length} Selected</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBuilderIds(selectedBuilderIds.length === allBuilders.length ? [] : allBuilders.map(b => b.id))}
+                          className="text-teal-600 hover:text-teal-700"
+                        >
+                          {selectedBuilderIds.length === allBuilders.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto p-2 space-y-1">
+                      {allBuilders
+                        .filter(b => b.name.toLowerCase().includes(searchTermBuilders.toLowerCase()) || b.email?.toLowerCase().includes(searchTermBuilders.toLowerCase()))
+                        .map(builder => (
+                          <div
+                            key={builder.id}
+                            onClick={() => toggleBuilderSelection(builder.id)}
+                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${selectedBuilderIds.includes(builder.id) ? 'bg-teal-50 border-teal-100' : 'hover:bg-gray-50'}`}
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-gray-800">{builder.name}</span>
+                              <span className="text-[10px] text-gray-500">{builder.email}</span>
+                            </div>
+                            {selectedBuilderIds.includes(builder.id) && <FaCheckCircle className="text-teal-500 text-sm" />}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Buyers Section */}
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    name="notify_buyers"
+                    checked={formData.notify_buyers}
+                    onChange={handleChange}
+                    className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500 transition-all cursor-pointer"
+                  />
+                  <span className="text-sm font-bold text-gray-800 group-hover:text-teal-700 transition-colors uppercase tracking-wide">Notify Buyers</span>
+                </label>
+
+                {formData.notify_buyers && (
+                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="p-3 bg-gray-50 border-b border-gray-200">
+                      <input
+                        type="text"
+                        placeholder="Search buyers..."
+                        value={searchTermBuyers}
+                        onChange={(e) => setSearchTermBuyers(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-teal-500"
+                      />
+                      <div className="mt-2 flex justify-between items-center text-[10px] font-bold uppercase text-gray-400">
+                        <span>{selectedBuyerIds.length} Selected</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBuyerIds(selectedBuyerIds.length === allBuyers.length ? [] : allBuyers.map(b => b.id))}
+                          className="text-teal-600 hover:text-teal-700"
+                        >
+                          {selectedBuyerIds.length === allBuyers.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto p-2 space-y-1">
+                      {allBuyers
+                        .filter(b => b.name.toLowerCase().includes(searchTermBuyers.toLowerCase()) || b.email?.toLowerCase().includes(searchTermBuyers.toLowerCase()))
+                        .map(buyer => (
+                          <div
+                            key={buyer.id}
+                            onClick={() => toggleBuyerSelection(buyer.id)}
+                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${selectedBuyerIds.includes(buyer.id) ? 'bg-teal-50 border-teal-100' : 'hover:bg-gray-50'}`}
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-gray-800">{buyer.name}</span>
+                              <span className="text-[10px] text-gray-500">{buyer.email}</span>
+                            </div>
+                            {selectedBuyerIds.includes(buyer.id) && <FaCheckCircle className="text-teal-500 text-sm" />}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <p className="text-[10px] text-gray-500 italic"> * If no specific users are selected but a category is checked, all users in that category will be notified by default.</p>
           </div>
 
           {/* Action Button */}
