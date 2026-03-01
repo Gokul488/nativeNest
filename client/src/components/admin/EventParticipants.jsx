@@ -155,7 +155,7 @@ const EventParticipants = () => {
         {!loading && !error && filteredParticipants.length > 0 && (
           <>
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
@@ -212,7 +212,7 @@ const EventParticipants = () => {
             </div>
 
             {/* Mobile Card View */}
-            <div className="md:hidden p-4 space-y-4">
+            <div className="xl:hidden p-4 space-y-4">
               {filteredParticipants.map((p, index) => {
                 const isAttended = p.is_attended === 1 || p.is_attended === "1" || p.is_attended === true;
                 return (

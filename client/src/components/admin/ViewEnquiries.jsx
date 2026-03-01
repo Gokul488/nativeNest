@@ -116,7 +116,7 @@ const ViewEnquiries = () => {
         {!loading && !error && filteredEnquiries.length > 0 && (
           <>
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
@@ -166,7 +166,7 @@ const ViewEnquiries = () => {
             </div>
 
             {/* Mobile Card View */}
-            <div className="md:hidden p-4 space-y-4">
+            <div className="xl:hidden p-4 space-y-4">
               {paginatedEnquiries.map((enquiry, index) => (
                 <div key={enquiry.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
                   <div className="flex justify-between items-start border-b border-gray-200 pb-2">
