@@ -13,7 +13,6 @@ const PropertyDetails = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [allImages, setAllImages] = useState([]);
   const [videoError, setVideoError] = useState('');
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const navigate = useNavigate();
 
   const getGuestId = () => {
@@ -106,12 +105,6 @@ const PropertyDetails = () => {
 
   // Handle Interested Button Click
   const handleInterested = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setShowRegisterModal(true);
-      return;
-    }
-
     if (!property.mobile_number) {
       alert("No contact number available for this property.");
       return;
@@ -124,13 +117,13 @@ const PropertyDetails = () => {
   // Build full address string safely
   const fullAddress = property
     ? [
-        property.address,
-        property.city,
-        property.state,
-        property.pincode || '', // if pincode exists in your data
-      ]
-        .filter(Boolean)
-        .join(', ')
+      property.address,
+      property.city,
+      property.state,
+      property.pincode || '', // if pincode exists in your data
+    ]
+      .filter(Boolean)
+      .join(', ')
     : '';
 
   // Encode address for Google Maps iframe
@@ -305,10 +298,10 @@ const PropertyDetails = () => {
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                 {property.amenities.map((amenity) => {
-                  const iconClass = amenity.icon 
-                    ? (amenity.icon.startsWith('fa') ? `fas ${amenity.icon}` : amenity.icon) 
+                  const iconClass = amenity.icon
+                    ? (amenity.icon.startsWith('fa') ? `fas ${amenity.icon}` : amenity.icon)
                     : 'fas fa-check-circle';
-                  
+
                   return (
                     <motion.div
                       key={amenity.id}
@@ -503,11 +496,10 @@ const PropertyDetails = () => {
                   <img
                     src={property.cover_image}
                     alt="Cover thumb"
-                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all ${
-                      selectedImage === property.cover_image
-                        ? 'border-[#2e6171] shadow-md scale-105'
-                        : 'border-transparent hover:border-gray-300'
-                    }`}
+                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all ${selectedImage === property.cover_image
+                      ? 'border-[#2e6171] shadow-md scale-105'
+                      : 'border-transparent hover:border-gray-300'
+                      }`}
                     onClick={() => setSelectedImage(property.cover_image)}
                   />
                 )}
@@ -516,11 +508,10 @@ const PropertyDetails = () => {
                     key={i}
                     src={img}
                     alt={`Thumb ${i + 1}`}
-                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all ${
-                      selectedImage === img
-                        ? 'border-[#2e6171] shadow-md scale-105'
-                        : 'border-transparent hover:border-gray-300'
-                    }`}
+                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all ${selectedImage === img
+                      ? 'border-[#2e6171] shadow-md scale-105'
+                      : 'border-transparent hover:border-gray-300'
+                      }`}
                     onClick={() => setSelectedImage(img)}
                   />
                 ))}
@@ -530,47 +521,6 @@ const PropertyDetails = () => {
         </motion.div>
       )}
 
-      {/* Register Modal */}
-      {showRegisterModal && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 z-50 flex-center p-4 md:p-8 backdrop-blur-sm"
-          onClick={() => setShowRegisterModal(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
-            className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden p-6 text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-2xl font-bold text-[#011936] mb-4">Registration Required</h3>
-            <p className="text-gray-600 mb-6">Please register or login to send a message to the builder.</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => { setShowRegisterModal(false); navigate('/register'); }}
-                className="bg-[#2e6171] text-white px-6 py-2 rounded-full font-medium hover:bg-[#011936] transition"
-              >
-                Register
-              </button>
-              <button
-                onClick={() => { setShowRegisterModal(false); navigate('/login'); }}
-                className="bg-gray-200 text-[#011936] px-6 py-2 rounded-full font-medium hover:bg-gray-300 transition"
-              >
-                Login
-              </button>
-            </div>
-            <button
-              onClick={() => setShowRegisterModal(false)}
-              className="mt-4 text-gray-500 hover:text-gray-700 text-sm"
-            >
-              Close
-            </button>
-          </motion.div>
-        </motion.div>
-      )}
 
       <Footer />
 

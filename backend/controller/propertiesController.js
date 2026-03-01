@@ -79,8 +79,8 @@ const createProperty = async (req, res) => {
 
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
     const video = req.files?.['video']?.[0] || null;
-    const images = req.files && req.files['images[]'] ? 
-      (Array.isArray(req.files['images[]']) ? req.files['images[]'] : [req.files['images[]']]) 
+    const images = req.files && req.files['images[]'] ?
+      (Array.isArray(req.files['images[]']) ? req.files['images[]'] : [req.files['images[]']])
       : [];
 
     const connection = await pool.getConnection();
@@ -114,7 +114,7 @@ const createProperty = async (req, res) => {
             'SELECT amenity_id FROM amenities WHERE amenity_id = ?',
             [amenityId]
           );
-          
+
           if (amenityCheck.length > 0) {
             await connection.query(
               'INSERT INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
@@ -249,7 +249,7 @@ const getFeaturedProperties = async (req, res) => {
   try {
     const { location, priceRange, propertyType, builder } = req.query;
 
-let query = `
+    let query = `
       SELECT
         p.property_id AS id,
         p.title,
@@ -293,9 +293,9 @@ let query = `
     }
 
     if (builder && builder !== 'All') {
-          conditions.push(`b.name = ?`);  
-          params.push(builder);
-        }
+      conditions.push(`b.name = ?`);
+      params.push(builder);
+    }
 
     if (conditions.length > 0) {
       query += ` WHERE ` + conditions.join(' AND ');
@@ -455,8 +455,8 @@ const getPropertyById = async (req, res) => {
         p.video,
         p.views,
         b.name,
-        a.mobile_number,
-        a.email,
+        COALESCE(a.mobile_number, b.mobile_number) AS mobile_number,
+        COALESCE(a.email, b.email) AS email,
         b.name AS builderName
       FROM properties p
       LEFT JOIN builders b ON p.builder_id = b.id
@@ -501,8 +501,8 @@ const getPropertyById = async (req, res) => {
     ========================= */
     const coverImage = property.cover_image
       ? `data:image/jpeg;base64,${Buffer.from(
-          property.cover_image
-        ).toString("base64")}`
+        property.cover_image
+      ).toString("base64")}`
       : null;
 
     const imageBase64s = images.map(img =>
@@ -602,7 +602,7 @@ const getMostViewedProperties = async (req, res) => {
     const properties = rows.map(p => ({
       ...p,
       builderName: p.builderName || 'Unknown',
-      cover_image: p.cover_image 
+      cover_image: p.cover_image
         ? `data:image/jpeg;base64,${Buffer.from(p.cover_image).toString('base64')}`
         : null
     }));
@@ -671,12 +671,12 @@ const getAllBuilders = async (req, res) => {
   }
 };
 
-module.exports = { 
-  createProperty, 
-  getPropertyTypes, 
-  getFeaturedProperties, 
-  getPropertyById, 
-  getMaxPrice, 
+module.exports = {
+  createProperty,
+  getPropertyTypes,
+  getFeaturedProperties,
+  getPropertyById,
+  getMaxPrice,
   getBuilders,
   getAmenities,
   getMostViewedProperties,

@@ -39,16 +39,15 @@ router.get('/builders', getBuilders);
 router.get('/builders-list', getAllBuilders);
 router.get('/featured', getFeaturedProperties);
 router.get('/max-price', getMaxPrice);
+router.get('/:id', getPropertyById);
 
 // ────────────────────────────────────────────────
 //  PROTECTED ROUTES
 // ────────────────────────────────────────────────
 router.use(authMiddleware);
 
-router.get('/most-viewed', getMostViewedProperties); 
+router.get('/most-viewed', getMostViewedProperties);
 router.get('/:propertyId/viewers', getPropertyViewers);
-
-router.get('/:id', getPropertyById); 
 
 router.post('/', upload.fields([
   { name: 'cover_image', maxCount: 1 },
