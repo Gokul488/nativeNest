@@ -1,7 +1,7 @@
 // src/components/ViewProperties.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaCity, FaRupeeSign, FaInfoCircle, FaMapMarkerAlt, FaUserTie } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaCity, FaRupeeSign, FaInfoCircle, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 
 const ViewProperties = () => {
@@ -9,7 +9,16 @@ const ViewProperties = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'city', direction: 'asc' });
   const navigate = useNavigate();
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -38,12 +47,27 @@ const ViewProperties = () => {
   }, [navigate]);
 
   const filteredProperties = useMemo(() => {
-    return properties.filter(p =>
+    let items = properties.filter(p =>
       p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.builder_name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [properties, searchQuery]);
+
+    if (sortConfig.key !== null) {
+      items.sort((a, b) => {
+        const aValue = a[sortConfig.key] || "";
+        const bValue = b[sortConfig.key] || "";
+        if (aValue.toString().toLowerCase() < bValue.toString().toLowerCase()) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue.toString().toLowerCase() > bValue.toString().toLowerCase()) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return items;
+  }, [properties, searchQuery, sortConfig]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this property?')) return;
@@ -115,52 +139,63 @@ const ViewProperties = () => {
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
-                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                    <th className="w-1/3 px-6 py-4 text-left border-b border-gray-200">Property Details</th>
-                    <th className="w-40 px-4 py-4 text-center border-b border-gray-200">Builder</th>
-                    <th className="w-32 px-4 py-4 text-center border-b border-gray-200">Price</th>
-                    <th className="w-36 px-6 py-4 text-center border-b border-gray-200">Actions</th>
+                    <th className="w-14 px-6 py-3 text-left border-b border-gray-200">#</th>
+                    <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Property Details</th>
+                    <th
+                      className="w-1/4 px-6 py-3 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => requestSort('city')}
+                    >
+                      <div className="flex items-center gap-2">
+                        City
+                        {sortConfig.key === 'city' ? (
+                          sortConfig.direction === 'asc' ? <FaSortUp className="text-teal-600" /> : <FaSortDown className="text-teal-600" />
+                        ) : (
+                          <FaSort className="text-gray-300" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="w-1/4 px-4 py-3 text-left border-b border-gray-200">Builder</th>
+                    <th className="w-32 px-4 py-3 text-right border-b border-gray-200">Price</th>
+                    <th className="w-36 px-6 py-3 text-center border-b border-gray-200">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {filteredProperties.map((property, index) => (
                     <tr key={property.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <td className="px-6 py-2.5 text-sm text-gray-400 font-mono border-b border-gray-100">
                         {String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 mb-1">{property.title}</div>
-                        <div className="flex items-center gap-3 text-xs">
-                          <span className="flex items-center gap-1 text-teal-600 font-medium whitespace-nowrap">
-                            <FaMapMarkerAlt /> {property.city}
-                          </span>
-                          <span className="text-gray-400 truncate max-w-[150px]">
-                            {property.address || 'No address'}
-                          </span>
+                      <td className="px-6 py-2.5 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 mb-0.5">{property.title}</div>
+                      </td>
+                      <td className="px-6 py-2.5 border-b border-gray-100">
+                        <div className="flex items-center gap-2 text-gray-700 text-sm">
+                          <FaMapMarkerAlt className="text-teal-600 shrink-0" />
+                          <span>{property.city || 'N/A'}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-5 text-center border-b border-gray-100">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-xs font-bold">
+                      <td className="px-4 py-2.5 text-left border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-bold">
                           <FaUserTie className="text-teal-600 shrink-0" /> <span className="truncate max-w-[100px]">{property.builder_name || 'N/A'}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-5 text-center border-b border-gray-100">
+                      <td className="px-4 py-2.5 text-right border-b border-gray-100">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           ₹{Math.floor(property.price).toLocaleString('en-IN')}
                         </span>
                       </td>
-                      <td className="px-6 py-5 text-right border-b border-gray-100">
+                      <td className="px-6 py-2.5 text-right border-b border-gray-100">
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
-                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition"
                             title="Edit"
                           >
-                            <FaEdit size={18} />
+                            <FaEdit size={16} />
                           </button>
                           <button
                             onClick={() => handleDelete(property.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
                             title="Delete"
                           >
                             <FaTrash size={16} />
@@ -174,9 +209,9 @@ const ViewProperties = () => {
             </div>
 
             {/* Mobile Card View */}
-            <div className="md:hidden p-4 space-y-4">
+            <div className="md:hidden p-4 space-y-2">
               {filteredProperties.map((property, index) => (
-                <div key={property.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                <div key={property.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100 shadow-sm space-y-2">
                   <div className="flex justify-between items-start border-b border-gray-200 pb-2">
                     <div className="flex items-center gap-2">
                       <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">

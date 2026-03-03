@@ -56,8 +56,8 @@ const EditProperty = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [video, setVideo] = useState(null);
-  const [images, setImages] = useState([]); 
-  const [extraImageInputs, setExtraImageInputs] = useState([]); 
+  const [images, setImages] = useState([]);
+  const [extraImageInputs, setExtraImageInputs] = useState([]);
 
   // ── UI state ──────────────────────────────────────────────────
   const [error, setError] = useState("");
@@ -311,9 +311,9 @@ const EditProperty = () => {
   const customStyles = {
     control: (provided) => ({
       ...provided,
-      minHeight: 52,
+      minHeight: 40,
       borderColor: "#d1d5db",
-      borderRadius: "0.75rem",
+      borderRadius: "0.5rem",
       "&:hover": { borderColor: "#9ca3af" },
     }),
     multiValue: (provided) => ({
@@ -325,7 +325,7 @@ const EditProperty = () => {
     multiValueLabel: (provided) => ({
       ...provided,
       color: "#065f46",
-      fontSize: "14px",
+      fontSize: "12px",
     }),
     multiValueRemove: (provided) => ({
       ...provided,
@@ -353,7 +353,7 @@ const EditProperty = () => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
       {/* Header – same as PostProperty */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="p-4 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link
             to="/admin-dashboard/manage-properties"
@@ -378,7 +378,7 @@ const EditProperty = () => {
         </div>
       </div>
 
-      <div className="p-6 lg:p-8 max-w-5xl mx-auto w-full">
+      <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full">
         {error && (
           <div className="mb-6 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 flex items-center gap-3 animate-headShake">
             <FaExclamationTriangle /> {error}
@@ -390,7 +390,7 @@ const EditProperty = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Builder – read only */}
           <div className="space-y-2">
@@ -401,7 +401,7 @@ const EditProperty = () => {
               type="text"
               value={builderName}
               readOnly
-              className="w-full px-5 py-4 border border-gray-300 rounded-xl bg-gray-100 cursor-not-allowed text-lg font-semibold text-gray-700"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed text-base font-semibold text-gray-700"
             />
           </div>
 
@@ -416,7 +416,7 @@ const EditProperty = () => {
               value={formData.title}
               onChange={handleInputChange}
               required
-              className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-lg font-semibold text-gray-800 placeholder:text-gray-400 placeholder:font-normal"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400 placeholder:font-normal"
               placeholder="e.g. 3BHK Luxury Apartment in Anna Nagar"
             />
           </div>
@@ -427,7 +427,7 @@ const EditProperty = () => {
               Description <span className="text-red-500">*</span>
             </label>
             <div className="rounded-xl border border-gray-300 overflow-hidden shadow-sm focus-within:ring-4 focus-within:ring-teal-500/10 focus-within:border-teal-500 transition-all">
-              <div ref={quillRef} className="min-h-[450px] text-gray-700" />
+              <div ref={quillRef} className="min-h-[300px] text-gray-700" />
             </div>
           </div>
 
@@ -444,7 +444,7 @@ const EditProperty = () => {
                 onChange={handleInputChange}
                 step="0.01"
                 required
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-lg font-semibold text-gray-800 placeholder:text-gray-400"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
                 placeholder="e.g. 7500000"
               />
             </div>
@@ -460,7 +460,7 @@ const EditProperty = () => {
                 onChange={handleInputChange}
                 min="1"
                 placeholder="e.g. 1850"
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-lg font-semibold text-gray-800 placeholder:text-gray-400"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -475,7 +475,7 @@ const EditProperty = () => {
               value={formData.property_type}
               onChange={handleInputChange}
               required
-              className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base text-gray-800 bg-white"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800 bg-white"
             >
               {propertyTypes.length ? (
                 propertyTypes.map((t) => (
@@ -501,7 +501,7 @@ const EditProperty = () => {
                 value={formData.address}
                 onChange={handleInputChange}
                 required
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base text-gray-800"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
                 placeholder="e.g. 42, North Street"
               />
             </div>
@@ -516,7 +516,7 @@ const EditProperty = () => {
                 value={formData.city}
                 onChange={handleInputChange}
                 required
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base text-gray-800"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
                 placeholder="e.g. Chennai"
               />
             </div>
@@ -533,7 +533,7 @@ const EditProperty = () => {
                 value={formData.state}
                 onChange={handleInputChange}
                 required
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base text-gray-800"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
                 placeholder="e.g. Tamil Nadu"
               />
             </div>
@@ -548,7 +548,7 @@ const EditProperty = () => {
                 value={formData.country}
                 onChange={handleInputChange}
                 required
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base text-gray-800"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
                 placeholder="e.g. India"
               />
             </div>
@@ -563,7 +563,7 @@ const EditProperty = () => {
                 value={formData.pincode}
                 onChange={handleInputChange}
                 required
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base text-gray-800"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
                 placeholder="e.g. 625001"
               />
             </div>
@@ -596,7 +596,7 @@ const EditProperty = () => {
                   placeholder="Enter custom amenity (e.g. Private Theatre)"
                   value={otherAmenityName}
                   onChange={(e) => setOtherAmenityName(e.target.value)}
-                  className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base text-gray-800"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
                   required
                 />
               </div>
@@ -610,15 +610,15 @@ const EditProperty = () => {
           </div>
 
           {/* ── MEDIA TABS ──────────────────────────────────────────────── */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8" aria-label="Media tabs">
                 <button
                   type="button"
                   onClick={() => setActiveMediaTab("cover")}
-                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "cover"
-                      ? "border-teal-500 text-teal-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  className={`group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "cover"
+                    ? "border-teal-500 text-teal-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     }`}
                 >
                   <FaImage className="mr-2 h-5 w-5" />
@@ -628,9 +628,9 @@ const EditProperty = () => {
                 <button
                   type="button"
                   onClick={() => setActiveMediaTab("gallery")}
-                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "gallery"
-                      ? "border-teal-500 text-teal-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  className={`group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "gallery"
+                    ? "border-teal-500 text-teal-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     }`}
                 >
                   <FaImages className="mr-2 h-5 w-5" />
@@ -638,22 +638,22 @@ const EditProperty = () => {
                 </button>
 
                 <button
-                      type="button"
-                      onClick={() => setActiveMediaTab("video")}
-                      className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "video"
-                          ? "border-teal-500 text-teal-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                      <FaVideo className="mr-2 h-5 w-5" />
-                      Video Tour
+                  type="button"
+                  onClick={() => setActiveMediaTab("video")}
+                  className={`group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "video"
+                    ? "border-teal-500 text-teal-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
+                >
+                  <FaVideo className="mr-2 h-5 w-5" />
+                  Video Tour
                 </button>
 
               </nav>
             </div>
 
             {/* Tab Content */}
-            <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-200">
+            <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
               {/* Cover Image Tab */}
               {activeMediaTab === "cover" && (
                 <div className="space-y-4">
@@ -664,7 +664,7 @@ const EditProperty = () => {
                   {property.cover_image && (
                     <div>
                       <p className="text-sm text-gray-600 mb-3">Current Cover:</p>
-                      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-64 group">
+                      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-48 group">
                         <img
                           src={`data:image/jpeg;base64,${bufferToBase64(property.cover_image)}`}
                           alt="Current cover"
@@ -680,7 +680,7 @@ const EditProperty = () => {
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
+                    <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <FaCloudUploadAlt className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
                         <p className="mb-2 text-lg font-semibold text-gray-700">Click to update cover image</p>
@@ -695,7 +695,7 @@ const EditProperty = () => {
                     </label>
 
                     {coverPreview ? (
-                      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-64 group">
+                      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-48 group">
                         <img
                           src={coverPreview}
                           alt="New cover preview"
@@ -708,7 +708,7 @@ const EditProperty = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="h-64 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-base italic bg-white/50">
+                      <div className="h-48 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-base italic bg-white/50">
                         No new cover selected
                       </div>
                     )}
@@ -741,7 +741,7 @@ const EditProperty = () => {
                         {property.images.map((img, idx) => (
                           <div
                             key={idx}
-                            className="h-40 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group aspect-square"
+                            className="h-28 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group aspect-square"
                           >
                             <img
                               src={`data:image/jpeg;base64,${bufferToBase64(img.image)}`}
@@ -759,9 +759,9 @@ const EditProperty = () => {
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {/* Upload slot */}
-                    <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group aspect-square">
-                      <FaCloudUploadAlt className="text-5xl text-gray-400 group-hover:text-teal-500 mb-3 transition-colors" />
-                      <p className="text-sm font-semibold text-gray-700 text-center">Upload new images</p>
+                    <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group aspect-square">
+                      <FaCloudUploadAlt className="text-4xl text-gray-400 group-hover:text-teal-500 mb-2 transition-colors" />
+                      <p className="text-xs font-semibold text-gray-700 text-center">Upload new images</p>
                       <input
                         type="file"
                         accept="image/*"
@@ -775,7 +775,7 @@ const EditProperty = () => {
                     {images.map((file, idx) => (
                       <div
                         key={idx}
-                        className="h-40 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group aspect-square"
+                        className="h-28 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group aspect-square"
                       >
                         <img
                           src={URL.createObjectURL(file)}
@@ -791,7 +791,7 @@ const EditProperty = () => {
                     {extraImageInputs.map((inp) => (
                       <div
                         key={inp.id}
-                        className="h-40 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative aspect-square"
+                        className="h-28 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative aspect-square"
                       >
                         {inp.file ? (
                           <img
@@ -830,16 +830,16 @@ const EditProperty = () => {
                       <video
                         src={`data:video/mp4;base64,${bufferToBase64(property.video)}`}
                         controls
-                        className="w-full h-56 object-cover rounded-xl border border-gray-200 shadow-lg"
+                        className="w-full h-40 object-cover rounded-xl border border-gray-200 shadow-lg"
                       />
                     </div>
                   )}
 
-                  <label className="flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
+                  <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
                     <div className="flex flex-col items-center justify-center">
-                      <FaVideo className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
-                      <p className="text-lg font-semibold text-gray-700">Upload new video (MP4 recommended)</p>
-                      <p className="text-sm text-gray-500 mt-2">Max size ~50MB suggested</p>
+                      <FaVideo className="text-4xl text-gray-400 group-hover:text-teal-500 mb-2 transition-colors" />
+                      <p className="text-base font-semibold text-gray-700">Upload new video (MP4 recommended)</p>
+                      <p className="text-xs text-gray-500 mt-1">Max size ~50MB suggested</p>
                     </div>
                     <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />
                   </label>
@@ -856,11 +856,11 @@ const EditProperty = () => {
           </div>
 
           {/* Submit */}
-          <div className="pt-10 border-t border-gray-100 flex justify-end">
+          <div className="pt-6 border-t border-gray-100 flex justify-end">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group flex items-center gap-3 bg-linear-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold px-12 py-4 rounded-xl transition-all shadow-lg hover:shadow-teal-200 transform hover:-translate-y-1 active:translate-y-0 disabled:transform-none min-w-72 justify-center"
+              className="group flex items-center gap-3 bg-linear-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold px-8 py-3 rounded-lg transition-all shadow-lg hover:shadow-teal-200 transform hover:-translate-y-1 active:translate-y-0 disabled:transform-none min-w-60 justify-center"
             >
               {isSubmitting ? (
                 <>

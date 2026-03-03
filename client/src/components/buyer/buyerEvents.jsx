@@ -125,55 +125,50 @@ const BuyerEvents = () => {
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
-                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                    <th className="w-1/3 px-6 py-4 text-left border-b border-gray-200">Event Details</th>
-                    <th className="w-40 px-4 py-4 text-center border-b border-gray-200">Type</th>
-                    <th className="w-48 px-4 py-4 text-center border-b border-gray-200">Dates</th>
-                    <th className="w-40 px-6 py-4 text-center border-b border-gray-200">Status</th>
+                    <th className="w-14 px-6 py-3 text-left border-b border-gray-200">#</th>
+                    <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Event Details</th>
+                    <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Location</th>
+                    <th className="w-64 px-4 py-3 text-center border-b border-gray-200">Dates</th>
+                    <th className="w-40 px-6 py-3 text-center border-b border-gray-200">Status</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {filteredEvents.map((event, index) => (
                     <tr key={event.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <td className="px-6 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
                         {String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 mb-1">{event.event_name}</div>
+                      <td className="px-6 py-3 border-b border-gray-100">
+                        <div className="font-bold text-gray-900">{event.event_name}</div>
+                      </td>
+                      <td className="px-6 py-3 border-b border-gray-100">
                         <div className="flex items-center gap-2 text-xs text-teal-600 font-medium">
-                          <FaMapMarkerAlt size={12} />
+                          <FaMapMarkerAlt size={12} className="shrink-0" />
                           <span className="truncate">
                             {event.event_location ? `${event.event_location}, ` : ""}
                             {event.city}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-5 text-center border-b border-gray-100">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
-                          {event.event_type || "Exhibition"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-5 text-center border-b border-gray-100">
-                        <div className="flex flex-col items-center text-xs text-gray-600 gap-1">
-                          <span className="flex items-center gap-1 font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded border border-teal-100">
-                            <FaCalendarAlt className="text-teal-500" />
-                            {new Date(event.start_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}
-                          </span>
-                          <div className="h-2 w-px bg-gray-300"></div>
-                          <span className="font-medium bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                      <td className="px-4 py-3 text-center border-b border-gray-100">
+                        <div className="flex items-center justify-center text-xs text-gray-700 gap-2 whitespace-nowrap font-medium">
+                          <FaCalendarAlt className="text-teal-600" />
+                          <span>
+                            {new Date(event.start_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {" – "}
                             {new Date(event.end_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-5 border-b border-gray-100 text-center">
+                      <td className="px-6 py-3 border-b border-gray-100 text-center">
                         {event.isRegistered ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100">
                             <FaCheckCircle /> Registered
                           </span>
                         ) : (
                           <button
                             onClick={() => setSelectedEvent(event)}
-                            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
+                            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
                           >
                             <FaTicketAlt /> Participate
                           </button>
@@ -194,9 +189,6 @@ const BuyerEvents = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
                           #{String(index + 1).padStart(2, '0')}
-                        </span>
-                        <span className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded text-[10px] font-bold border border-teal-100 uppercase tracking-widest">
-                          {event.event_type || "Exhibition"}
                         </span>
                       </div>
                       <h4 className="font-bold text-gray-900 text-lg leading-tight">{event.event_name}</h4>

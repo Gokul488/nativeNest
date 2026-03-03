@@ -118,19 +118,19 @@ const ManageBuilders = () => {
           <>
             {/* Desktop Table View */}
             <div className="hidden xl:block overflow-x-auto">
-              <table className="w-full table-fixed border-separate border-spacing-0">
+              <table className="w-full border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
                     <th className="w-14 px-4 py-4 text-left border-b border-gray-200">#</th>
-                    <th onClick={() => requestSort("name")} className="w-1/4 px-4 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                    <th onClick={() => requestSort("name")} className="min-w-[180px] px-4 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
                       <div className="flex items-center">Company {getSortIcon("name")}</div>
                     </th>
-                    <th onClick={() => requestSort("contact_person")} className="w-1/4 px-4 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                    <th onClick={() => requestSort("contact_person")} className="min-w-[150px] px-4 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
                       <div className="flex items-center">Contact Person {getSortIcon("contact_person")}</div>
                     </th>
-                    <th className="w-1/5 px-4 py-4 text-left border-b border-gray-200">Mobile Number</th>
-                    <th className="w-1/4 px-4 py-4 text-left border-b border-gray-200">Email Address</th>
-                    <th onClick={() => requestSort("created_at")} className="w-32 px-4 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                    <th className="min-w-[140px] px-4 py-4 text-left border-b border-gray-200">Mobile Number</th>
+                    <th className="min-w-[220px] px-4 py-4 text-left border-b border-gray-200">Email Address</th>
+                    <th onClick={() => requestSort("created_at")} className="min-w-[140px] px-4 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
                       <div className="flex items-center justify-center">Registered {getSortIcon("created_at")}</div>
                     </th>
                   </tr>
@@ -138,33 +138,33 @@ const ManageBuilders = () => {
                 <tbody className="bg-white">
                   {filteredAndSortedBuilders.map((builder, index) => (
                     <tr key={builder.id || index} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-4 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <td className="px-4 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
                         {String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="px-4 py-5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 flex items-center gap-2 truncate">
+                      <td className="px-4 py-3 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 flex items-center gap-2">
                           <FaBuilding className="text-teal-600 text-xs shrink-0" />
-                          <span className="truncate">{builder.name}</span>
+                          <span>{builder.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-5 border-b border-gray-100">
-                        <div className="text-sm font-medium text-gray-700 flex items-center gap-2 truncate">
+                      <td className="px-4 py-3 border-b border-gray-100">
+                        <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
                           <FaUser className="text-gray-400 text-xs shrink-0" />
-                          <span className="truncate">{builder.contact_person || "—"}</span>
+                          <span>{builder.contact_person || "—"}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-5 border-b border-gray-100 text-sm text-gray-700">
+                      <td className="px-4 py-3 border-b border-gray-100 text-sm text-gray-700">
                         <div className="flex items-center gap-2">
                           <FaPhoneAlt className="text-[10px] text-gray-400 shrink-0" /> {builder.mobile_number || "—"}
                         </div>
                       </td>
-                      <td className="px-4 py-5 border-b border-gray-100 text-sm text-gray-500">
-                        <div className="flex items-center gap-2 truncate">
-                          <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> <span className="truncate">{builder.email || "—"}</span>
+                      <td className="px-4 py-3 border-b border-gray-100 text-sm text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> <span>{builder.email || "—"}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-5 text-center border-b border-gray-100">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                      <td className="px-4 py-3 text-center border-b border-gray-100">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
                           <FaCalendarAlt className="text-[10px]" />
                           {new Date(builder.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
