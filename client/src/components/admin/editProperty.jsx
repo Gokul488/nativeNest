@@ -56,8 +56,8 @@ const EditProperty = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [video, setVideo] = useState(null);
-  const [images, setImages] = useState([]);           // new files to upload
-  const [extraImageInputs, setExtraImageInputs] = useState([]); // for UX consistency
+  const [images, setImages] = useState([]); 
+  const [extraImageInputs, setExtraImageInputs] = useState([]); 
 
   // ── UI state ──────────────────────────────────────────────────
   const [error, setError] = useState("");
@@ -391,6 +391,20 @@ const EditProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
+
+          {/* Builder – read only */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+              Builder <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={builderName}
+              readOnly
+              className="w-full px-5 py-4 border border-gray-300 rounded-xl bg-gray-100 cursor-not-allowed text-lg font-semibold text-gray-700"
+            />
+          </div>
+
           {/* Title */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
@@ -404,19 +418,6 @@ const EditProperty = () => {
               required
               className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-lg font-semibold text-gray-800 placeholder:text-gray-400 placeholder:font-normal"
               placeholder="e.g. 3BHK Luxury Apartment in Anna Nagar"
-            />
-          </div>
-
-          {/* Builder – read only */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              Builder <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={builderName}
-              readOnly
-              className="w-full px-5 py-4 border border-gray-300 rounded-xl bg-gray-100 cursor-not-allowed text-lg font-semibold text-gray-700"
             />
           </div>
 
@@ -626,18 +627,6 @@ const EditProperty = () => {
 
                 <button
                   type="button"
-                  onClick={() => setActiveMediaTab("video")}
-                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "video"
-                      ? "border-teal-500 text-teal-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                >
-                  <FaVideo className="mr-2 h-5 w-5" />
-                  Video Tour
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => setActiveMediaTab("gallery")}
                   className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "gallery"
                       ? "border-teal-500 text-teal-600"
@@ -647,6 +636,19 @@ const EditProperty = () => {
                   <FaImages className="mr-2 h-5 w-5" />
                   Gallery ({images.length + extraImageInputs.length}/10)
                 </button>
+
+                <button
+                      type="button"
+                      onClick={() => setActiveMediaTab("video")}
+                      className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "video"
+                          ? "border-teal-500 text-teal-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                    >
+                      <FaVideo className="mr-2 h-5 w-5" />
+                      Video Tour
+                </button>
+
               </nav>
             </div>
 
@@ -711,42 +713,6 @@ const EditProperty = () => {
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-
-              {/* Video Tab */}
-              {activeMediaTab === "video" && (
-                <div className="space-y-4">
-                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Video Tour <span className="text-xs font-normal normal-case text-gray-500">(optional)</span>
-                  </label>
-
-                  {property.video && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-3">Current Video:</p>
-                      <video
-                        src={`data:video/mp4;base64,${bufferToBase64(property.video)}`}
-                        controls
-                        className="w-full h-56 object-cover rounded-xl border border-gray-200 shadow-lg"
-                      />
-                    </div>
-                  )}
-
-                  <label className="flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
-                    <div className="flex flex-col items-center justify-center">
-                      <FaVideo className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
-                      <p className="text-lg font-semibold text-gray-700">Upload new video (MP4 recommended)</p>
-                      <p className="text-sm text-gray-500 mt-2">Max size ~50MB suggested</p>
-                    </div>
-                    <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />
-                  </label>
-
-                  {video && (
-                    <div className="bg-teal-50 p-4 rounded-lg text-teal-800">
-                      <p className="font-medium">Selected video:</p>
-                      <p className="text-sm mt-1">{video.name}</p>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -848,6 +814,42 @@ const EditProperty = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Video Tab */}
+              {activeMediaTab === "video" && (
+                <div className="space-y-4">
+                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
+                    Video Tour <span className="text-xs font-normal normal-case text-gray-500">(optional)</span>
+                  </label>
+
+                  {property.video && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">Current Video:</p>
+                      <video
+                        src={`data:video/mp4;base64,${bufferToBase64(property.video)}`}
+                        controls
+                        className="w-full h-56 object-cover rounded-xl border border-gray-200 shadow-lg"
+                      />
+                    </div>
+                  )}
+
+                  <label className="flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
+                    <div className="flex flex-col items-center justify-center">
+                      <FaVideo className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
+                      <p className="text-lg font-semibold text-gray-700">Upload new video (MP4 recommended)</p>
+                      <p className="text-sm text-gray-500 mt-2">Max size ~50MB suggested</p>
+                    </div>
+                    <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />
+                  </label>
+
+                  {video && (
+                    <div className="bg-teal-50 p-4 rounded-lg text-teal-800">
+                      <p className="font-medium">Selected video:</p>
+                      <p className="text-sm mt-1">{video.name}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

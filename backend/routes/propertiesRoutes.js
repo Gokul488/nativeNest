@@ -1,3 +1,4 @@
+// propertiesRoutes.js
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -31,7 +32,7 @@ const upload = multer({
 });
 
 // ────────────────────────────────────────────────
-//  PUBLIC ROUTES – no authentication required
+//  PUBLIC ROUTES (no auth) – fixed paths first
 // ────────────────────────────────────────────────
 router.get('/types', getPropertyTypes);
 router.get('/amenities', getAmenities);
@@ -39,20 +40,28 @@ router.get('/builders', getBuilders);
 router.get('/builders-list', getAllBuilders);
 router.get('/featured', getFeaturedProperties);
 router.get('/max-price', getMaxPrice);
+
+// ────────────────────────────────────────────────
+//  PROTECTED ROUTES (with authMiddleware inline)
+//  → These MUST come BEFORE the catch-all :id
+// ────────────────────────────────────────────────
+router.get('/most-viewed', authMiddleware, getMostViewedProperties);
+router.get('/:propertyId/viewers', authMiddleware, getPropertyViewers);
+
+router.post(
+  '/',
+  authMiddleware,
+  upload.fields([
+    { name: 'cover_image', maxCount: 1 },
+    { name: 'images[]', maxCount: 10 },
+    { name: 'video', maxCount: 1 }
+  ]),
+  createProperty
+);
+
+// ────────────────────────────────────────────────
+//  PUBLIC PROPERTY DETAILS (catch-all) – MUST BE LAST
+// ────────────────────────────────────────────────
 router.get('/:id', getPropertyById);
-
-// ────────────────────────────────────────────────
-//  PROTECTED ROUTES
-// ────────────────────────────────────────────────
-router.use(authMiddleware);
-
-router.get('/most-viewed', getMostViewedProperties);
-router.get('/:propertyId/viewers', getPropertyViewers);
-
-router.post('/', upload.fields([
-  { name: 'cover_image', maxCount: 1 },
-  { name: 'images[]', maxCount: 10 },
-  { name: 'video', maxCount: 1 }
-]), createProperty);
 
 module.exports = router;

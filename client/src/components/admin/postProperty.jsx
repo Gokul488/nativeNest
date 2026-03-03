@@ -368,21 +368,6 @@ const PostProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Title */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              Property Title <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              required
-              className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-lg font-semibold text-gray-800 placeholder:text-gray-400 placeholder:font-normal"
-              placeholder="e.g. 3BHK Luxury Apartment in Anna Nagar"
-            />
-          </div>
 
           {/* Builder */}
           <div className="space-y-2">
@@ -411,6 +396,22 @@ const PostProperty = () => {
                 ))}
               </select>
             )}
+          </div>
+
+          {/* Title */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+              Property Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              required
+              className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-lg font-semibold text-gray-800 placeholder:text-gray-400 placeholder:font-normal"
+              placeholder="e.g. 3BHK Luxury Apartment in Anna Nagar"
+            />
           </div>
 
           {/* Description (Quill) */}
@@ -619,18 +620,6 @@ const PostProperty = () => {
 
                 <button
                   type="button"
-                  onClick={() => setActiveMediaTab("video")}
-                  className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "video"
-                      ? "border-teal-500 text-teal-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                >
-                  <FaVideo className="mr-2 h-5 w-5" />
-                  Video Tour
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => setActiveMediaTab("gallery")}
                   className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "gallery"
                       ? "border-teal-500 text-teal-600"
@@ -639,6 +628,18 @@ const PostProperty = () => {
                 >
                   <FaImages className="mr-2 h-5 w-5" />
                   Gallery ({images.length + extraImageInputs.length}/10)
+                </button>
+
+                <button
+                        type="button"
+                        onClick={() => setActiveMediaTab("video")}
+                        className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === "video"
+                            ? "border-teal-500 text-teal-600"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          }`}
+                      >
+                        <FaVideo className="mr-2 h-5 w-5" />
+                        Video Tour
                 </button>
               </nav>
             </div>
@@ -686,31 +687,6 @@ const PostProperty = () => {
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-
-              {/* Video Tab */}
-              {activeMediaTab === "video" && (
-                <div className="space-y-4">
-                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Video Tour <span className="text-xs font-normal normal-case text-gray-500">(optional)</span>
-                  </label>
-
-                  <label className="flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
-                    <div className="flex flex-col items-center justify-center">
-                      <FaVideo className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
-                      <p className="text-lg font-semibold text-gray-700">Upload video (MP4 recommended)</p>
-                      <p className="text-sm text-gray-500 mt-2">Max size ~50MB suggested</p>
-                    </div>
-                    <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />
-                  </label>
-
-                  {video && (
-                    <div className="bg-teal-50 p-4 rounded-lg text-teal-800">
-                      <p className="font-medium">Selected video:</p>
-                      <p className="text-sm mt-1">{video.name}</p>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -791,6 +767,32 @@ const PostProperty = () => {
                   </div>
                 </div>
               )}
+
+              {/* Video Tab */}
+              {activeMediaTab === "video" && (
+                <div className="space-y-4">
+                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
+                    Video Tour <span className="text-xs font-normal normal-case text-gray-500">(optional)</span>
+                  </label>
+
+                  <label className="flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
+                    <div className="flex flex-col items-center justify-center">
+                      <FaVideo className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
+                      <p className="text-lg font-semibold text-gray-700">Upload video (MP4 recommended)</p>
+                      <p className="text-sm text-gray-500 mt-2">Max size ~50MB suggested</p>
+                    </div>
+                    <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />
+                  </label>
+
+                  {video && (
+                    <div className="bg-teal-50 p-4 rounded-lg text-teal-800">
+                      <p className="font-medium">Selected video:</p>
+                      <p className="text-sm mt-1">{video.name}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
 
