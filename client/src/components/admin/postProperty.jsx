@@ -25,8 +25,9 @@ import {
 
 const animatedComponents = makeAnimated();
 
+Quill.register("modules/table-better", QuillTableBetter);
+
 const PostProperty = () => {
-  Quill.register("modules/table-better", QuillTableBetter);
 
   const navigate = useNavigate();
 
@@ -50,6 +51,22 @@ const PostProperty = () => {
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [amenityOptions, setAmenityOptions] = useState([]);
   const [propertyTypes, setPropertyTypes] = useState([]);
+  const [variants, setVariants] = useState([{ apartment_type: "1BHK", price: "", sqft: "", isCustom: false }]);
+
+  const handleVariantChange = (index, field, value) => {
+    const newVariants = [...variants];
+
+    if (field === "apartment_type" && value === "Others") {
+      newVariants[index].isCustom = true;
+      newVariants[index].apartment_type = ""; // Clear to let user type
+    } else {
+      newVariants[index][field] = value;
+    }
+    setVariants(newVariants);
+  };
+
+  const addVariant = () => setVariants([...variants, { apartment_type: "1BHK", price: "", sqft: "", isCustom: false }]);
+  const removeVariant = (index) => setVariants(variants.filter((_, i) => i !== index));
 
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [otherAmenityName, setOtherAmenityName] = useState("");
@@ -110,7 +127,6 @@ const PostProperty = () => {
       "italic",
       "underline",
       "list",
-      "bullet",
       "link",
       "align",
       "color",
@@ -240,57 +256,65 @@ const PostProperty = () => {
     setSelectedAmenities(selected.filter((opt) => opt.value !== "OTHER"));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setIsSubmitting(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setSuccess("");
+  setIsSubmitting(true);
 
-    if (!formData.description || formData.description === "<p><br></p>") {
-      setError("Description is required");
+  if (!formData.description || formData.description === "<p><br></p>") {
+    setError("Description is required");
+    setIsSubmitting(false);
+    return;
+  }
+
+  // === FIXED: Validation for Apartment variants (this was causing the submit error) ===
+  if (formData.property_type === "Apartment") {
+    if (variants.length === 0 || variants.some(v => 
+      !v.apartment_type || v.apartment_type.trim() === "" ||
+      !v.price || String(v.price).trim() === "" ||
+      !v.sqft || String(v.sqft).trim() === ""
+    )) {
+      setError("Please provide complete details (Type, Price, Sqft) for ALL apartment configurations");
       setIsSubmitting(false);
       return;
     }
+  }
 
-    if (showOtherInput && !otherAmenityName.trim()) {
-      setError("Please enter the custom amenity name");
-      setIsSubmitting(false);
-      return;
-    }
+  const data = new FormData();
 
-    const data = new FormData();
+  Object.entries(formData).forEach(([k, v]) => data.append(k, v));
+  data.append("builder_id", selectedBuilderId);
 
-    Object.entries(formData).forEach(([k, v]) => data.append(k, v));
-    data.append("builder_id", selectedBuilderId);
+  selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
+  if (showOtherInput && otherAmenityName.trim()) {
+    data.append("other_amenity", otherAmenityName.trim());
+  }
 
-    selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
-    if (showOtherInput && otherAmenityName.trim()) {
-      data.append("other_amenity", otherAmenityName.trim());
-    }
+  images.forEach((img) => data.append("images[]", img));
+  extraImageInputs.forEach((i) => i.file && data.append("images[]", i.file));
 
-    images.forEach((img) => data.append("images[]", img));
-    extraImageInputs.forEach((i) => i.file && data.append("images[]", i.file));
+  if (coverImage) data.append("cover_image", coverImage);
+  if (video) data.append("video", video);
+  data.append("variants", JSON.stringify(variants));
 
-    if (coverImage) data.append("cover_image", coverImage);
-    if (video) data.append("video", video);
+  try {
+    const token = localStorage.getItem("token");
+    await axios.post(`${API_BASE_URL}/api/properties`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-    try {
-      const token = localStorage.getItem("token");
-      await axios.post(`${API_BASE_URL}/api/properties`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      setSuccess("Property posted successfully!");
-      setTimeout(() => navigate("/admin-dashboard/manage-properties"), 1500);
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to post property");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    setSuccess("Property posted successfully!");
+    setTimeout(() => navigate("/admin-dashboard/manage-properties"), 1500);
+  } catch (err) {
+    setError(err.response?.data?.error || "Failed to post property");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // ── Custom Select Styles ──────────────────────────────────────
   const customStyles = {
@@ -424,40 +448,6 @@ const PostProperty = () => {
             </div>
           </div>
 
-          {/* Price & Area */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                Price (₹) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                step="0.01"
-                required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
-                placeholder="e.g. 7500000"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                Area (sqft)
-              </label>
-              <input
-                type="number"
-                name="sqft"
-                value={formData.sqft}
-                onChange={handleInputChange}
-                min="1"
-                placeholder="e.g. 1850"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
-              />
-            </div>
-          </div>
-
           {/* Property Type */}
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
@@ -482,6 +472,130 @@ const PostProperty = () => {
             </select>
           </div>
 
+          {/* Price & Area */}
+          {formData.property_type !== 'Apartment' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                  Price (₹) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  step="0.01"
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
+                  placeholder="e.g. 7500000"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                  Area (sqft)
+                </label>
+                <input
+                  type="number"
+                  name="sqft"
+                  value={formData.sqft}
+                  onChange={handleInputChange}
+                  min="1"
+                  placeholder="e.g. 1850"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
+                />
+              </div>
+            </div>
+          )}
+
+
+
+
+          {formData.property_type === 'Apartment' && (
+            <div className="p-4 bg-teal-50/50 rounded-xl border border-teal-100 space-y-4">
+              <h3 className="text-sm font-bold text-teal-800 uppercase">Apartment Configurations</h3>
+              {variants.map((variant, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-white p-3 rounded-lg shadow-sm">
+                  {/* Apartment Type */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600">Type</label>
+                    {!variant.isCustom ? (
+                      <select
+                        value={variant.apartment_type}
+                        onChange={(e) => handleVariantChange(index, "apartment_type", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md text-sm"
+                      >
+                        <option value="1BHK">1BHK</option>
+                        <option value="2BHK">2BHK</option>
+                        <option value="3BHK">3BHK</option>
+                        <option value="Others">Others</option>
+                      </select>
+                    ) : (
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          autoFocus
+                          placeholder="e.g. 4BHK"
+                          value={variant.apartment_type}
+                          onChange={(e) => handleVariantChange(index, "apartment_type", e.target.value)}
+                          className="w-full px-3 py-2 border rounded-md text-sm border-teal-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const v = [...variants];
+                            v[index].isCustom = false;
+                            v[index].apartment_type = "1BHK";
+                            setVariants(v);
+                          }}
+                          className="text-xs text-teal-600 underline"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600">Price (₹)</label>
+                    <input
+                      type="number"
+                      value={variant.price}
+                      onChange={(e) => handleVariantChange(index, "price", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                    />
+                  </div>
+
+                  {/* SQFT */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600">Sqft</label>
+                    <input
+                      type="number"
+                      value={variant.sqft}
+                      onChange={(e) => handleVariantChange(index, "sqft", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(index)}
+                    className="text-red-500 pb-2 hover:text-red-700 text-sm font-bold"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addVariant}
+                className="text-sm bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700"
+              >
+                + Add Configuration
+              </button>
+            </div>
+          )}
           {/* Location Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">

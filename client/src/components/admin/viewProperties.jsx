@@ -1,7 +1,7 @@
-// src/components/ViewProperties.jsx
+// src/components/ViewProperties.jsx  ← FULL REPLACEMENT
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaCity, FaRupeeSign, FaInfoCircle, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 
 const ViewProperties = () => {
@@ -10,13 +10,13 @@ const ViewProperties = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'city', direction: 'asc' });
+  const [selectedConfigs, setSelectedConfigs] = useState({}); // new: per-property selected sqft for apartments
+
   const navigate = useNavigate();
 
   const requestSort = (key) => {
     let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
     setSortConfig({ key, direction });
   };
 
@@ -36,7 +36,7 @@ const ViewProperties = () => {
         }
 
         const data = await response.json();
-        setProperties(data.properties || data || []);
+        setProperties(data.properties || []);
       } catch (err) {
         setError(err.message || 'Something went wrong');
       } finally {
@@ -45,6 +45,25 @@ const ViewProperties = () => {
     };
     fetchProperties();
   }, [navigate]);
+
+  // Helper functions for Apartment display
+  const getDisplayPrice = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
+      return prop.price ? parseFloat(prop.price) : 0;
+    }
+    const selSqft = selectedConfigs[prop.id] !== undefined
+      ? selectedConfigs[prop.id]
+      : (prop.variants[0] ? prop.variants[0].sqft : 0);
+    const variant = prop.variants.find(v => v.sqft === selSqft) || prop.variants[0];
+    return variant && variant.price ? variant.price : 0;
+  };
+
+  const getSqftSelectValue = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) return null;
+    return selectedConfigs[prop.id] !== undefined
+      ? selectedConfigs[prop.id]
+      : (prop.variants[0] ? prop.variants[0].sqft : null);
+  };
 
   const filteredProperties = useMemo(() => {
     let items = properties.filter(p =>
@@ -86,7 +105,7 @@ const ViewProperties = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
-      {/* Header */}
+      {/* Header (unchanged) */}
       <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Manage Properties</h2>
@@ -134,71 +153,91 @@ const ViewProperties = () => {
 
         {!loading && filteredProperties.length > 0 && (
           <>
-            {/* Desktop Table View */}
+            {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
-                    <th className="w-14 px-6 py-3 text-left border-b border-gray-200">#</th>
-                    <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Property Details</th>
-                    <th
-                      className="w-1/4 px-6 py-3 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => requestSort('city')}
-                    >
-                      <div className="flex items-center gap-2">
-                        City
-                        {sortConfig.key === 'city' ? (
-                          sortConfig.direction === 'asc' ? <FaSortUp className="text-teal-600" /> : <FaSortDown className="text-teal-600" />
-                        ) : (
-                          <FaSort className="text-gray-300" />
-                        )}
-                      </div>
-                    </th>
-                    <th className="w-1/4 px-4 py-3 text-left border-b border-gray-200">Builder</th>
-                    <th className="w-32 px-4 py-3 text-right border-b border-gray-200">Price</th>
-                    <th className="w-36 px-6 py-3 text-center border-b border-gray-200">Actions</th>
+                    <th className="w-[6%] px-3 py-3 text-left border-b border-gray-200">#</th>
+                    <th className="w-[34%] px-3 py-3 text-left border-b border-gray-200">Property Details</th>
+                    <th className="w-[15%] px-3 py-3 text-left border-b border-gray-200">Builder</th>
+                    <th className="w-[15%] px-3 py-3 text-center border-b border-gray-200">Sqft</th>
+                    <th className="w-[15%] px-3 py-3 text-center border-b border-gray-200">Price</th>
+                    <th className="w-[15%] px-3 py-3 text-center border-b border-gray-200">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {filteredProperties.map((property, index) => (
                     <tr key={property.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-2.5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <td className="px-3 py-2.5 text-sm text-gray-400 font-mono border-b border-gray-100">
                         {String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="px-6 py-2.5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 mb-0.5">{property.title}</div>
+                      <td className="px-3 py-2.5 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 mb-0.5 line-clamp-2 leading-tight">{property.title}</div>
                       </td>
-                      <td className="px-6 py-2.5 border-b border-gray-100">
-                        <div className="flex items-center gap-2 text-gray-700 text-sm">
-                          <FaMapMarkerAlt className="text-teal-600 shrink-0" />
-                          <span>{property.city || 'N/A'}</span>
+                      <td className="px-3 py-2.5 text-left border-b border-gray-100">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-bold w-full break-words">
+                          <FaUserTie className="text-teal-600 shrink-0" />
+                          <span>{property.builder_name || 'N/A'}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-2.5 text-left border-b border-gray-100">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-bold">
-                          <FaUserTie className="text-teal-600 shrink-0" /> <span className="truncate max-w-[100px]">{property.builder_name || 'N/A'}</span>
+
+                      {/* SQFT COLUMN */}
+                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
+                        <div className="flex justify-center items-center">
+                          {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
+                            <div className="relative group/select inline-flex items-center w-32">
+                              <FaRulerCombined className="absolute left-2 text-teal-400 text-[10px] pointer-events-none z-10" />
+                              <select
+                                value={getSqftSelectValue(property)}
+                                onChange={(e) => {
+                                  setSelectedConfigs(prev => ({
+                                    ...prev,
+                                    [property.id]: parseInt(e.target.value, 10)
+                                  }));
+                                }}
+                                className="w-full pl-6 pr-6 py-1.5 bg-white border border-slate-200 text-[10px] font-bold text-slate-700 rounded-lg shadow-sm hover:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-50/50 cursor-pointer appearance-none transition-all text-center"
+                                style={{
+                                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230d9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                                  backgroundRepeat: 'no-repeat',
+                                  backgroundPosition: 'right 0.4rem center',
+                                  backgroundSize: '0.8em',
+                                }}
+                              >
+                                {property.variants.map((variant, vIdx) => (
+                                  <option key={vIdx} value={variant.sqft}>
+                                    {variant.sqft} ({variant.apartment_type})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center justify-center gap-1 w-32 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 shadow-sm">
+                              <FaRulerCombined className="text-teal-500 text-[10px] shrink-0" />
+                              <span className="truncate">{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'}</span>
+                              <span className="text-[8px] text-slate-400 font-medium uppercase shrink-0">sq.ft</span>
+                            </div>
+                          )}
                         </div>
                       </td>
-                      <td className="px-4 py-2.5 text-right border-b border-gray-100">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          ₹{Math.floor(property.price).toLocaleString('en-IN')}
-                        </span>
+
+                      {/* PRICE COLUMN */}
+                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-green-50/50 border border-green-100 rounded-lg text-[11px] font-bold text-green-700 shadow-sm">
+                          <span className="text-[9px] opacity-70">₹</span>
+                          <span className="tracking-tight">{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}</span>
+                        </div>
                       </td>
-                      <td className="px-6 py-2.5 text-right border-b border-gray-100">
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
-                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition"
-                            title="Edit"
-                          >
-                            <FaEdit size={16} />
+
+                      <td className="px-3 py-2.5 text-right border-b border-gray-100">
+                        <div className="flex justify-center gap-1.5">
+                          <button onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Edit">
+                            <FaEdit size={14} />
                           </button>
-                          <button
-                            onClick={() => handleDelete(property.id)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
-                            title="Delete"
-                          >
-                            <FaTrash size={16} />
+                          <button onClick={() => handleDelete(property.id)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete">
+                            <FaTrash size={14} />
                           </button>
                         </div>
                       </td>
@@ -208,7 +247,7 @@ const ViewProperties = () => {
               </table>
             </div>
 
-            {/* Mobile Card View */}
+            {/* Mobile Card View - also updated */}
             <div className="md:hidden p-4 space-y-2">
               {filteredProperties.map((property, index) => (
                 <div key={property.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100 shadow-sm space-y-2">
@@ -223,29 +262,59 @@ const ViewProperties = () => {
 
                   <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                      <FaMapMarkerAlt className="text-gray-400 text-xs" />
-                      <span className="text-gray-700 font-medium">{property.city}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
                       <FaUserTie className="text-gray-400 text-xs" />
                       <span className="truncate">{property.builder_name || 'N/A'}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-green-700 font-bold">₹{Math.floor(property.price).toLocaleString('en-IN')}</span>
+
+                    {/* Sqft - dropdown for apartments */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs font-medium">Area</span>
+                      {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
+                        <div className="relative inline-flex items-center">
+                          <FaRulerCombined className="absolute left-2 text-teal-400 text-[9px] pointer-events-none" />
+                          <select
+                            value={getSqftSelectValue(property)}
+                            onChange={(e) => setSelectedConfigs(prev => ({
+                              ...prev,
+                              [property.id]: parseInt(e.target.value, 10)
+                            }))}
+                            className="pl-5 pr-6 py-1 rounded-lg text-[10px] font-bold bg-white text-slate-700 border border-slate-200 outline-none appearance-none"
+                            style={{
+                              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230d9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'right 0.3rem center',
+                              backgroundSize: '0.8em',
+                            }}
+                          >
+                            {property.variants.map((v, i) => (
+                              <option key={i} value={v.sqft}>{v.sqft.toLocaleString('en-IN')} ({v.apartment_type})</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700">
+                          <FaRulerCombined className="text-teal-500 text-[9px]" />
+                          <span>{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'} <span className="text-[8px] text-slate-400 uppercase">sq.ft</span></span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Price (updates when sqft dropdown changes) */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs font-medium">Price</span>
+                      <div className="px-2 py-1 rounded-lg text-[11px] font-bold bg-green-50/50 text-green-700 border border-green-100 shadow-sm">
+                        ₹{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex gap-2 pt-2 border-t border-gray-200">
-                    <button
-                      onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold"
-                    >
+                    <button onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold">
                       <FaEdit /> Edit
                     </button>
-                    <button
-                      onClick={() => handleDelete(property.id)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold"
-                    >
+                    <button onClick={() => handleDelete(property.id)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold">
                       <FaTrash size={14} /> Delete
                     </button>
                   </div>

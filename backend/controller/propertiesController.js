@@ -3,7 +3,6 @@
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 
-// Modified part in propertiesController.js - createProperty function
 const createProperty = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -18,7 +17,7 @@ const createProperty = async (req, res) => {
     const {
       title,
       description,
-      price,
+      price,           // may be empty/null for apartments
       address,
       city,
       state,
@@ -27,14 +26,45 @@ const createProperty = async (req, res) => {
       property_type,
       builder_id,
       sqft,
-      amenities = [],
-      other_amenity
+      other_amenity,
+      variants         // JSON string for apartments
     } = req.body;
 
-    if (!title || !description || !price || !address || !city || !state || !country || !pincode || !property_type) {
-      return res.status(400).json({ error: 'All required fields must be filled' });
+    let amenities = req.body.amenities || req.body['amenities[]'] || [];
+    if (!Array.isArray(amenities)) {
+      amenities = [amenities].filter(Boolean);
     }
 
+    // ── Required fields validation ───────────────────────────────────────
+    if (!title || !description || !address || !city || !state || !country || !pincode || !property_type) {
+      return res.status(400).json({ error: 'All required fields must be filled (title, description, address, city, state, country, pincode, property_type)' });
+    }
+
+    const validPropertyTypes = ['Villas', 'Apartment', 'Plots', 'Commercial'];
+    if (!validPropertyTypes.includes(property_type)) {
+      return res.status(400).json({ error: 'Invalid property type. Allowed: Villas, Apartment, Plots, Commercial' });
+    }
+
+    // ── Price & sqft validation depending on type ─────────────────────────
+    let finalPrice = null;
+    let finalSqft = sqft ? Number(sqft) : null;
+
+    if (property_type !== 'Apartment') {
+      if (!price || isNaN(price) || Number(price) <= 0) {
+        return res.status(400).json({ error: 'Valid price (> 0) is required for non-apartment properties' });
+      }
+      finalPrice = Number(price);
+      if (finalSqft && (isNaN(finalSqft) || finalSqft <= 0)) {
+        return res.status(400).json({ error: 'Sqft must be a positive number for non-apartment properties' });
+      }
+    } else {
+      // Apartment → main price can be null
+      finalPrice = null;
+      // sqft in main table is usually null or total/average — up to you
+      // here we allow it to be sent or null
+    }
+
+    // ── Builder validation ───────────────────────────────────────────────
     let adminId = null;
     let builderId = null;
 
@@ -42,31 +72,12 @@ const createProperty = async (req, res) => {
       adminId = userId;
       builderId = builder_id;
       if (!builderId) {
-        return res.status(400).json({ error: 'Builder ID is required for admins' });
+        return res.status(400).json({ error: 'Builder ID is required when posting as admin' });
       }
     } else if (accountType === 'builder') {
       builderId = userId;
     } else {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    // Optional: make sqft required or validate
-    if (sqft && (isNaN(sqft) || sqft <= 0)) {
-      return res.status(400).json({ error: 'Sqft must be a positive number' });
-    }
-
-    const validPropertyTypes = ['Villas', 'Apartment', 'Plots', 'Commercial'];
-    if (!validPropertyTypes.includes(property_type)) {
-      return res.status(400).json({ error: 'Invalid property type' });
-    }
-
-    if (isNaN(price) || price <= 0) {
-      return res.status(400).json({ error: 'Price must be a positive number' });
-    }
-
-    // Validate amenities - must be array of numbers
-    if (!Array.isArray(amenities)) {
-      return res.status(400).json({ error: 'Amenities must be an array' });
+      return res.status(403).json({ error: 'Access denied - only admin or builder can create properties' });
     }
 
     const [builderCheck] = await pool.query(
@@ -74,31 +85,80 @@ const createProperty = async (req, res) => {
       [builderId]
     );
     if (builderCheck.length === 0) {
-      return res.status(400).json({ error: 'Invalid builder' });
+      return res.status(400).json({ error: 'Invalid builder ID' });
     }
 
+    // ── File handling ────────────────────────────────────────────────────
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
-    const video = req.files?.['video']?.[0] || null;
-    const images = req.files && req.files['images[]'] ?
-      (Array.isArray(req.files['images[]']) ? req.files['images[]'] : [req.files['images[]']])
+    const video = req.files?.['video']?.[0]?.buffer || null;
+    const images = req.files?.['images[]']
+      ? (Array.isArray(req.files['images[]']) ? req.files['images[]'] : [req.files['images[]']])
       : [];
 
+    // ── Transaction ──────────────────────────────────────────────────────
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
 
+      // Insert main property
       const [propertyResult] = await connection.query(
-        `INSERT INTO properties (admin_id, builder_id, title, description, price, address, city, state, country, pincode, property_type, sqft, cover_image, video, created_at)
+        `INSERT INTO properties 
+         (admin_id, builder_id, title, description, price, address, city, state, country, pincode, property_type, sqft, cover_image, video, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-        [adminId, builderId, title, description, price, address, city, state, country, pincode, property_type, sqft || null, coverImage, video?.buffer || null]
+        [
+          adminId,
+          builderId,
+          title,
+          description,
+          finalPrice,
+          address,
+          city,
+          state,
+          country,
+          pincode,
+          property_type,
+          finalSqft,
+          coverImage,
+          video
+        ]
       );
 
       const propertyId = propertyResult.insertId;
 
-      // Insert property images
+      // ── Insert apartment variants (if applicable) ─────────────────────
+      if (property_type === 'Apartment' && variants) {
+        let variantData;
+        try {
+          variantData = JSON.parse(variants);
+        } catch (e) {
+          throw new Error("Invalid variants format - must be valid JSON array");
+        }
+
+        if (!Array.isArray(variantData) || variantData.length === 0) {
+          throw new Error("At least one apartment variant is required for Apartment type");
+        }
+
+        for (const v of variantData) {
+          const aptType = v.apartment_type?.trim();
+          const vPrice = Number(v.price);
+          const vSqft = Number(v.sqft);
+
+          if (!aptType || isNaN(vPrice) || vPrice <= 0 || isNaN(vSqft) || vSqft <= 0) {
+            throw new Error(`Invalid variant: apartment_type, price (>0) and sqft (>0) are all required`);
+          }
+
+          await connection.query(
+            `INSERT INTO property_variants (property_id, apartment_type, price, sqft) 
+             VALUES (?, ?, ?, ?)`,
+            [propertyId, aptType, vPrice, vSqft]
+          );
+        }
+      }
+
+      // ── Insert additional images ──────────────────────────────────────
       if (images.length > 0) {
         for (const image of images) {
-          if (image && image.buffer) {
+          if (image?.buffer) {
             await connection.query(
               'INSERT INTO property_images (property_id, image) VALUES (?, ?)',
               [propertyId, image.buffer]
@@ -107,30 +167,28 @@ const createProperty = async (req, res) => {
         }
       }
 
-      // Insert DB amenities
+      // ── Insert standard (DB) amenities ────────────────────────────────
       if (amenities.length > 0) {
         for (const amenityId of amenities) {
-          const [amenityCheck] = await connection.query(
-            'SELECT amenity_id FROM amenities WHERE amenity_id = ?',
+          const [exists] = await connection.query(
+            'SELECT 1 FROM amenities WHERE amenity_id = ?',
             [amenityId]
           );
-
-          if (amenityCheck.length > 0) {
+          if (exists.length > 0) {
             await connection.query(
-              'INSERT INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
+              'INSERT IGNORE INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
               [propertyId, amenityId]
             );
           }
         }
       }
 
-      // Handle custom "Other" amenity
+      // ── Handle custom "Other" amenity ─────────────────────────────────
       if (other_amenity && other_amenity.trim()) {
         const customName = other_amenity.trim();
 
-        // Check if custom amenity already exists (case-insensitive)
-        const [existing] = await connection.query(
-          'SELECT amenity_id FROM amenities WHERE LOWER(name) = LOWER(?)',
+        let [existing] = await connection.query(
+          'SELECT amenity_id FROM amenities WHERE LOWER(name) = LOWER(?) LIMIT 1',
           [customName]
         );
 
@@ -138,35 +196,37 @@ const createProperty = async (req, res) => {
         if (existing.length > 0) {
           customAmenityId = existing[0].amenity_id;
         } else {
-          const [insertResult] = await connection.query(
-            'INSERT INTO amenities (name, icon) VALUES (?, ?)',
-            [customName, null]
+          const [insert] = await connection.query(
+            'INSERT INTO amenities (name, icon) VALUES (?, NULL)',
+            [customName]
           );
-          customAmenityId = insertResult.insertId;
+          customAmenityId = insert.insertId;
         }
 
-        // Link custom amenity to property
         await connection.query(
-          'INSERT INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
+          'INSERT IGNORE INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
           [propertyId, customAmenityId]
         );
       }
 
       await connection.commit();
 
-      res.status(201).json({
+      return res.status(201).json({
         message: 'Property created successfully',
-        propertyId,
+        propertyId
       });
-    } catch (error) {
+
+    } catch (innerError) {
       await connection.rollback();
-      throw error;
+      console.error('Transaction failed:', innerError);
+      return res.status(400).json({ error: innerError.message || 'Failed to create property' });
     } finally {
       connection.release();
     }
+
   } catch (error) {
     console.error('Error creating property:', error.message, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
 

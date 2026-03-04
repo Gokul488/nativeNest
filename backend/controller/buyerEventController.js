@@ -271,7 +271,8 @@ const getBookedBuildersForEvent = async (req, res) => {
         b.name,
         b.contact_person,
         b.mobile_number,
-        COUNT(s.stall_id) AS stall_count,
+        -- Changed: Fetching stall numbers. Using GROUP_CONCAT in case one builder has multiple stalls
+        GROUP_CONCAT(s.stall_number ORDER BY s.stall_number ASC SEPARATOR ', ') AS stall_numbers,
         MIN(st.stall_type_id) AS sample_stall_type_id,
         MAX(CASE WHEN bsi.id IS NOT NULL THEN 1 ELSE 0 END) AS interest_registered
       FROM builders b
@@ -283,7 +284,7 @@ const getBookedBuildersForEvent = async (req, res) => {
         AND bsi.stall_type_id = st.stall_type_id
       WHERE s.event_id = ?
       GROUP BY b.id
-      ORDER BY b.name ASC
+      ORDER BY MIN(s.stall_number) ASC -- Optional: Order by stall location
       `,
       [buyerId, eventId, eventId]
     );
@@ -302,7 +303,6 @@ const getBookedBuildersForEvent = async (req, res) => {
     res.status(500).json({ error: "Failed to load booked builders" });
   }
 };
-
 /* ================= BUYER: MARK ATTENDANCE VIA QR ================= */
 const markAttendance = async (req, res) => {
   try {
