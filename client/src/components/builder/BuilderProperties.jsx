@@ -1,7 +1,7 @@
 // src/components/BuilderProperties.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaInfoCircle } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaRulerCombined } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 
 const BuilderProperties = () => {
@@ -9,6 +9,7 @@ const BuilderProperties = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedConfigs, setSelectedConfigs] = useState({}); // per-property selected sqft for apartments
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,6 +37,25 @@ const BuilderProperties = () => {
     };
     fetchBuilderProperties();
   }, [navigate]);
+
+  // Helper functions for Apartment display
+  const getDisplayPrice = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
+      return prop.price ? parseFloat(prop.price) : 0;
+    }
+    const selSqft = selectedConfigs[prop.property_id] !== undefined
+      ? selectedConfigs[prop.property_id]
+      : (prop.variants[0] ? prop.variants[0].sqft : 0);
+    const variant = prop.variants.find(v => v.sqft === selSqft) || prop.variants[0];
+    return variant && variant.price ? variant.price : 0;
+  };
+
+  const getSqftSelectValue = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) return null;
+    return selectedConfigs[prop.property_id] !== undefined
+      ? selectedConfigs[prop.property_id]
+      : (prop.variants[0] ? prop.variants[0].sqft : null);
+  };
 
   const filteredProperties = useMemo(() => {
     return properties.filter(p =>
@@ -113,46 +133,90 @@ const BuilderProperties = () => {
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
-                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                    <th className="w-1/2 px-6 py-4 text-left border-b border-gray-200">Property Details</th>
-                    <th className="w-32 px-4 py-4 text-center border-b border-gray-200">Price</th>
-                    <th className="w-32 px-4 py-4 text-center border-b border-gray-200">City</th>
-                    <th className="w-36 px-6 py-4 text-right border-b border-gray-200">Actions</th>
+                    <th className="w-[4%] px-3 py-3 text-left border-b border-gray-200">#</th>
+                    <th className="w-[30%] px-3 py-3 text-left border-b border-gray-200">Property Details</th>
+                    <th className="w-[20%] px-3 py-3 text-center border-b border-gray-200">Sqft</th>
+                    <th className="w-[16%] px-3 py-3 text-center border-b border-gray-200">Price</th>
+                    <th className="w-[15%] px-3 py-3 text-center border-b border-gray-200">City</th>
+                    <th className="w-[15%] px-3 py-3 text-center border-b border-gray-200">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {filteredProperties.map((property, index) => (
                     <tr key={property.property_id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <td className="px-3 py-2.5 text-base text-gray-500 font-mono border-b border-gray-100">
                         {String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 mb-1">{property.title}</div>
-                        <div className="text-xs text-teal-600 font-medium">{property.property_type || 'Residential'}</div>
+                      <td className="px-3 py-2.5 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 mb-0.5 line-clamp-2 leading-tight">{property.title}</div>
                       </td>
-                      <td className="px-4 py-5 text-center border-b border-gray-100">
-                        <span className="font-bold text-gray-800 text-sm">
-                          ₹{Math.floor(property.price).toLocaleString('en-IN')}
-                        </span>
+
+                      {/* SQFT COLUMN */}
+                      <td className="px-3 py-2.5 text-right border-b border-gray-100">
+                        <div className="flex justify-end items-center">
+                          {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
+                            <div className="relative group/select inline-flex items-center w-40">
+                              <FaRulerCombined className="absolute left-2 text-teal-400 text-[10px] pointer-events-none z-10" />
+                              <select
+                                value={getSqftSelectValue(property)}
+                                onChange={(e) => {
+                                  setSelectedConfigs(prev => ({
+                                    ...prev,
+                                    [property.property_id]: parseInt(e.target.value, 10)
+                                  }));
+                                }}
+                                className="w-full pl-6 pr-6 py-1.5 bg-white border border-slate-200 text-sm font-bold text-slate-700 rounded-lg shadow-sm hover:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-50/50 cursor-pointer appearance-none transition-all text-center"
+                                style={{
+                                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230d9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                                  backgroundRepeat: 'no-repeat',
+                                  backgroundPosition: 'right 0.4rem center',
+                                  backgroundSize: '0.8em',
+                                }}
+                              >
+                                {property.variants.map((variant, vIdx) => (
+                                  <option key={vIdx} value={variant.sqft}>
+                                    {variant.sqft} ({variant.apartment_type})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center justify-center gap-1 w-40 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 shadow-sm">
+                              <FaRulerCombined className="text-teal-500 text-[10px] shrink-0" />
+                              <span className="truncate">{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'}</span>
+                              <span className="text-[10px] text-slate-400 font-medium uppercase shrink-0">sq.ft</span>
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-5 text-center border-b border-gray-100 text-sm text-gray-600">
+
+                      {/* PRICE COLUMN */}
+                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-green-50/50 border border-green-100 rounded-lg text-sm font-bold text-green-700 shadow-sm">
+                          <span className="text-[11px] opacity-70">₹</span>
+                          <span className="tracking-tight">{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}</span>
+                        </div>
+                      </td>
+
+                      <td className="px-3 py-2.5 text-center border-b border-gray-100 text-sm text-gray-600">
                         {property.city}
                       </td>
-                      <td className="px-6 py-5 text-right border-b border-gray-100">
-                        <div className="flex justify-end gap-2">
+
+                      <td className="px-3 py-2.5 text-right border-b border-gray-100">
+                        <div className="flex justify-center gap-1.5">
                           <button
                             onClick={() => navigate(`/builder-dashboard/edit-property/${property.property_id}`)}
-                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition"
                             title="Edit"
                           >
-                            <FaEdit size={18} />
+                            <FaEdit size={14} />
                           </button>
                           <button
                             onClick={() => handleDelete(property.property_id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
                             title="Delete"
                           >
-                            <FaTrash size={16} />
+                            <FaTrash size={14} />
                           </button>
                         </div>
                       </td>
@@ -165,37 +229,79 @@ const BuilderProperties = () => {
             {/* Mobile/Tablet Card View */}
             <div className="xl:hidden grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
               {filteredProperties.map((property, index) => (
-                <div key={property.property_id} className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-[10px] font-mono text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100 mr-2">
-                        #{String(index + 1).padStart(2, '0')}
-                      </span>
-                      <h4 className="font-bold text-gray-900 mt-1">{property.title}</h4>
-                      <p className="text-xs text-teal-600 font-medium">{property.property_type || 'Residential'}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => navigate(`/builder-dashboard/edit-property/${property.property_id}`)}
-                        className="p-2 text-blue-500 bg-white shadow-sm rounded-lg border border-blue-100"
-                      >
-                        <FaEdit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(property.property_id)}
-                        className="p-2 text-red-500 bg-white shadow-sm rounded-lg border border-red-100"
-                      >
-                        <FaTrash size={14} />
-                      </button>
+                <div key={property.property_id} className="bg-gray-50 rounded-xl p-3 border border-gray-100 shadow-sm space-y-2">
+                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                        {index + 1}
+                      </div>
+                      <div className="font-bold text-gray-900 truncate max-w-[180px]">{property.title}</div>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <div className="text-sm font-bold text-gray-800">
-                      ₹{Math.floor(property.price).toLocaleString('en-IN')}
+
+                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs font-medium">City</span>
+                      <div className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full border border-gray-200 uppercase font-semibold">
+                        {property.city}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full border border-gray-200 uppercase font-semibold">
-                      {property.city}
+
+                    {/* Sqft - dropdown for apartments */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs font-medium">Area</span>
+                      {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
+                        <div className="relative inline-flex items-center">
+                          <FaRulerCombined className="absolute left-2 text-teal-400 text-[9px] pointer-events-none" />
+                          <select
+                            value={getSqftSelectValue(property)}
+                            onChange={(e) => setSelectedConfigs(prev => ({
+                              ...prev,
+                              [property.property_id]: parseInt(e.target.value, 10)
+                            }))}
+                            className="pl-5 pr-6 py-1 rounded-lg text-[10px] font-bold bg-white text-slate-700 border border-slate-200 outline-none appearance-none"
+                            style={{
+                              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230d9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'right 0.3rem center',
+                              backgroundSize: '0.8em',
+                            }}
+                          >
+                            {property.variants.map((v, i) => (
+                              <option key={i} value={v.sqft}>{v.sqft.toLocaleString('en-IN')} ({v.apartment_type})</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700">
+                          <FaRulerCombined className="text-teal-500 text-[9px]" />
+                          <span>{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'} <span className="text-[8px] text-slate-400 uppercase">sq.ft</span></span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Price (updates when sqft dropdown changes) */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs font-medium">Price</span>
+                      <div className="px-2 py-1 rounded-lg text-[11px] font-bold bg-green-50/50 text-green-700 border border-green-100 shadow-sm">
+                        ₹{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-gray-200">
+                    <button
+                      onClick={() => navigate(`/builder-dashboard/edit-property/${property.property_id}`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold"
+                    >
+                      <FaEdit /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(property.property_id)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold"
+                    >
+                      <FaTrash size={14} /> Delete
+                    </button>
                   </div>
                 </div>
               ))}

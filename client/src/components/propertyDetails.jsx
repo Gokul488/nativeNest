@@ -8,6 +8,7 @@ import API_BASE_URL from '../config.js';   // ← one level up
 const PropertyDetails = () => {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -62,6 +63,11 @@ const PropertyDetails = () => {
 
       const data = await response.json();
       setProperty(data.property);
+      if (data.property.property_type === 'Apartment' && data.property.variants?.length > 0) {
+        setSelectedVariant(data.property.variants[0]);
+      } else {
+        setSelectedVariant(null);
+      }
     } catch (err) {
       setError("Unable to load property details");
     } finally {
@@ -217,10 +223,50 @@ const PropertyDetails = () => {
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold drop-shadow-lg">
                   {property.title}
                 </h1>
-                <p className="text-xl sm:text-2xl font-bold mt-2 flex items-center drop-shadow-md">
-                  <i className="fa-solid fa-indian-rupee-sign mr-2"></i>{formatPriceInINR(property.price)}
-                </p>
-                <p className="mt-2 text-sm sm:text-base font-light opacity-90 flex items-center">
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+                  <div className="flex flex-col">
+                    <p className="text-xl sm:text-2xl font-bold flex items-center drop-shadow-md">
+                      <i className="fa-solid fa-indian-rupee-sign mr-2"></i>
+                      {property.property_type === 'Apartment' && selectedVariant
+                        ? formatPriceInINR(selectedVariant.price)
+                        : formatPriceInINR(property.price)}
+                    </p>
+                    <p className="text-sm opacity-80">Total Price</p>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <p className="text-xl sm:text-2xl font-bold flex items-center drop-shadow-md">
+                      <i className="fas fa-ruler-combined mr-2"></i>
+                      {property.property_type === 'Apartment' && selectedVariant
+                        ? selectedVariant.sqft.toLocaleString('en-IN')
+                        : (property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A')}
+                      <span className="text-sm ml-1 font-medium italic opacity-80">sq.ft</span>
+                    </p>
+                    <p className="text-sm opacity-80">Total Area</p>
+                  </div>
+                </div>
+
+                {property.property_type === 'Apartment' && property.variants && property.variants.length > 0 && (
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium mb-2 opacity-90">Select Configuration:</label>
+                    <div className="flex flex-wrap gap-2">
+                      {property.variants.map((variant, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedVariant(variant)}
+                          className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border ${selectedVariant?.apartment_type === variant.apartment_type && selectedVariant?.sqft === variant.sqft
+                              ? 'bg-white text-[#2e6171] border-white shadow-lg scale-105'
+                              : 'bg-black/20 text-white border-white/30 hover:bg-black/30'
+                            }`}
+                        >
+                          {variant.apartment_type} ({variant.sqft} sq.ft)
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="mt-6 text-sm sm:text-base font-light opacity-90 flex items-center">
                   <i className="fas fa-map-marker-alt mr-2"></i>
                   {property.address}, {property.city}, {property.state}
                 </p>

@@ -384,6 +384,20 @@ const getFeaturedProperties = async (req, res) => {
           imageBase64 = `data:image/jpeg;base64,${Buffer.from(property.cover_image).toString('base64')}`;
         }
 
+        // --- Fetch variants for apartments ---
+        let variants = [];
+        if (property.property_type === 'Apartment') {
+          const [vRows] = await connection.query(
+            `SELECT apartment_type, price, sqft FROM property_variants WHERE property_id = ? ORDER BY price ASC`,
+            [property.id]
+          );
+          variants = vRows.map(v => ({
+            apartment_type: v.apartment_type,
+            price: v.price ? parseFloat(v.price) : null,
+            sqft: v.sqft ? Number(v.sqft) : null
+          }));
+        }
+
         return {
           id: property.id,
           title: property.title,
@@ -395,6 +409,7 @@ const getFeaturedProperties = async (req, res) => {
           created_at: property.created_at,
           img: imageBase64,
           builderName: property.builderName,
+          variants: variants // Added field
         };
       })
     );
@@ -554,6 +569,25 @@ const getPropertyById = async (req, res) => {
       [propertyId]
     );
 
+    /* =========================
+       FETCH VARIANTS (IF APARTMENT)
+    ========================= */
+    let variants = [];
+    if (property.property_type === 'Apartment') {
+      const [variantRows] = await connection.query(
+        `SELECT apartment_type, price, sqft 
+         FROM property_variants 
+         WHERE property_id = ?
+         ORDER BY apartment_type ASC`,
+        [propertyId]
+      );
+      variants = variantRows.map(v => ({
+        apartment_type: v.apartment_type,
+        price: v.price ? parseFloat(v.price) : null,
+        sqft: v.sqft ? Number(v.sqft) : null
+      }));
+    }
+
     await connection.commit();
 
     /* =========================
@@ -607,7 +641,8 @@ const getPropertyById = async (req, res) => {
         })),
         builderName: property.builderName,
         mobile_number: property.mobile_number,
-        email: property.email
+        email: property.email,
+        variants: variants
       }
     });
   } catch (error) {

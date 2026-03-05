@@ -150,32 +150,36 @@ const BuilderEvents = () => {
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                   <tr>
-                    <th className="w-16 px-6 py-4 text-left border-b border-gray-200">#</th>
-                    <th onClick={() => requestSort("event_name")} className="w-1/3 px-6 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center">Exhibition Details {getSortIcon("event_name")}</div>
+                    <th className="w-16 px-6 py-3 text-left border-b border-gray-200">#</th>
+                    <th onClick={() => requestSort("event_name")} className="w-1/4 px-6 py-3 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center">Exhibition Name {getSortIcon("event_name")}</div>
                     </th>
-                    <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Schedule</th>
-                    <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Visitors</th>
-                    <th className="w-32 px-6 py-4 text-center border-b border-gray-200">Book Stall</th>
+                    <th onClick={() => requestSort("city")} className="w-40 px-6 py-3 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center">City {getSortIcon("city")}</div>
+                    </th>
+                    <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Schedule</th>
+                    <th className="w-32 px-6 py-3 text-center border-b border-gray-200">Visitors</th>
+                    <th className="w-32 px-6 py-3 text-center border-b border-gray-200">Book Stall</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {filteredAndSortedEvents.map((event, index) => (
                     <tr key={event.id} className="hover:bg-gray-50 transition-colors group">
-                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <td className="px-6 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
                         {String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 mb-1 group-hover:text-teal-600 transition-colors cursor-default">
+                      <td className="px-6 py-3 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors cursor-default">
                           {event.event_name}
                         </div>
-                        <div className="flex items-center gap-3 text-xs">
-                          <span className="flex items-center gap-1 text-teal-600 font-medium bg-teal-50 px-1.5 py-0.5 rounded">
-                            <FaMapMarkerAlt className="text-[10px]" /> {event.city || "N/A"}
-                          </span>
+                      </td>
+                      <td className="px-6 py-3 border-b border-gray-100">
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                          <span className="text-teal-600/70"><FaMapMarkerAlt size={12} /></span>
+                          {event.city || "N/A"}
                         </div>
                       </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
+                      <td className="px-6 py-3 border-b border-gray-100">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5 text-sm text-gray-800 font-semibold">
                             <FaCalendarAlt className="text-gray-400 text-[11px]" />
@@ -183,7 +187,7 @@ const BuilderEvents = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-5 text-center border-b border-gray-100">
+                      <td className="px-6 py-3 text-center border-b border-gray-100">
                         <Link
                           to={`/builder-dashboard/interests?eventId=${event.id}`}
                           className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white transition-all shadow-sm group/btn active:scale-90"
@@ -192,7 +196,7 @@ const BuilderEvents = () => {
                           <FaUsers size={18} />
                         </Link>
                       </td>
-                      <td className="px-6 py-5 text-center border-b border-gray-100">
+                      <td className="px-6 py-3 text-center border-b border-gray-100">
                         <Link
                           to={`/builder-dashboard/stall-booking/${event.id}`}
                           className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all shadow-sm group/btn active:scale-90"

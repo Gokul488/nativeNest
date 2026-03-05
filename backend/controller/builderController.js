@@ -45,8 +45,8 @@ const updateBuilderDetails = async (req, res) => {
     const { name, email, mobile_number, contact_person, password } = req.body;
 
     if (!name || !email || !mobile_number || !contact_person) {
-      return res.status(400).json({ 
-        error: 'Name, email, mobile number, and contact person are required' 
+      return res.status(400).json({
+        error: 'Name, email, mobile number, and contact person are required'
       });
     }
 
@@ -67,8 +67,8 @@ const updateBuilderDetails = async (req, res) => {
     );
 
     if (existing.length > 0) {
-      return res.status(400).json({ 
-        error: 'Mobile number or email is already in use by another account' 
+      return res.status(400).json({
+        error: 'Mobile number or email is already in use by another account'
       });
     }
 
@@ -84,7 +84,7 @@ const updateBuilderDetails = async (req, res) => {
     if (password && password.trim() !== '') {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password.trim(), salt);
-      
+
       query += `, password = ?`;
       params.push(hashedPassword);
     }
@@ -117,13 +117,13 @@ const updateBuilderDetails = async (req, res) => {
 
   } catch (error) {
     console.error('Error updating builder details:', error);
-    
+
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    res.status(500).json({ 
-      error: 'Internal server error while updating profile' 
+    res.status(500).json({
+      error: 'Internal server error while updating profile'
     });
   }
 };
@@ -200,6 +200,33 @@ const getBuilderProperties = async (req, res) => {
        ORDER BY created_at DESC`,
       [builderId]
     );
+
+    // ====================== NEW: Attach variants ======================
+    const variantsMap = {};
+    if (properties.length > 0) {
+      const propertyIds = properties.map(p => p.property_id);
+      const [variantRows] = await pool.query(`
+        SELECT property_id, apartment_type, price, sqft 
+        FROM property_variants 
+        WHERE property_id IN (?)
+        ORDER BY apartment_type ASC
+      `, [propertyIds]);
+
+      variantRows.forEach(row => {
+        if (!variantsMap[row.property_id]) variantsMap[row.property_id] = [];
+        variantsMap[row.property_id].push({
+          apartment_type: row.apartment_type,
+          price: row.price ? parseFloat(row.price) : null,
+          sqft: row.sqft ? Number(row.sqft) : null,
+        });
+      });
+    }
+
+    // Attach variants to each property
+    properties.forEach(prop => {
+      prop.variants = variantsMap[prop.property_id] || [];
+    });
+    // =================================================================
 
     res.status(200).json({ properties });
   } catch (error) {
@@ -293,7 +320,7 @@ const getBuilderStallInterests = async (req, res) => {
       INNER JOIN buyers buy          ON buy.id = bsi.buyer_id
       WHERE s.builder_id = ?
     `;
-    
+
     const params = [builderId];
 
     // If an eventId is provided, filter the SQL results immediately

@@ -155,38 +155,38 @@ const ViewProperties = () => {
           <>
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full table-fixed border-separate border-spacing-0">
+              <table className="w-full border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
-                    <th className="w-[6%] px-3 py-3 text-left border-b border-gray-200">#</th>
-                    <th className="w-[34%] px-3 py-3 text-left border-b border-gray-200">Property Details</th>
-                    <th className="w-[15%] px-3 py-3 text-left border-b border-gray-200">Builder</th>
-                    <th className="w-[15%] px-3 py-3 text-center border-b border-gray-200">Sqft</th>
-                    <th className="w-[15%] px-3 py-3 text-center border-b border-gray-200">Price</th>
-                    <th className="w-[15%] px-3 py-3 text-center border-b border-gray-200">Actions</th>
+                    <th className="w-[4%] px-3 py-3 text-left border-b border-gray-200">#</th>
+                    <th className="w-[30%] px-3 py-3 text-left border-b border-gray-200">Property Details</th>
+                    <th className="w-[18%] px-3 py-3 text-left border-b border-gray-200 whitespace-nowrap">Builder Name</th>
+                    <th className="w-[20%] px-3 py-3 text-center border-b border-gray-200">Sqft</th>
+                    <th className="w-[16%] px-3 py-3 text-center border-b border-gray-200">Price</th>
+                    <th className="w-[12%] px-3 py-3 text-center border-b border-gray-200">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {filteredProperties.map((property, index) => (
                     <tr key={property.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-3 py-2.5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <td className="px-3 py-2.5 text-base text-gray-500 font-mono border-b border-gray-100">
                         {String(index + 1).padStart(2, '0')}
                       </td>
                       <td className="px-3 py-2.5 border-b border-gray-100">
                         <div className="font-bold text-gray-900 mb-0.5 line-clamp-2 leading-tight">{property.title}</div>
                       </td>
                       <td className="px-3 py-2.5 text-left border-b border-gray-100">
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-bold w-full break-words">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-sm font-bold whitespace-nowrap">
                           <FaUserTie className="text-teal-600 shrink-0" />
                           <span>{property.builder_name || 'N/A'}</span>
                         </div>
                       </td>
 
                       {/* SQFT COLUMN */}
-                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
-                        <div className="flex justify-center items-center">
+                      <td className="px-3 py-2.5 text-right border-b border-gray-100">
+                        <div className="flex justify-end items-center">
                           {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
-                            <div className="relative group/select inline-flex items-center w-32">
+                            <div className="relative group/select inline-flex items-center w-40">
                               <FaRulerCombined className="absolute left-2 text-teal-400 text-[10px] pointer-events-none z-10" />
                               <select
                                 value={getSqftSelectValue(property)}
@@ -196,7 +196,7 @@ const ViewProperties = () => {
                                     [property.id]: parseInt(e.target.value, 10)
                                   }));
                                 }}
-                                className="w-full pl-6 pr-6 py-1.5 bg-white border border-slate-200 text-[10px] font-bold text-slate-700 rounded-lg shadow-sm hover:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-50/50 cursor-pointer appearance-none transition-all text-center"
+                                className="w-full pl-6 pr-6 py-1.5 bg-white border border-slate-200 text-sm font-bold text-slate-700 rounded-lg shadow-sm hover:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-50/50 cursor-pointer appearance-none transition-all text-center"
                                 style={{
                                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230d9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                                   backgroundRepeat: 'no-repeat',
@@ -212,10 +212,10 @@ const ViewProperties = () => {
                               </select>
                             </div>
                           ) : (
-                            <div className="inline-flex items-center justify-center gap-1 w-32 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 shadow-sm">
+                            <div className="inline-flex items-center justify-center gap-1 w-40 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 shadow-sm">
                               <FaRulerCombined className="text-teal-500 text-[10px] shrink-0" />
                               <span className="truncate">{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'}</span>
-                              <span className="text-[8px] text-slate-400 font-medium uppercase shrink-0">sq.ft</span>
+                              <span className="text-[10px] text-slate-400 font-medium uppercase shrink-0">sq.ft</span>
                             </div>
                           )}
                         </div>
@@ -223,8 +223,8 @@ const ViewProperties = () => {
 
                       {/* PRICE COLUMN */}
                       <td className="px-3 py-2.5 text-center border-b border-gray-100">
-                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-green-50/50 border border-green-100 rounded-lg text-[11px] font-bold text-green-700 shadow-sm">
-                          <span className="text-[9px] opacity-70">₹</span>
+                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-green-50/50 border border-green-100 rounded-lg text-sm font-bold text-green-700 shadow-sm">
+                          <span className="text-[11px] opacity-70">₹</span>
                           <span className="tracking-tight">{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}</span>
                         </div>
                       </td>
