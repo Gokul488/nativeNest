@@ -6,7 +6,7 @@ import OngoingEventsMarquee from "./OngoingEventsMarquee";
 import { motion, AnimatePresence } from "framer-motion";
 import "./buy.css"; // Reuse home styles if needed
 import API_BASE_URL from '../config.js';   // ← one level up
-const Buy = () => {
+const Buy = () => { 
   const [properties, setProperties] = useState([]);
   const [propertyError, setPropertyError] = useState('');
   const [propertyTypes, setPropertyTypes] = useState([]);

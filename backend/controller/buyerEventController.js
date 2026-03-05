@@ -33,16 +33,14 @@ const getPublicEvents = async (req, res) => {
         pe.start_time,
         pe.end_time,
         pe.description,
-        ${
-          buyerId
-            ? 'CASE WHEN ep.id IS NULL THEN 0 ELSE 1 END AS isRegistered'
-            : '0 AS isRegistered'
-        }
+        ${buyerId
+        ? 'CASE WHEN ep.id IS NULL THEN 0 ELSE 1 END AS isRegistered'
+        : '0 AS isRegistered'
+      }
       FROM property_events pe
-      ${
-        buyerId
-          ? 'LEFT JOIN event_participants ep ON ep.event_id = pe.id AND ep.buyer_id = ?'
-          : ''
+      ${buyerId
+        ? 'LEFT JOIN event_participants ep ON ep.event_id = pe.id AND ep.buyer_id = ?'
+        : ''
       }
       ORDER BY pe.start_date DESC
     `;
@@ -55,6 +53,59 @@ const getPublicEvents = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch events' });
+  }
+};
+
+/* ================= BUYER: GET EVENT BY ID ================= */
+const getEventDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let buyerId = null;
+
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.account_type === 'buyer') {
+          buyerId = decoded.userId;
+        }
+      } catch (err) {
+        // ignore invalid token
+      }
+    }
+
+    const query = `
+      SELECT 
+        pe.*,
+        ${buyerId
+        ? 'CASE WHEN ep.id IS NULL THEN 0 ELSE 1 END AS isRegistered'
+        : '0 AS isRegistered'
+      }
+      FROM property_events pe
+      ${buyerId
+        ? 'LEFT JOIN event_participants ep ON ep.event_id = pe.id AND ep.buyer_id = ?'
+        : ''
+      }
+      WHERE pe.id = ?
+    `;
+
+    const [rows] = buyerId
+      ? await pool.query(query, [buyerId, id])
+      : await pool.query(query, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    const event = rows[0];
+    if (event.banner_image) {
+      event.banner_image = `data:image/jpeg;base64,${Buffer.from(event.banner_image).toString('base64')}`;
+    }
+
+    res.json(event);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch event details' });
   }
 };
 
@@ -145,7 +196,7 @@ const participateEvent = async (req, res) => {
     /* ================= RESPONSE ================= */
     res.status(201).json({
       message: 'Successfully registered for the event',
-      emailSent: !!email, 
+      emailSent: !!email,
     });
 
   } catch (err) {
@@ -320,8 +371,8 @@ const markAttendance = async (req, res) => {
     );
 
     if (registration.length === 0) {
-      return res.status(404).json({ 
-        error: 'Registration not found. Please ensure you registered for this event with this mobile number.' 
+      return res.status(404).json({
+        error: 'Registration not found. Please ensure you registered for this event with this mobile number.'
       });
     }
 
@@ -404,11 +455,12 @@ const getStallCheckInDetails = async (req, res) => {
   }
 };
 
-module.exports = { 
-  getPublicEvents, 
-  participateEvent, 
-  getMyRegisteredEvents, 
-  getOngoingEventsForHome,  
+module.exports = {
+  getPublicEvents,
+  getEventDetails,
+  participateEvent,
+  getMyRegisteredEvents,
+  getOngoingEventsForHome,
   getBookedBuildersForEvent,
   registerStallInterest,
   markAttendance,

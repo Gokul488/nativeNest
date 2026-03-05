@@ -110,7 +110,7 @@ const AdminDashboard = () => {
         <nav className="flex-1 px-3 py-5 overflow-y-auto scrollbar-hide hover:scrollbar-show transition-all">
           <div className="space-y-1.5">
             {[
-              { to: "/admin-dashboard/", label: "Overview", icon: <FaHome /> },
+              { to: "/admin-dashboard/", label: "Dashboard", icon: <FaHome /> },
               { to: "/admin-dashboard/manage-users", label: "Manage Users", icon: <FaUsers /> },
               { to: "/admin-dashboard/manage-builders", label: "Manage Builders", icon: <FaBuilding /> },
               { to: "/admin-dashboard/manage-properties", label: "Manage Properties", icon: <FaBuilding /> },

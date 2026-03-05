@@ -1,18 +1,25 @@
 // src/components/ViewProperties.jsx  ← FULL REPLACEMENT
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 
 const ViewProperties = () => {
+  const location = useLocation();
   const [properties, setProperties] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(location.state?.builderFilter || "");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'city', direction: 'asc' });
   const [selectedConfigs, setSelectedConfigs] = useState({}); // new: per-property selected sqft for apartments
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.builderFilter) {
+      setSearchQuery(location.state.builderFilter);
+    }
+  }, [location.state]);
 
   const requestSort = (key) => {
     let direction = 'asc';

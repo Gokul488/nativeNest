@@ -8,11 +8,12 @@ const {
   participateEvent,
   getMyRegisteredEvents,
   getOngoingEventsForHome,
-  getBookedBuildersForEvent, 
+  getBookedBuildersForEvent,
   registerStallInterest,
   markAttendance,
   markStallAttendance,
-  getStallCheckInDetails
+  getStallCheckInDetails,
+  getEventDetails
 } = require('../controller/buyerEventController');
 
 // Public / semi-public routes
@@ -20,8 +21,9 @@ router.get("/events/ongoing", getOngoingEventsForHome);
 
 // Authenticated buyer routes (with /buyer/ prefix for clarity)
 router.get('/buyer/events', getPublicEvents);
+router.get('/buyer/events/my', getMyRegisteredEvents); // Moved up to avoid clash with :id
+router.get('/buyer/events/:id', getEventDetails);
 router.post('/buyer/events/participate', participateEvent);
-router.get('/buyer/events/my', getMyRegisteredEvents);
 
 router.post('/buyer/events/stall-interest', registerStallInterest);
 router.get('/buyer/events/:eventId/booked-builders', getBookedBuildersForEvent);

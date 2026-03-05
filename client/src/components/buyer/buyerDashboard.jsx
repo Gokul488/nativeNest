@@ -1,3 +1,4 @@
+// src/components/BuyerDashboard.jsx (or wherever this file lives)
 import React, { useState, useEffect } from "react";
 import {
   Link,
@@ -8,11 +9,11 @@ import {
 } from "react-router-dom";
 import {
   FaBars,
+  FaArrowLeft,
   FaUser,
   FaHome,
   FaCog,
   FaCalendarAlt,
-  FaCalendarCheck,
   FaBookmark,
   FaSpinner,
   FaChartBar,
@@ -23,11 +24,11 @@ import API_BASE_URL from "../../config.js";
 
 import ProfileSettings from "./profileSettings";
 import BuyerEvents from "./buyerEvents";
-import MyRegisteredEvents from "./MyRegisteredEvents";
-import EventBookedBuilders from "./EventBookedBuilders";
 import BookmarkedProperties from "./BookmarkedProperties";
 import EventCheckIn from "./EventCheckIn";
 import StallCheckIn from "./StallCheckIn";
+import EventDetails from "./EventDetails";
+// Removed: MyRegisteredEvents, EventBookedBuilders
 
 const StatCounter = ({ targetValue, duration = 1500 }) => {
   const [count, setCount] = useState(0);
@@ -56,7 +57,7 @@ const BuyerDashboard = () => {
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [stats, setStats] = useState({ myEvents: 0, totalEvents: 0, bookmarks: 0 });
+  const [stats, setStats] = useState({ totalEvents: 0, bookmarks: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
@@ -69,7 +70,11 @@ const BuyerDashboard = () => {
       const res = await axios.get(`${API_BASE_URL}/api/user/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setStats(res.data);
+      // We keep only the stats we still use
+      setStats({
+        totalEvents: res.data.totalEvents || 0,
+        bookmarks: res.data.bookmarks || 0
+      });
     } catch (err) {
       console.error("Error fetching buyer stats", err);
     } finally {
@@ -98,7 +103,7 @@ const BuyerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex relative font-sans">
-      {/* ================= SIDEBAR (Admin Aesthetic) ================= */}
+      {/* ================= SIDEBAR ================= */}
       <div
         className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
@@ -111,10 +116,9 @@ const BuyerDashboard = () => {
 
         <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto">
           {[
-            { to: "/buyer-dashboard", label: "Overview", icon: <FaHome /> },
+            { to: "/buyer-dashboard", label: "Dashboard", icon: <FaHome /> },
             { to: "/buyer-dashboard/bookmarks", label: "Saved Properties", icon: <FaBookmark /> },
             { to: "/buyer-dashboard/events", label: "Explore Events", icon: <FaCalendarAlt /> },
-            { to: "/buyer-dashboard/my-events", label: "My Events", icon: <FaCalendarCheck /> },
             { to: "/buyer-dashboard/profile-settings", label: "Profile Settings", icon: <FaCog /> },
           ].map((link) => (
             <Link
@@ -150,19 +154,27 @@ const BuyerDashboard = () => {
 
       {/* ================= MAIN CONTENT ================= */}
       <div className="flex-1 md:ml-72 transition-all duration-300 flex flex-col min-h-screen">
-        <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-200">
-          <div className="flex items-center gap-4">
+        <header className="bg-white shadow-sm p-3 sm:p-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-200">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={toggleSidebar}
-              className="text-teal-600 md:hidden p-2 hover:bg-teal-50 rounded-lg"
+              className="text-teal-600 md:hidden p-1.5 hover:bg-teal-50 rounded-lg"
             >
-              <FaBars className="w-6 h-6" />
+              <FaBars className="w-5 h-5" />
             </button>
+            <Link
+              to="/buy"
+              className="flex items-center gap-1 sm:gap-2 text-teal-600 hover:text-teal-800 transition-colors font-bold text-[10px] sm:text-sm uppercase tracking-tight"
+            >
+              <FaArrowLeft className="w-3 h-3 sm:w-4 h-4" />
+              <span className="hidden sm:inline">Back to </span>
+              <span>Browse</span>
+            </Link>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 bg-teal-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-full border border-teal-100">
-            <FaUser className="text-teal-600 text-sm sm:text-base" />
-            <span className="text-teal-800 font-bold text-xs sm:text-sm uppercase truncate max-w-[120px] sm:max-w-none">
+          <div className="flex items-center gap-2 sm:gap-3 bg-teal-50 py-1 sm:py-2 px-3 sm:px-4 rounded-full border border-teal-100">
+            <FaUser className="text-teal-600 text-[10px] sm:text-base" />
+            <span className="text-teal-800 font-bold text-[10px] sm:text-sm uppercase truncate max-w-[100px] sm:max-w-none">
               Welcome, {user.name || "Buyer"}
             </span>
           </div>
@@ -174,17 +186,9 @@ const BuyerDashboard = () => {
               path="/"
               element={
                 <div className="space-y-8">
-                  {/* Statistics Cards - Integrated with StatCounter logic */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Statistics Cards - removed Registered Events */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                     {[
-                      {
-                        label: "Registered Events",
-                        val: stats.myEvents,
-                        icon: <FaCalendarCheck />,
-                        color: "text-blue-600",
-                        bg: "bg-blue-50",
-                        path: "/buyer-dashboard/my-events"
-                      },
                       {
                         label: "Available Events",
                         val: stats.totalEvents,
@@ -224,15 +228,15 @@ const BuyerDashboard = () => {
                     ))}
                   </div>
 
-                  {/* Welcome Area & Quick Actions - Mirrored from Admin Dashboard */}
+                  {/* Welcome Area & Quick Actions */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                       <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                        Great to see you, {user.name}!
+                        Great to see you, {user.name || "Buyer"}!
                       </h3>
                       <p className="text-gray-600 leading-relaxed mb-6">
-                        Stay ahead in your property search. Here you can track all the events you've registered for,
-                        manage your saved properties, and discover new opportunities across NativeNest.
+                        Stay ahead in your property search. Manage your saved properties,
+                        discover upcoming events and connect with builders across NativeNest.
                       </p>
                       <div className="bg-teal-50 border-l-4 border-teal-500 p-4 rounded-r-xl">
                         <p className="text-teal-800 text-sm font-medium italic">
@@ -245,6 +249,10 @@ const BuyerDashboard = () => {
                       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Links</h3>
                         <div className="grid gap-3">
+                          <Link to="/buy" className="flex items-center gap-3 p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition-colors group">
+                            <FaArrowLeft className="text-teal-600 group-hover:-translate-x-1 transition-transform" />
+                            <span className="text-sm font-bold text-teal-800">Browse Properties</span>
+                          </Link>
                           <Link to="/buyer-dashboard/events" className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-teal-50 transition-colors group">
                             <FaPlusCircle className="text-teal-600 group-hover:scale-110 transition-transform" />
                             <span className="text-sm font-semibold text-gray-700">Explore Events</span>
@@ -256,7 +264,7 @@ const BuyerDashboard = () => {
                         </div>
                       </div>
 
-                      <div className="bg-linear-to-br from-teal-600 to-teal-700 p-6 rounded-2xl text-white shadow-lg">
+                      <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-6 rounded-2xl text-white shadow-lg">
                         <h4 className="font-bold flex items-center gap-2 mb-2"><FaChartBar /> Dashboard Tip</h4>
                         <p className="text-sm text-teal-50 leading-relaxed">
                           Use the "Saved Properties" section to keep track of listings you liked during events. It makes comparing options much easier later!
@@ -268,9 +276,8 @@ const BuyerDashboard = () => {
               }
             />
 
-            <Route path="/my-events" element={<MyRegisteredEvents />} />
-            <Route path="/my-events/builders/:eventId" element={<EventBookedBuilders />} />
             <Route path="/events" element={<BuyerEvents />} />
+            <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/bookmarks" element={<BookmarkedProperties />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/event-checkin/:eventId" element={<EventCheckIn />} />

@@ -127,7 +127,7 @@ const BuilderDashboard = () => {
 
         <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto">
           {[
-            { to: "/builder-dashboard/", label: "Overview", icon: <FaHome /> },
+            { to: "/builder-dashboard/", label: "Dashboard", icon: <FaHome /> },
             { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <FaBuilding /> },
             { to: "/builder-dashboard/events", label: "Event Stalls", icon: <FaCalendarAlt /> },
             { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <FaCog /> },

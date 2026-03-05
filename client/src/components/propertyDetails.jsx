@@ -116,7 +116,7 @@ const PropertyDetails = () => {
       return;
     }
 
-    const message = encodeURIComponent(`Hello, I'm interested in ${property.title} (ID: ${property.id}).`);
+    const message = encodeURIComponent(`Hello, I'm interested in ${property.title}.`);
     window.open(`https://wa.me/+91${property.mobile_number}?text=${message}`, '_blank');
   };
 
