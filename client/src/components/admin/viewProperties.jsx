@@ -1,7 +1,7 @@
 // src/components/ViewProperties.jsx  ← FULL REPLACEMENT
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 
 const ViewProperties = () => {
@@ -66,10 +66,11 @@ const ViewProperties = () => {
   };
 
   const filteredProperties = useMemo(() => {
+    const query = searchQuery.toLowerCase();
     let items = properties.filter(p =>
-      p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.builder_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      (p.title || "").toLowerCase().includes(query) ||
+      (p.city || "").toLowerCase().includes(query) ||
+      (p.builder_name || "").toLowerCase().includes(query)
     );
 
     if (sortConfig.key !== null) {
