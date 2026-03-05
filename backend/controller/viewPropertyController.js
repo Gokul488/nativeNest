@@ -149,72 +149,39 @@ const updateProperty = async (req, res) => {
     const { id } = req.params;
 
     const {
-      title,
-      builder_id,
-      description,
-      price,
-      address,
-      city,
-      state,
-      country,
-      pincode,
-      property_type,
-      sqft,
+      title, builder_id, description, price, address, city, state, country, pincode, property_type, sqft,
       other_amenity,
       variants
     } = req.body;
 
     let amenityIds = req.body.amenities || req.body['amenities[]'] || [];
     if (!Array.isArray(amenityIds)) {
-      amenityIds = [amenityIds].filter(Boolean);
+      amenityIds = [amenityIds];
     }
 
-    // ── Required fields validation ───────────────────────────────────────
-    const requiredFields = { title, builder_id, description, address, city, state, country, pincode, property_type };
-    const missing = Object.entries(requiredFields)
-      .filter(([key, val]) => !val || String(val).trim() === '')
-      .map(([key]) => key);
-
-    if (missing.length > 0) {
-      return res.status(400).json({
-        error: 'All required fields must be filled',
-        missingFields: missing
-      });
+    // Required field validation
+    if (!title || !builder_id || !description || !address || !city || !state || !country || !pincode || !property_type) {
+      return res.status(400).json({ error: 'All required fields must be filled' });
     }
 
-    const validPropertyTypes = ['Villas', 'Plots', 'Apartment', 'Commercial'];
-    if (!validPropertyTypes.includes(property_type)) {
-      return res.status(400).json({ error: 'Invalid property type' });
-    }
-
-    // ── Price & sqft validation depending on type ─────────────────────────
-    let finalPrice = price ? Number(price) : null;
-    let finalSqft = sqft ? Number(sqft) : null;
-
+    // Dynamic Validation logic based on property type
     if (property_type !== 'Apartment') {
-      if (!price || isNaN(finalPrice) || finalPrice <= 0) {
-        return res.status(400).json({ error: 'Valid price (> 0) is required for non-apartment properties' });
+      if (!price || isNaN(price) || price <= 0) {
+        return res.status(400).json({ error: 'Price is required and must be a positive number for this property type' });
       }
-      if (sqft && (isNaN(finalSqft) || finalSqft <= 0)) {
-        return res.status(400).json({ error: 'Sqft must be a positive number for non-apartment properties' });
+      if (sqft && (isNaN(sqft) || sqft <= 0)) {
+        return res.status(400).json({ error: 'Sqft must be a positive number' });
       }
-    } else {
-      // Apartment → allow price to be null/empty
-      finalPrice = null;
-      // sqft usually null or average/total — accept what's sent
     }
 
-    // ── Authorization check ──────────────────────────────────────────────
-    const [propCheck] = await pool.query(
-      'SELECT admin_id FROM properties WHERE property_id = ?',
-      [id]
-    );
-    if (propCheck.length === 0) return res.status(404).json({ error: 'Property not found' });
-    if (propCheck[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    // Authorization check
+    const [properties] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
+    if (properties.length === 0) return res.status(404).json({ error: 'Property not found' });
+    if (properties[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
 
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
     const video = req.files?.['video']?.[0]?.buffer || null;
-    const images = req.files?.['images[]']
+    const images = req.files && req.files['images[]']
       ? (Array.isArray(req.files['images[]']) ? req.files['images[]'] : [req.files['images[]']])
       : [];
 
@@ -222,46 +189,30 @@ const updateProperty = async (req, res) => {
     try {
       await connection.beginTransaction();
 
-      // Update main property row
+      // Update main property table
+      // If Apartment, we store NULL in the main table to avoid misleading data
       await connection.query(
         `UPDATE properties SET 
-          title = ?, 
-          builder_id = ?, 
-          description = ?, 
-          price = ?, 
-          address = ?, 
-          city = ?, 
-          state = ?, 
-          country = ?, 
-          pincode = ?, 
-          property_type = ?, 
-          sqft = ?,
+          title = ?, builder_id = ?, description = ?, 
+          price = ?, address = ?, city = ?, state = ?, country = ?, 
+          pincode = ?, property_type = ?, sqft = ?,
           cover_image = COALESCE(?, cover_image),
           video = COALESCE(?, video)
          WHERE property_id = ?`,
         [
-          title,
-          builder_id,
-          description,
-          finalPrice,
-          address,
-          city,
-          state,
-          country,
-          pincode,
-          property_type,
-          finalSqft,
-          coverImage,
-          video,
-          id
+          title, builder_id, description, 
+          property_type === 'Apartment' ? null : price, 
+          address, city, state, country, pincode, property_type, 
+          property_type === 'Apartment' ? null : sqft, 
+          coverImage, video, id
         ]
       );
 
-      // Replace images if new ones uploaded
+      // Handle Image updates (replaces existing if new ones provided)
       if (images.length > 0) {
         await connection.query('DELETE FROM property_images WHERE property_id = ?', [id]);
         for (const image of images) {
-          if (image?.buffer) {
+          if (image && image.buffer) {
             await connection.query(
               'INSERT INTO property_images (property_id, image) VALUES (?, ?)',
               [id, image.buffer]
@@ -270,9 +221,8 @@ const updateProperty = async (req, res) => {
         }
       }
 
-      // ── Amenities ─────────────────────────────────────────────────────
+      // Update amenities
       await connection.query('DELETE FROM property_amenities WHERE property_id = ?', [id]);
-
       if (amenityIds.length > 0) {
         const values = amenityIds.map(aid => [id, aid]);
         await connection.query(
@@ -281,11 +231,11 @@ const updateProperty = async (req, res) => {
         );
       }
 
-      // Custom "Other" amenity
+      // Handle custom "Other" amenity
       if (other_amenity && other_amenity.trim()) {
         const customName = other_amenity.trim();
-        let [existing] = await connection.query(
-          'SELECT amenity_id FROM amenities WHERE LOWER(name) = LOWER(?) LIMIT 1',
+        const [existing] = await connection.query(
+          'SELECT amenity_id FROM amenities WHERE LOWER(name) = LOWER(?)',
           [customName]
         );
 
@@ -293,55 +243,45 @@ const updateProperty = async (req, res) => {
         if (existing.length > 0) {
           customAmenityId = existing[0].amenity_id;
         } else {
-          const [insert] = await connection.query(
-            'INSERT INTO amenities (name, icon) VALUES (?, NULL)',
-            [customName]
+          const [insertResult] = await connection.query(
+            'INSERT INTO amenities (name, icon) VALUES (?, ?)',
+            [customName, null]
           );
-          customAmenityId = insert.insertId;
+          customAmenityId = insertResult.insertId;
         }
 
         await connection.query(
-          'INSERT IGNORE INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
+          'INSERT INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
           [id, customAmenityId]
         );
       }
 
-      // ── Variants (only for Apartment) ────────────────────────────────
-      await connection.query('DELETE FROM property_variants WHERE property_id = ?', [id]);
-
+      // Update Variants for Apartments
       if (property_type === 'Apartment' && variants) {
-        let variantData;
-        try {
-          variantData = JSON.parse(variants);
-        } catch (e) {
-          throw new Error("Invalid variants JSON format");
-        }
-
+        await connection.query('DELETE FROM property_variants WHERE property_id = ?', [id]);
+        
+        // Parse JSON if sent as string via FormData
+        const variantData = typeof variants === 'string' ? JSON.parse(variants) : variants;
+        
         if (Array.isArray(variantData) && variantData.length > 0) {
           for (const v of variantData) {
-            const aptType = (v.apartment_type || '').trim();
-            const vPrice = Number(v.price);
-            const vSqft = Number(v.sqft);
-
-            if (!aptType || isNaN(vPrice) || vPrice <= 0 || isNaN(vSqft) || vSqft <= 0) {
-              throw new Error("Every apartment variant must have valid apartment_type, price (>0) and sqft (>0)");
-            }
-
             await connection.query(
               `INSERT INTO property_variants (property_id, apartment_type, price, sqft) 
                VALUES (?, ?, ?, ?)`,
-              [id, aptType, vPrice, vSqft]
+              [id, v.apartment_type, v.price || null, v.sqft || null]
             );
           }
         }
+      } else {
+        // If changed from Apartment to another type, clear variants
+        await connection.query('DELETE FROM property_variants WHERE property_id = ?', [id]);
       }
 
       await connection.commit();
       res.status(200).json({ message: 'Property updated successfully' });
-    } catch (innerErr) {
+    } catch (error) {
       await connection.rollback();
-      console.error('Update transaction failed:', innerErr);
-      return res.status(400).json({ error: innerErr.message || 'Failed to update property' });
+      throw error;
     } finally {
       connection.release();
     }
