@@ -22,6 +22,7 @@ const getProperties = async (req, res) => {
         p.address,
         p.property_type,
         p.sqft,
+        p.quantity,
         p.created_at,
         b.name AS builder_name,
         COALESCE(pi.image_count, 0) AS image_count
@@ -89,7 +90,8 @@ const getPropertyById = async (req, res) => {
         p.country, 
         p.pincode, 
         p.property_type,
-        p.sqft, 
+        p.sqft,
+        p.quantity, 
         p.video,
         p.cover_image, 
         p.created_at
@@ -116,7 +118,7 @@ const getPropertyById = async (req, res) => {
     );
 
     const [variants] = await pool.query(
-      'SELECT variant_id, apartment_type, price, sqft FROM property_variants WHERE property_id = ?',
+      'SELECT variant_id, apartment_type, price, sqft, quantity FROM property_variants WHERE property_id = ?', // ADDED quantity
       [id]
     );
 
@@ -124,7 +126,8 @@ const getPropertyById = async (req, res) => {
       ...properties[0],
       images,
       sqft: properties[0].sqft || null,
-      variants, // Add variants here
+      quantity: properties[0].quantity || 1,
+      variants,
       amenities: amenitiesResult.map(a => ({
         id: a.amenity_id,
         name: a.name,
@@ -160,6 +163,7 @@ const updateProperty = async (req, res) => {
       pincode,
       property_type,
       sqft,
+      quantity,
       other_amenity,
       variants
     } = req.body;
@@ -182,26 +186,21 @@ const updateProperty = async (req, res) => {
       });
     }
 
-    const validPropertyTypes = ['Villas', 'Plots', 'Apartment', 'Commercial'];
-    if (!validPropertyTypes.includes(property_type)) {
-      return res.status(400).json({ error: 'Invalid property type' });
-    }
-
-    // ── Price & sqft validation depending on type ─────────────────────────
+    // ── Price, Sqft & Quantity Logic based on type ────────────────────────
     let finalPrice = price ? Number(price) : null;
     let finalSqft = sqft ? Number(sqft) : null;
+    let finalQuantity = (quantity && !isNaN(quantity)) ? Number(quantity) : 1;
 
-    if (property_type !== 'Apartment') {
+    if (property_type === 'Apartment') {
+      // Force NULL in main properties table for Apartments
+      finalPrice = null;
+      finalSqft = null;
+      finalQuantity = null;
+    } else {
+      // Validation for non-apartment properties
       if (!price || isNaN(finalPrice) || finalPrice <= 0) {
         return res.status(400).json({ error: 'Valid price (> 0) is required for non-apartment properties' });
       }
-      if (sqft && (isNaN(finalSqft) || finalSqft <= 0)) {
-        return res.status(400).json({ error: 'Sqft must be a positive number for non-apartment properties' });
-      }
-    } else {
-      // Apartment → allow price to be null/empty
-      finalPrice = null;
-      // sqft usually null or average/total — accept what's sent
     }
 
     // ── Authorization check ──────────────────────────────────────────────
@@ -236,6 +235,7 @@ const updateProperty = async (req, res) => {
           pincode = ?, 
           property_type = ?, 
           sqft = ?,
+          quantity = ?,
           cover_image = COALESCE(?, cover_image),
           video = COALESCE(?, video)
          WHERE property_id = ?`,
@@ -251,13 +251,14 @@ const updateProperty = async (req, res) => {
           pincode,
           property_type,
           finalSqft,
+          finalQuantity,
           coverImage,
           video,
           id
         ]
       );
 
-      // Replace images if new ones uploaded
+      // ── Handle Images ──────────────────────────────────────────────────
       if (images.length > 0) {
         await connection.query('DELETE FROM property_images WHERE property_id = ?', [id]);
         for (const image of images) {
@@ -270,9 +271,8 @@ const updateProperty = async (req, res) => {
         }
       }
 
-      // ── Amenities ─────────────────────────────────────────────────────
+      // ── Handle Amenities ──────────────────────────────────────────────
       await connection.query('DELETE FROM property_amenities WHERE property_id = ?', [id]);
-
       if (amenityIds.length > 0) {
         const values = amenityIds.map(aid => [id, aid]);
         await connection.query(
@@ -281,7 +281,6 @@ const updateProperty = async (req, res) => {
         );
       }
 
-      // Custom "Other" amenity
       if (other_amenity && other_amenity.trim()) {
         const customName = other_amenity.trim();
         let [existing] = await connection.query(
@@ -306,7 +305,7 @@ const updateProperty = async (req, res) => {
         );
       }
 
-      // ── Variants (only for Apartment) ────────────────────────────────
+      // ── Handle Variants (only for Apartment) ──────────────────────────
       await connection.query('DELETE FROM property_variants WHERE property_id = ?', [id]);
 
       if (property_type === 'Apartment' && variants) {
@@ -322,15 +321,16 @@ const updateProperty = async (req, res) => {
             const aptType = (v.apartment_type || '').trim();
             const vPrice = Number(v.price);
             const vSqft = Number(v.sqft);
+            const vQty = Number(v.quantity) || 1;
 
             if (!aptType || isNaN(vPrice) || vPrice <= 0 || isNaN(vSqft) || vSqft <= 0) {
               throw new Error("Every apartment variant must have valid apartment_type, price (>0) and sqft (>0)");
             }
 
             await connection.query(
-              `INSERT INTO property_variants (property_id, apartment_type, price, sqft) 
-               VALUES (?, ?, ?, ?)`,
-              [id, aptType, vPrice, vSqft]
+              `INSERT INTO property_variants (property_id, apartment_type, price, sqft, quantity) 
+              VALUES (?, ?, ?, ?, ?)`,
+              [id, aptType, vPrice, vSqft, vQty]
             );
           }
         }

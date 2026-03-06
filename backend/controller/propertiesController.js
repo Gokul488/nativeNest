@@ -26,6 +26,7 @@ const createProperty = async (req, res) => {
       property_type,
       builder_id,
       sqft,
+      quantity,
       other_amenity,
       variants         // JSON string for apartments
     } = req.body;
@@ -45,9 +46,10 @@ const createProperty = async (req, res) => {
       return res.status(400).json({ error: 'Invalid property type. Allowed: Villas, Apartment, Plots, Commercial' });
     }
 
-    // ── Price & sqft validation depending on type ─────────────────────────
+    // ── Price, Sqft & Quantity validation depending on type ─────────────────────────
     let finalPrice = null;
     let finalSqft = sqft ? Number(sqft) : null;
+    let finalQuantity = (quantity && !isNaN(quantity)) ? Number(quantity) : 1;
 
     if (property_type !== 'Apartment') {
       if (!price || isNaN(price) || Number(price) <= 0) {
@@ -58,10 +60,10 @@ const createProperty = async (req, res) => {
         return res.status(400).json({ error: 'Sqft must be a positive number for non-apartment properties' });
       }
     } else {
-      // Apartment → main price can be null
+      // For Apartments: force NULL in main properties table
       finalPrice = null;
-      // sqft in main table is usually null or total/average — up to you
-      // here we allow it to be sent or null
+      finalSqft = null;
+      finalQuantity = null;
     }
 
     // ── Builder validation ───────────────────────────────────────────────
@@ -103,8 +105,8 @@ const createProperty = async (req, res) => {
       // Insert main property
       const [propertyResult] = await connection.query(
         `INSERT INTO properties 
-         (admin_id, builder_id, title, description, price, address, city, state, country, pincode, property_type, sqft, cover_image, video, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        (admin_id, builder_id, title, description, price, address, city, state, country, pincode, property_type, sqft, quantity, cover_image, video, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [
           adminId,
           builderId,
@@ -118,6 +120,7 @@ const createProperty = async (req, res) => {
           pincode,
           property_type,
           finalSqft,
+          finalQuantity,
           coverImage,
           video
         ]
@@ -142,15 +145,16 @@ const createProperty = async (req, res) => {
           const aptType = v.apartment_type?.trim();
           const vPrice = Number(v.price);
           const vSqft = Number(v.sqft);
+          const vQty = Number(v.quantity) || 1;
 
           if (!aptType || isNaN(vPrice) || vPrice <= 0 || isNaN(vSqft) || vSqft <= 0) {
             throw new Error(`Invalid variant: apartment_type, price (>0) and sqft (>0) are all required`);
           }
 
           await connection.query(
-            `INSERT INTO property_variants (property_id, apartment_type, price, sqft) 
-             VALUES (?, ?, ?, ?)`,
-            [propertyId, aptType, vPrice, vSqft]
+            `INSERT INTO property_variants (property_id, apartment_type, price, sqft, quantity) 
+            VALUES (?, ?, ?, ?, ?)`,
+            [propertyId, aptType, vPrice, vSqft, vQty]
           );
         }
       }

@@ -43,6 +43,7 @@ const EditProperty = () => {
     pincode: "",
     property_type: "",
     sqft: "",
+    quantity: "1",
   });
   const [builderName, setBuilderName] = useState("");
 
@@ -50,21 +51,20 @@ const EditProperty = () => {
   const [amenityOptions, setAmenityOptions] = useState([]);
   const [propertyTypes, setPropertyTypes] = useState([]);
 
-  const [variants, setVariants] = useState([{ apartment_type: "1BHK", price: "", sqft: "", isCustom: false }]);
+  const [variants, setVariants] = useState([{ apartment_type: "1BHK", price: "", sqft: "", quantity: "1", isCustom: false }]);
 
-  const handleVariantChange = (index, field, value) => {
-    const newVariants = [...variants];
+const handleVariantChange = (index, field, value) => {
+  const newVariants = [...variants];
+  if (field === "apartment_type" && value === "Others") {
+    newVariants[index].isCustom = true;
+    newVariants[index].apartment_type = "";
+  } else {
+    newVariants[index][field] = value;
+  }
+  setVariants(newVariants);
+};
 
-    if (field === "apartment_type" && value === "Others") {
-      newVariants[index].isCustom = true;
-      newVariants[index].apartment_type = ""; // Clear to let user type
-    } else {
-      newVariants[index][field] = value;
-    }
-    setVariants(newVariants);
-  };
-
-  const addVariant = () => setVariants([...variants, { apartment_type: "1BHK", price: "", sqft: "", isCustom: false }]);
+  const addVariant = () => setVariants([...variants, { apartment_type: "1BHK", price: "", sqft: "", quantity: "1", isCustom: false }]);
   const removeVariant = (index) => setVariants(variants.filter((_, i) => i !== index));
 
   const [showOtherInput, setShowOtherInput] = useState(false);
@@ -170,12 +170,15 @@ const EditProperty = () => {
           pincode: prop.pincode || "",
           property_type: prop.property_type || "",
           sqft: prop.sqft || "",
+          quantity: prop.quantity || "1",
         });
 
         setBuilderName(prop.builder_name || "");
 
         if (prop.variants && prop.variants.length > 0) {
-          setVariants(prop.variants.map(v => ({ ...v, isCustom: !["1BHK", "2BHK", "3BHK"].includes(v.apartment_type) })));
+          setVariants(prop.variants.map(v => ({ ...v, 
+            quantity: v.quantity || "1", 
+            isCustom: !["1BHK", "2BHK", "3BHK"].includes(v.apartment_type) })));
         } else {
           setVariants([{ apartment_type: "1BHK", price: "", sqft: "", isCustom: false }]);
         }
@@ -514,6 +517,21 @@ const EditProperty = () => {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
                 />
               </div>
+
+              {/* Added Quantity Field */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                  Total Quantity
+                </label>
+                <input
+                  type="number"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleInputChange}
+                  min="1"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800"
+                />
+              </div>
             </div>
           )}
 
@@ -583,6 +601,18 @@ const EditProperty = () => {
                       className="w-full px-3 py-2 border rounded-md text-sm"
                     />
                   </div>
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-600">Qty</label>
+                        <input
+                          type="number"
+                          value={variant.quantity}
+                          onChange={(e) => handleVariantChange(index, "quantity", e.target.value)}
+                          className="w-full px-3 py-2 border rounded-md text-sm"
+                          min="1"
+                          required
+                        />
+                    </div>
 
                   <button
                     type="button"

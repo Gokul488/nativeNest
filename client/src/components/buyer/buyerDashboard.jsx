@@ -28,7 +28,6 @@ import BookmarkedProperties from "./BookmarkedProperties";
 import EventCheckIn from "./EventCheckIn";
 import StallCheckIn from "./StallCheckIn";
 import EventDetails from "./EventDetails";
-// Removed: MyRegisteredEvents, EventBookedBuilders
 
 const StatCounter = ({ targetValue, duration = 1500 }) => {
   const [count, setCount] = useState(0);
@@ -70,7 +69,6 @@ const BuyerDashboard = () => {
       const res = await axios.get(`${API_BASE_URL}/api/user/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // We keep only the stats we still use
       setStats({
         totalEvents: res.data.totalEvents || 0,
         bookmarks: res.data.bookmarks || 0
@@ -107,7 +105,7 @@ const BuyerDashboard = () => {
       <div
         className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          bg-gradient-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}
+          bg-linear-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}
       >
         <div className="p-6 border-b border-teal-400/40">
           <h1 className="text-3xl font-bold text-white tracking-tight">NativeNest</h1>
@@ -166,8 +164,7 @@ const BuyerDashboard = () => {
               to="/buy"
               className="flex items-center gap-1 sm:gap-2 text-teal-600 hover:text-teal-800 transition-colors font-bold text-[10px] sm:text-sm uppercase tracking-tight"
             >
-              <FaArrowLeft className="w-3 h-3 sm:w-4 h-4" />
-              <span className="hidden sm:inline">Back to </span>
+              <FaArrowLeft className="w-3 h-3 sm:w-4" />
               <span>Browse</span>
             </Link>
           </div>
@@ -264,7 +261,7 @@ const BuyerDashboard = () => {
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-6 rounded-2xl text-white shadow-lg">
+                      <div className="bg-linear-to-br from-teal-600 to-teal-700 p-6 rounded-2xl text-white shadow-lg">
                         <h4 className="font-bold flex items-center gap-2 mb-2"><FaChartBar /> Dashboard Tip</h4>
                         <p className="text-sm text-teal-50 leading-relaxed">
                           Use the "Saved Properties" section to keep track of listings you liked during events. It makes comparing options much easier later!

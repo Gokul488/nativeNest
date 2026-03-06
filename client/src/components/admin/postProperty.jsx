@@ -43,6 +43,7 @@ const PostProperty = () => {
     pincode: "",
     property_type: "",
     sqft: "",
+    quantity: "1",
   });
 
   const [accountType, setAccountType] = useState(null);
@@ -51,7 +52,9 @@ const PostProperty = () => {
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [amenityOptions, setAmenityOptions] = useState([]);
   const [propertyTypes, setPropertyTypes] = useState([]);
-  const [variants, setVariants] = useState([{ apartment_type: "1BHK", price: "", sqft: "", isCustom: false }]);
+  const [variants, setVariants] = useState([
+  { apartment_type: "1BHK", price: "", sqft: "", quantity: "1", isCustom: false }
+]);
 
   const handleVariantChange = (index, field, value) => {
     const newVariants = [...variants];
@@ -505,6 +508,17 @@ const handleSubmit = async (e) => {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
                 />
               </div>
+              <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 uppercase">Quantity</label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleInputChange}
+                      min="1"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                    />
+                </div>
             </div>
           )}
 
@@ -577,7 +591,16 @@ const handleSubmit = async (e) => {
                       className="w-full px-3 py-2 border rounded-md text-sm"
                     />
                   </div>
-
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-600">Qty</label>
+                        <input
+                          type="number"
+                          value={variant.quantity}
+                          onChange={(e) => handleVariantChange(index, "quantity", e.target.value)}
+                          className="w-full px-3 py-2 border rounded-md text-sm"
+                          min="1"
+                        />
+                    </div>
                   <button
                     type="button"
                     onClick={() => removeVariant(index)}
