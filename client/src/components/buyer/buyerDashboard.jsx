@@ -29,6 +29,7 @@ import EventCheckIn from "./EventCheckIn";
 import StallCheckIn from "./StallCheckIn";
 import EventDetails from "./EventDetails";
 import LogoutDialog from "../LogoutDialog";
+import EventBookedBuilders from "./EventBookedBuilders";
 
 const StatCounter = ({ targetValue, duration = 1500 }) => {
   const [count, setCount] = useState(0);
@@ -281,6 +282,7 @@ const BuyerDashboard = () => {
 
             <Route path="/events" element={<BuyerEvents />} />
             <Route path="/events/:id" element={<EventDetails />} />
+            <Route path="/my-events/builders/:eventId" element={<EventBookedBuilders />} />
             <Route path="/bookmarks" element={<BookmarkedProperties />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/event-checkin/:eventId" element={<EventCheckIn />} />
