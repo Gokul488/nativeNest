@@ -20,6 +20,7 @@ import PostProperty from "../admin/postProperty";
 import EditProperty from "../admin/editProperty";
 import StallBooking from "./StallBooking";
 import BuilderStallInterests from "./BuilderStallInterests";
+import LogoutDialog from "../LogoutDialog";
 
 /**
  * Animated Stat Counter Component
@@ -55,11 +56,16 @@ const BuilderDashboard = () => {
   const [stats, setStats] = useState(null);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
 
   const handleLogout = () => {
+    setIsLogoutDialogOpen(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login", { replace: true });
@@ -291,6 +297,11 @@ const BuilderDashboard = () => {
           </Routes>
         </main>
       </div>
+      <LogoutDialog
+        isOpen={isLogoutDialogOpen}
+        onConfirm={confirmLogout}
+        onCancel={() => setIsLogoutDialogOpen(false)}
+      />
     </div>
   );
 };

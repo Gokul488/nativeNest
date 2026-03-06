@@ -11,6 +11,8 @@ import {
   FaClock
 } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
+import DeleteDialog from '../DeleteDialog';
+
 
 const ITEMS_PER_PAGE = 10;
 
@@ -21,6 +23,9 @@ const ViewEnquiries = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [enquiryToDelete, setEnquiryToDelete] = useState(null);
+
 
   useEffect(() => {
     const fetchEnquiries = async () => {
@@ -51,23 +56,32 @@ const ViewEnquiries = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedEnquiries = filteredEnquiries.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this enquiry?")) return;
-    setDeletingId(id);
+  const handleDelete = (id) => {
+    setEnquiryToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!enquiryToDelete) return;
+    setDeletingId(enquiryToDelete);
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.delete(`${API_BASE_URL}/api/contact/${id}`, {
+      const response = await axios.delete(`${API_BASE_URL}/api/contact/${enquiryToDelete}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (response.status === 200 || response.status === 204) {
-        setEnquiries(prev => prev.filter((enq) => enq.id !== id));
+        setEnquiries(prev => prev.filter((enq) => enq.id !== enquiryToDelete));
       }
+      setShowDeleteDialog(false);
+      setEnquiryToDelete(null);
     } catch (err) {
       alert("Failed to delete enquiry.");
+      setShowDeleteDialog(false);
     } finally {
       setDeletingId(null);
     }
   };
+
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
@@ -228,7 +242,15 @@ const ViewEnquiries = () => {
           </div>
         </div>
       )}
+      <DeleteDialog
+        isOpen={showDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        title="Delete Enquiry?"
+        message="Are you sure you want to delete this enquiry? This action cannot be undone."
+      />
     </div>
+
   );
 };
 

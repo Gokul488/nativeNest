@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
+import DeleteDialog from '../DeleteDialog';
+
 
 const ViewProperties = () => {
   const location = useLocation();
@@ -12,6 +14,9 @@ const ViewProperties = () => {
   const [error, setError] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'city', direction: 'asc' });
   const [selectedConfigs, setSelectedConfigs] = useState({}); // new: per-property selected sqft for apartments
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState(null);
+
 
   const navigate = useNavigate();
 
@@ -96,20 +101,29 @@ const ViewProperties = () => {
     return items;
   }, [properties, searchQuery, sortConfig]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this property?')) return;
+  const handleDelete = (id) => {
+    setPropertyToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!propertyToDelete) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/viewproperties/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/viewproperties/${propertyToDelete}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to delete');
-      setProperties(properties.filter((prop) => prop.id !== id));
+      setProperties(properties.filter((prop) => prop.id !== propertyToDelete));
+      setShowDeleteDialog(false);
+      setPropertyToDelete(null);
     } catch (err) {
       setError(err.message);
+      setShowDeleteDialog(false);
     }
   };
+
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
@@ -332,7 +346,16 @@ const ViewProperties = () => {
           </>
         )}
       </div>
+
+      <DeleteDialog
+        isOpen={showDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        title="Delete Property?"
+        message="Are you sure you want to delete this property? This action cannot be undone."
+      />
     </div>
+
   );
 };
 

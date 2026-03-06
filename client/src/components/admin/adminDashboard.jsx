@@ -27,6 +27,7 @@ import ManageStallTypes from "./ManageStallTypes";
 import EventStallBookings from "./EventStallBookings";
 import ManageBuilders from "./ManageBuilders";
 import AddEditStallType from "./AddEditStallType";
+import LogoutDialog from "../LogoutDialog";
 
 import {
   FaBars, FaChartBar, FaUser, FaHome, FaUsers, FaBuilding,
@@ -64,6 +65,7 @@ const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -85,6 +87,10 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
+    setIsLogoutDialogOpen(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login", { replace: true });
@@ -306,6 +312,11 @@ const AdminDashboard = () => {
           </Routes>
         </main>
       </div>
+      <LogoutDialog
+        isOpen={isLogoutDialogOpen}
+        onConfirm={confirmLogout}
+        onCancel={() => setIsLogoutDialogOpen(false)}
+      />
     </div>
   );
 };

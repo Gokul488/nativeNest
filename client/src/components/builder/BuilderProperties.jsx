@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaRulerCombined } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
+import DeleteDialog from '../DeleteDialog';
+
 
 const BuilderProperties = () => {
   const [properties, setProperties] = useState([]);
@@ -10,6 +12,9 @@ const BuilderProperties = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedConfigs, setSelectedConfigs] = useState({}); // per-property selected sqft for apartments
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,20 +69,29 @@ const BuilderProperties = () => {
     );
   }, [properties, searchQuery]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this property?")) return;
+  const handleDelete = (id) => {
+    setPropertyToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!propertyToDelete) return;
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/api/builder/my-properties/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/builder/my-properties/${propertyToDelete}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Failed to delete property");
-      setProperties(properties.filter((prop) => prop.property_id !== id));
+      setProperties(properties.filter((prop) => prop.property_id !== propertyToDelete));
+      setShowDeleteDialog(false);
+      setPropertyToDelete(null);
     } catch (err) {
       setError(err.message);
+      setShowDeleteDialog(false);
     }
   };
+
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
@@ -309,7 +323,16 @@ const BuilderProperties = () => {
           </>
         )}
       </div>
+
+      <DeleteDialog
+        isOpen={showDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        title="Delete Property?"
+        message="Are you sure you want to delete this property? This action cannot be undone."
+      />
     </div>
+
   );
 };
 

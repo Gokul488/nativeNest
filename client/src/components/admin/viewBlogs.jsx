@@ -3,12 +3,17 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaNewspaper } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
+import DeleteDialog from '../DeleteDialog';
+
 
 const ViewBlogs = () => {
   const [blogs, setBlogs] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [blogToDelete, setBlogToDelete] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,12 +52,16 @@ const ViewBlogs = () => {
     );
   }, [blogs, searchQuery]);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this blog?')) return;
+  const handleDelete = (id) => {
+    setBlogToDelete(id);
+    setShowDeleteDialog(true);
+  };
 
+  const confirmDelete = async () => {
+    if (!blogToDelete) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/blogs/${blogToDelete}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -62,11 +71,15 @@ const ViewBlogs = () => {
         throw new Error('Failed to delete blog');
       }
 
-      setBlogs(blogs.filter((blog) => blog.id !== id));
+      setBlogs(blogs.filter((blog) => blog.id !== blogToDelete));
+      setShowDeleteDialog(false);
+      setBlogToDelete(null);
     } catch (err) {
       setError(err.message);
+      setShowDeleteDialog(false);
     }
   };
+
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
@@ -205,7 +218,16 @@ const ViewBlogs = () => {
           </>
         )}
       </div>
+
+      <DeleteDialog
+        isOpen={showDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        title="Delete Blog?"
+        message="Are you sure you want to delete this blog post? This action cannot be undone."
+      />
     </div>
+
   );
 };
 

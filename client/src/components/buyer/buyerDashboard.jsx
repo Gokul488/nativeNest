@@ -28,6 +28,7 @@ import BookmarkedProperties from "./BookmarkedProperties";
 import EventCheckIn from "./EventCheckIn";
 import StallCheckIn from "./StallCheckIn";
 import EventDetails from "./EventDetails";
+import LogoutDialog from "../LogoutDialog";
 
 const StatCounter = ({ targetValue, duration = 1500 }) => {
   const [count, setCount] = useState(0);
@@ -58,6 +59,7 @@ const BuyerDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [stats, setStats] = useState({ totalEvents: 0, bookmarks: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchBuyerStats();
@@ -84,6 +86,10 @@ const BuyerDashboard = () => {
   const closeSidebar = () => setIsSidebarOpen(false);
 
   const handleLogout = () => {
+    setIsLogoutDialogOpen(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login", { replace: true });
@@ -282,6 +288,11 @@ const BuyerDashboard = () => {
           </Routes>
         </main>
       </div>
+      <LogoutDialog
+        isOpen={isLogoutDialogOpen}
+        onConfirm={confirmLogout}
+        onCancel={() => setIsLogoutDialogOpen(false)}
+      />
     </div>
   );
 };
