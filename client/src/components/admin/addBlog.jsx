@@ -1,17 +1,14 @@
 // src/components/AddBlog.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Quill from 'quill';
-import QuillTableBetter from 'quill-table-better';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
 import 'quill-table-better/dist/quill-table-better.css';
+import { QuillTableBetter } from '../../utils/registerQuillModules';
 import { FaArrowLeft, FaBlog, FaImage, FaExclamationTriangle, FaCheckCircle, FaCloudUploadAlt } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 
 const AddBlog = () => {
-  // Register the new table module
-  Quill.register('modules/table-better', QuillTableBetter);
 
   const { quill, quillRef } = useQuill({
     modules: {
@@ -44,7 +41,7 @@ const AddBlog = () => {
         bindings: QuillTableBetter.keyboardBindings
       },
     },
-    formats: ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'align', 'color', 'background', 'table'],
+    formats: ['header', 'bold', 'italic', 'underline', 'list', 'link', 'align', 'color', 'background', 'table'],
   });
 
   const [title, setTitle] = useState('');

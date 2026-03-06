@@ -1,6 +1,6 @@
 // src/components/PostProperty.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useQuill } from "react-quilljs";
 import "quill/dist/quill.snow.css";
@@ -8,8 +8,7 @@ import "quill-table-better/dist/quill-table-better.css";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import API_BASE_URL from "../../config.js";
-import Quill from "quill";
-import QuillTableBetter from "quill-table-better";
+import { QuillTableBetter } from "../../utils/registerQuillModules";
 import { jwtDecode } from "jwt-decode";
 import {
   FaArrowLeft,
@@ -25,11 +24,16 @@ import {
 
 const animatedComponents = makeAnimated();
 
-Quill.register("modules/table-better", QuillTableBetter);
 
 const PostProperty = () => {
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isAdmin = location.pathname.includes("/admin-dashboard");
+  const backPath = isAdmin
+    ? "/admin-dashboard/manage-properties"
+    : "/builder-dashboard/my-properties";
 
   // ── Form state ────────────────────────────────────────────────
   const [formData, setFormData] = useState({
@@ -53,8 +57,8 @@ const PostProperty = () => {
   const [amenityOptions, setAmenityOptions] = useState([]);
   const [propertyTypes, setPropertyTypes] = useState([]);
   const [variants, setVariants] = useState([
-  { apartment_type: "1BHK", price: "", sqft: "", quantity: "1", isCustom: false }
-]);
+    { apartment_type: "1BHK", price: "", sqft: "", quantity: "1", isCustom: false }
+  ]);
 
   const handleVariantChange = (index, field, value) => {
     const newVariants = [...variants];
@@ -259,65 +263,65 @@ const PostProperty = () => {
     setSelectedAmenities(selected.filter((opt) => opt.value !== "OTHER"));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setSuccess("");
-  setIsSubmitting(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setIsSubmitting(true);
 
-  if (!formData.description || formData.description === "<p><br></p>") {
-    setError("Description is required");
-    setIsSubmitting(false);
-    return;
-  }
-
-  // === FIXED: Validation for Apartment variants (this was causing the submit error) ===
-  if (formData.property_type === "Apartment") {
-    if (variants.length === 0 || variants.some(v => 
-      !v.apartment_type || v.apartment_type.trim() === "" ||
-      !v.price || String(v.price).trim() === "" ||
-      !v.sqft || String(v.sqft).trim() === ""
-    )) {
-      setError("Please provide complete details (Type, Price, Sqft) for ALL apartment configurations");
+    if (!formData.description || formData.description === "<p><br></p>") {
+      setError("Description is required");
       setIsSubmitting(false);
       return;
     }
-  }
 
-  const data = new FormData();
+    // === FIXED: Validation for Apartment variants (this was causing the submit error) ===
+    if (formData.property_type === "Apartment") {
+      if (variants.length === 0 || variants.some(v =>
+        !v.apartment_type || v.apartment_type.trim() === "" ||
+        !v.price || String(v.price).trim() === "" ||
+        !v.sqft || String(v.sqft).trim() === ""
+      )) {
+        setError("Please provide complete details (Type, Price, Sqft) for ALL apartment configurations");
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
-  Object.entries(formData).forEach(([k, v]) => data.append(k, v));
-  data.append("builder_id", selectedBuilderId);
+    const data = new FormData();
 
-  selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
-  if (showOtherInput && otherAmenityName.trim()) {
-    data.append("other_amenity", otherAmenityName.trim());
-  }
+    Object.entries(formData).forEach(([k, v]) => data.append(k, v));
+    data.append("builder_id", selectedBuilderId);
 
-  images.forEach((img) => data.append("images[]", img));
-  extraImageInputs.forEach((i) => i.file && data.append("images[]", i.file));
+    selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
+    if (showOtherInput && otherAmenityName.trim()) {
+      data.append("other_amenity", otherAmenityName.trim());
+    }
 
-  if (coverImage) data.append("cover_image", coverImage);
-  if (video) data.append("video", video);
-  data.append("variants", JSON.stringify(variants));
+    images.forEach((img) => data.append("images[]", img));
+    extraImageInputs.forEach((i) => i.file && data.append("images[]", i.file));
 
-  try {
-    const token = localStorage.getItem("token");
-    await axios.post(`${API_BASE_URL}/api/properties`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    if (coverImage) data.append("cover_image", coverImage);
+    if (video) data.append("video", video);
+    data.append("variants", JSON.stringify(variants));
 
-    setSuccess("Property posted successfully!");
-    setTimeout(() => navigate("/admin-dashboard/manage-properties"), 1500);
-  } catch (err) {
-    setError(err.response?.data?.error || "Failed to post property");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API_BASE_URL}/api/properties`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setSuccess("Property posted successfully!");
+      setTimeout(() => navigate(backPath), 1500);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to post property");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // ── Custom Select Styles ──────────────────────────────────────
   const customStyles = {
@@ -360,7 +364,7 @@ const handleSubmit = async (e) => {
       <div className="p-4 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link
-            to="/admin-dashboard/manage-properties"
+            to={backPath}
             className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600"
           >
             <FaArrowLeft />
@@ -509,16 +513,16 @@ const handleSubmit = async (e) => {
                 />
               </div>
               <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 uppercase">Quantity</label>
-                    <input
-                      type="number"
-                      name="quantity"
-                      value={formData.quantity}
-                      onChange={handleInputChange}
-                      min="1"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                    />
-                </div>
+                <label className="text-sm font-bold text-gray-700 uppercase">Quantity</label>
+                <input
+                  type="number"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleInputChange}
+                  min="1"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                />
+              </div>
             </div>
           )}
 
@@ -591,16 +595,16 @@ const handleSubmit = async (e) => {
                       className="w-full px-3 py-2 border rounded-md text-sm"
                     />
                   </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-600">Qty</label>
-                        <input
-                          type="number"
-                          value={variant.quantity}
-                          onChange={(e) => handleVariantChange(index, "quantity", e.target.value)}
-                          className="w-full px-3 py-2 border rounded-md text-sm"
-                          min="1"
-                        />
-                    </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600">Qty</label>
+                    <input
+                      type="number"
+                      value={variant.quantity}
+                      onChange={(e) => handleVariantChange(index, "quantity", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                      min="1"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeVariant(index)}

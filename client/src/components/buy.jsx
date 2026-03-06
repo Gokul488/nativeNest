@@ -6,7 +6,7 @@ import OngoingEventsMarquee from "./OngoingEventsMarquee";
 import { motion, AnimatePresence } from "framer-motion";
 import "./buy.css"; // Reuse home styles if needed
 import API_BASE_URL from '../config.js';   // ← one level up
-const Buy = () => { 
+const Buy = () => {
   const [properties, setProperties] = useState([]);
   const [propertyError, setPropertyError] = useState('');
   const [propertyTypes, setPropertyTypes] = useState([]);
@@ -776,8 +776,8 @@ const Buy = () => {
             className="fixed bottom-6 right-6 z-50 max-w-sm"
           >
             <div className={`p-5 rounded-xl shadow-xxl border backdrop-blur-lg text-white flex items-start gap-4 ${toast.type === 'success' ? 'bg-linear-to-r from-teal-600 to-emerald-600 border-teal-400' :
-                toast.type === 'error' ? 'bg-linear-to-r from-red-600 to-pink-600 border-red-400' :
-                  'bg-linear-to-r from-blue-600 to-indigo-600 border-blue-400'
+              toast.type === 'error' ? 'bg-linear-to-r from-red-600 to-pink-600 border-red-400' :
+                'bg-linear-to-r from-blue-600 to-indigo-600 border-blue-400'
               }`}>
               <div className="text-2xl">
                 {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✗' : 'ℹ'}
@@ -808,7 +808,7 @@ const Buy = () => {
       </AnimatePresence>
 
       {/* Custom Line Clamp Styles */}
-      <style jsx>{`
+      <style>{`
         .line-clamp-2 {
           overflow: hidden;
           display: -webkit-box;

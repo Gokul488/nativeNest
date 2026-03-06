@@ -1,11 +1,10 @@
 // src/components/EditBlog.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import Quill from 'quill';
-import QuillTableBetter from 'quill-table-better';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
 import 'quill-table-better/dist/quill-table-better.css';
+import { QuillTableBetter } from '../../utils/registerQuillModules';
 import {
   FaArrowLeft,
   FaBlog,
@@ -18,8 +17,6 @@ import {
 import API_BASE_URL from '../../config.js';
 
 const EditBlog = () => {
-  // Register the table module to match AddBlog functionality
-  Quill.register('modules/table-better', QuillTableBetter);
 
   const { quill, quillRef } = useQuill({
     modules: {
@@ -52,7 +49,7 @@ const EditBlog = () => {
         bindings: QuillTableBetter.keyboardBindings
       },
     },
-    formats: ['header', 'bold', 'italic', 'underline', 'list', 'bullet', 'link', 'align', 'color', 'background', 'table'],
+    formats: ['header', 'bold', 'italic', 'underline', 'list', 'link', 'align', 'color', 'background', 'table'],
   });
 
   const [title, setTitle] = useState('');

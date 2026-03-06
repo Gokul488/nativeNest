@@ -7,6 +7,7 @@ import {
   FaCalendarAlt, FaLayerGroup, FaRupeeSign, FaListUl
 } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
+import DeleteDialog from '../DeleteDialog';
 
 const ManageStallTypes = () => {
   const { eventId } = useParams();
@@ -19,6 +20,8 @@ const ManageStallTypes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [stallTypeToDelete, setStallTypeToDelete] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -66,20 +69,26 @@ const ManageStallTypes = () => {
     );
   }, [stallTypes, searchQuery]);
 
-  const handleDelete = async (stallTypeId) => {
-    if (!window.confirm("Are you sure? This will delete the stall type and all associated unbooked stalls.")) {
-      return;
-    }
+  const handleDelete = (stallTypeId) => {
+    setStallTypeToDelete(stallTypeId);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!stallTypeToDelete) return;
 
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `${API_BASE_URL}/api/stalls/types/${stallTypeId}/event/${eventId}`,
+        `${API_BASE_URL}/api/stalls/types/${stallTypeToDelete}/event/${eventId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchData();
+      setShowDeleteDialog(false);
+      setStallTypeToDelete(null);
     } catch (err) {
       setError("Failed to delete stall type.");
+      setShowDeleteDialog(false);
     }
   };
 
@@ -273,6 +282,13 @@ const ManageStallTypes = () => {
           </>
         )}
       </div>
+      <DeleteDialog
+        isOpen={showDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        title="Delete Stall Type?"
+        message="Are you sure you want to delete this stall type? This will also remove all associated unbooked stalls. This action cannot be undone."
+      />
     </div>
   );
 };

@@ -255,8 +255,8 @@ const PropertyDetails = () => {
                           key={idx}
                           onClick={() => setSelectedVariant(variant)}
                           className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border ${selectedVariant?.apartment_type === variant.apartment_type && selectedVariant?.sqft === variant.sqft
-                              ? 'bg-white text-[#2e6171] border-white shadow-lg scale-105'
-                              : 'bg-black/20 text-white border-white/30 hover:bg-black/30'
+                            ? 'bg-white text-[#2e6171] border-white shadow-lg scale-105'
+                            : 'bg-black/20 text-white border-white/30 hover:bg-black/30'
                             }`}
                         >
                           {variant.apartment_type} ({variant.sqft} sq.ft)
@@ -571,7 +571,7 @@ const PropertyDetails = () => {
       <Footer />
 
       {/* Custom scrollbar */}
-      <style jsx>{`
+      <style>{`
         .scrollbar-thin::-webkit-scrollbar { height: 6px; }
         .scrollbar-thin::-webkit-scrollbar-thumb {
           background-color: rgba(156, 163, 175, 0.5);

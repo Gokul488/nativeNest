@@ -192,35 +192,35 @@ const ViewEvents = () => {
                         <div className="font-bold text-gray-900" title={event.event_name}>{event.event_name}</div>
                       </td>
                       <td className="px-6 py-2.5 border-b border-gray-100">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
                           <FaCalendarAlt className="text-teal-500" /> {formatDateRange(event.start_date, event.end_date)}
                         </div>
                       </td>
                       <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                        <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 text-gray-700 rounded text-[11px] font-bold hover:bg-teal-600 hover:text-white transition-all">
+                        <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-bold hover:bg-teal-600 hover:text-white transition-all">
                           {event.stall_count || 0}
                         </Link>
                       </td>
                       <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                        <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded text-[11px] font-bold hover:bg-indigo-600 hover:text-white transition-all">
+                        <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded text-sm font-bold hover:bg-indigo-600 hover:text-white transition-all">
                           {event.booked_stall_count || 0}
                         </Link>
                       </td>
                       <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                        <Link to={`/admin-dashboard/events/${event.id}/participants`} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 text-purple-700 rounded text-[11px] font-bold hover:bg-purple-600 hover:text-white transition-all whitespace-nowrap">
+                        <Link to={`/admin-dashboard/events/${event.id}/participants`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded text-sm font-bold hover:bg-purple-600 hover:text-white transition-all whitespace-nowrap">
                           View
                         </Link>
                       </td>
                       <td className="px-6 py-2.5 text-right border-b border-gray-100">
-                        <div className="flex justify-end gap-1">
-                          <button onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition" title="Edit">
-                            <FaEdit size={16} />
+                        <div className="flex justify-end gap-1.5">
+                          <button onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)} className="p-2 text-blue-500 hover:bg-blue-50 rounded transition" title="Edit">
+                            <FaEdit size={18} />
                           </button>
-                          <button onClick={() => openQR(event)} className="p-1.5 text-purple-500 hover:bg-purple-50 rounded transition" title="Attendance QR">
-                            <FaQrcode size={16} />
+                          <button onClick={() => openQR(event)} className="p-2 text-purple-500 hover:bg-purple-50 rounded transition" title="Attendance QR">
+                            <FaQrcode size={18} />
                           </button>
-                          <button onClick={() => handleDownload(event.id, event.event_name)} className="p-1.5 text-teal-500 hover:bg-teal-50 rounded transition" title="Download Invitation">
-                            <FaDownload size={16} />
+                          <button onClick={() => handleDownload(event.id, event.event_name)} className="p-2 text-teal-500 hover:bg-teal-50 rounded transition" title="Download Invitation">
+                            <FaDownload size={18} />
                           </button>
                         </div>
                       </td>

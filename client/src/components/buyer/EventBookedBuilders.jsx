@@ -29,7 +29,11 @@ const EventBookedBuilders = () => {
     const fetchBookedBuilders = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) throw new Error("No token");
+        if (!token) {
+          setError("Authentication required. Please login again.");
+          setLoading(false);
+          return;
+        }
 
         const res = await axios.get(
           `${API_BASE_URL}/api/buyer/events/${eventId}/booked-builders`,
@@ -48,13 +52,21 @@ const EventBookedBuilders = () => {
     fetchBookedBuilders();
   }, [eventId]);
 
-  const filteredBuilders = useMemo(() => {
-    return builders.filter(b =>
-      b.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.contact_person?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.stall_numbers?.toString().includes(searchQuery)
+const filteredBuilders = useMemo(() => {
+  const query = searchQuery.toLowerCase();
+
+  return builders.filter((b) => {
+    const name = b.name ? b.name.toLowerCase() : "";
+    const person = b.contact_person ? b.contact_person.toLowerCase() : "";
+    const stall = b.stall_numbers ? b.stall_numbers.toString() : "";
+
+    return (
+      name.includes(query) ||
+      person.includes(query) ||
+      stall.includes(searchQuery)
     );
-  }, [builders, searchQuery]);
+  });
+}, [builders, searchQuery]);
 
   const handleRegisterInterest = async (builder) => {
     if (!builder.sample_stall_type_id) {
@@ -74,7 +86,7 @@ const EventBookedBuilders = () => {
       );
       alert(`Interest registered for ${builder.name}!`);
     } catch (err) {
-      alert("Failed to register interest. Please try again.");
+      alert(err.response?.data?.message || "Failed to register interest.");
     }
   };
 

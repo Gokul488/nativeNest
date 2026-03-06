@@ -1,6 +1,6 @@
 // src/components/EditProperty.jsx
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useQuill } from "react-quilljs";
 import "quill/dist/quill.snow.css";
@@ -8,8 +8,7 @@ import "quill-table-better/dist/quill-table-better.css";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import API_BASE_URL from "../../config.js";
-import Quill from "quill";
-import QuillTableBetter from "quill-table-better";
+import { QuillTableBetter } from "../../utils/registerQuillModules";
 import {
   FaArrowLeft,
   FaHome,
@@ -23,12 +22,17 @@ import {
 
 const animatedComponents = makeAnimated();
 
-Quill.register("modules/table-better", QuillTableBetter);
 
 const EditProperty = () => {
 
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isAdmin = location.pathname.includes("/admin-dashboard");
+  const backPath = isAdmin
+    ? "/admin-dashboard/manage-properties"
+    : "/builder-dashboard/my-properties";
 
   // ── Form state ────────────────────────────────────────────────
   const [property, setProperty] = useState(null);
@@ -53,16 +57,16 @@ const EditProperty = () => {
 
   const [variants, setVariants] = useState([{ apartment_type: "1BHK", price: "", sqft: "", quantity: "1", isCustom: false }]);
 
-const handleVariantChange = (index, field, value) => {
-  const newVariants = [...variants];
-  if (field === "apartment_type" && value === "Others") {
-    newVariants[index].isCustom = true;
-    newVariants[index].apartment_type = "";
-  } else {
-    newVariants[index][field] = value;
-  }
-  setVariants(newVariants);
-};
+  const handleVariantChange = (index, field, value) => {
+    const newVariants = [...variants];
+    if (field === "apartment_type" && value === "Others") {
+      newVariants[index].isCustom = true;
+      newVariants[index].apartment_type = "";
+    } else {
+      newVariants[index][field] = value;
+    }
+    setVariants(newVariants);
+  };
 
   const addVariant = () => setVariants([...variants, { apartment_type: "1BHK", price: "", sqft: "", quantity: "1", isCustom: false }]);
   const removeVariant = (index) => setVariants(variants.filter((_, i) => i !== index));
@@ -176,9 +180,11 @@ const handleVariantChange = (index, field, value) => {
         setBuilderName(prop.builder_name || "");
 
         if (prop.variants && prop.variants.length > 0) {
-          setVariants(prop.variants.map(v => ({ ...v, 
-            quantity: v.quantity || "1", 
-            isCustom: !["1BHK", "2BHK", "3BHK"].includes(v.apartment_type) })));
+          setVariants(prop.variants.map(v => ({
+            ...v,
+            quantity: v.quantity || "1",
+            isCustom: !["1BHK", "2BHK", "3BHK"].includes(v.apartment_type)
+          })));
         } else {
           setVariants([{ apartment_type: "1BHK", price: "", sqft: "", isCustom: false }]);
         }
@@ -298,8 +304,8 @@ const handleVariantChange = (index, field, value) => {
 
 
     Object.entries(formData).forEach(([k, v]) => data.append(k, v));
-//  (right after the main form fields, before amenities/media)
-  data.append("builder_id", property.builder_id || property.builderId || "");
+    //  (right after the main form fields, before amenities/media)
+    data.append("builder_id", property.builder_id || property.builderId || "");
     selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
     if (showOtherInput && otherAmenityName.trim()) {
       data.append("other_amenity", otherAmenityName.trim());
@@ -322,7 +328,7 @@ const handleVariantChange = (index, field, value) => {
       });
 
       setSuccess("Property updated successfully!");
-      setTimeout(() => navigate("/admin-dashboard/manage-properties"), 1500);
+      setTimeout(() => navigate(backPath), 1500);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to update property");
     } finally {
@@ -385,7 +391,7 @@ const handleVariantChange = (index, field, value) => {
       <div className="p-4 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link
-            to="/admin-dashboard/manage-properties"
+            to={backPath}
             className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600"
           >
             <FaArrowLeft />
@@ -602,17 +608,17 @@ const handleVariantChange = (index, field, value) => {
                     />
                   </div>
 
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-600">Qty</label>
-                        <input
-                          type="number"
-                          value={variant.quantity}
-                          onChange={(e) => handleVariantChange(index, "quantity", e.target.value)}
-                          className="w-full px-3 py-2 border rounded-md text-sm"
-                          min="1"
-                          required
-                        />
-                    </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-600">Qty</label>
+                    <input
+                      type="number"
+                      value={variant.quantity}
+                      onChange={(e) => handleVariantChange(index, "quantity", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                      min="1"
+                      required
+                    />
+                  </div>
 
                   <button
                     type="button"
