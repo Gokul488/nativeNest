@@ -671,81 +671,107 @@ const Buy = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
                   viewport={{ once: true }}
-                  whileHover={{ y: -8 }}
+                  whileHover={{ y: -6, scale: 1.01 }}
                   onClick={() => handlePropertyClick(listing.id)}
-                  className="group relative bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-gray-100 cursor-pointer"
+                  className="group relative bg-white rounded-3xl overflow-hidden cursor-pointer"
+                  style={{
+                    boxShadow: '0 4px 24px 0 rgba(1,25,54,0.08), 0 1px 4px 0 rgba(1,25,54,0.04)',
+                    transition: 'box-shadow 0.4s ease, transform 0.4s ease',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = '0 16px 48px 0 rgba(1,25,54,0.18), 0 4px 12px 0 rgba(46,97,113,0.12)'}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = '0 4px 24px 0 rgba(1,25,54,0.08), 0 1px 4px 0 rgba(1,25,54,0.04)'}
                 >
                   {/* Image Container */}
-                  <div className="relative h-56 sm:h-64 overflow-hidden">
+                  <div className="relative h-52 sm:h-56 overflow-hidden">
                     <img
                       src={listing.img}
                       alt={listing.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
+                      style={{ transition: 'transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)' }}
                     />
 
-                    {/* Dark overlay on hover */}
-                    <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                    {/* Gradient overlay always visible at bottom */}
+                    <div className="absolute inset-0 pointer-events-none"
+                      style={{ background: 'linear-gradient(to top, rgba(1,25,54,0.55) 0%, rgba(1,25,54,0.1) 45%, transparent 100%)' }} />
 
-                    {/* Bookmark Icon - Bottom Right of Image */}
+                    {/* Property type pill — top left */}
+                    <div className="absolute top-3 left-3">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-white"
+                        style={{ background: 'rgba(46,97,113,0.85)', backdropFilter: 'blur(8px)', letterSpacing: '0.1em' }}>
+                        {listing.property_type}
+                      </span>
+                    </div>
+
+                    {/* Bookmark Icon — top right */}
                     <button
                       onClick={(e) => toggleBookmark(e, listing.id)}
-                      className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:scale-110 transition-all z-10"
+                      className="absolute top-3 right-3 p-2.5 rounded-full transition-all duration-300 z-10 hover:scale-110"
+                      style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
                       title={bookmarks.has(listing.id) ? "Remove from bookmarks" : "Add to bookmarks"}
                       aria-label={bookmarks.has(listing.id) ? "Remove bookmark" : "Bookmark property"}
                     >
                       {bookmarks.has(listing.id) ? (
-                        <i className="fa-solid fa-bookmark text-red-500 text-xl"></i>
+                        <i className="fa-solid fa-bookmark text-red-500 text-base"></i>
                       ) : (
-                        <i className="fa-regular fa-bookmark text-gray-700 text-xl"></i>
+                        <i className="fa-regular fa-bookmark text-[#011936] text-base"></i>
                       )}
                     </button>
+
+                    {/* Sqft badge — bottom left on image */}
+                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                      style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                      <i className="fas fa-vector-square text-white/80 text-[11px]"></i>
+                      <span className="text-white font-bold text-[13px] leading-none">
+                        {listing.property_type === 'Apartment' && listing.variants?.length > 0
+                          ? `${listing.variants[0].sqft.toLocaleString('en-IN')}–${listing.variants[listing.variants.length - 1].sqft.toLocaleString('en-IN')}`
+                          : (listing.sqft ? listing.sqft.toLocaleString('en-IN') : 'N/A')}
+                      </span>
+                      <span className="text-white/60 text-[10px] font-semibold uppercase tracking-wide">sq.ft</span>
+                    </div>
                   </div>
 
                   {/* Property Details */}
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-[#011936] mb-2 tracking-tight line-clamp-2">
-                      {listing.title}
-                    </h3>
-                    <p className="text-sm text-[#2e6171] font-semibold mb-3 flex items-center gap-2">
-                      <i className="fas fa-location-dot"></i>
+                  <div className="p-5">
+                    {/* Location */}
+                    <p className="text-[11px] font-semibold text-[#2e6171] uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                      <i className="fas fa-location-dot text-[10px]"></i>
                       {listing.city}
                     </p>
 
-                    <div className="flex flex-col mb-4">
-                      <p className="text-lg font-extrabold text-[#011936]">
-                        {listing.property_type === 'Apartment' && listing.variants?.length > 0
-                          ? `₹ ${Math.floor(listing.variants[0].price).toLocaleString('en-IN')} onwards`
-                          : formatCurrency(listing.price)}
-                      </p>
-                      <div className="flex items-center gap-3 text-sm text-gray-500 font-bold mt-1">
-                        <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                          <i className="fas fa-ruler-combined text-[10px] text-teal-600"></i>
+                    {/* Title */}
+                    <h3 className="text-[15px] font-bold text-[#011936] mb-3 line-clamp-2 leading-snug">
+                      {listing.title}
+                    </h3>
+
+                    {/* Divider */}
+                    <div className="h-px bg-gradient-to-r from-[#2e6171]/20 via-[#2e6171]/10 to-transparent mb-3" />
+
+                    {/* Price row */}
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-0.5">Price</p>
+                        <p className="text-[17px] font-extrabold text-[#011936] leading-none">
                           {listing.property_type === 'Apartment' && listing.variants?.length > 0
-                            ? `${listing.variants[0].sqft} - ${listing.variants[listing.variants.length - 1].sqft}`
-                            : (listing.sqft ? listing.sqft.toLocaleString('en-IN') : 'N/A')}
-                          <span className="text-[10px] text-slate-400 uppercase">sq.ft</span>
-                        </span>
-                        <span className="bg-teal-50 text-teal-700 px-2 py-1 rounded-lg text-[10px] uppercase font-black border border-teal-100">
-                          {listing.property_type}
-                        </span>
+                            ? <>₹&nbsp;{Math.floor(listing.variants[0].price).toLocaleString('en-IN')} <span className="text-[11px] font-semibold text-gray-400">onwards</span></>
+                            : formatCurrency(listing.price)}
+                        </p>
+                      </div>
+
+                      {/* View arrow */}
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 border border-gray-200 group-hover:border-[#2e6171]"
+                        style={{ background: 'transparent' }}>
+                        <i className="fas fa-arrow-right text-[#2e6171] text-xs transform group-hover:translate-x-0.5 transition-transform duration-300"></i>
                       </div>
                     </div>
 
+                    {/* Builder */}
                     {listing.builderName && (
-                      <div className="flex items-center justify-between text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <i className="fas fa-building"></i>
-                          Builder: {listing.builderName}
-                        </div>
-                        <div className="flex items-center text-[#2e6171] font-semibold">
-                          <i className="fas fa-arrow-right text-sm transform group-hover:translate-x-2 transition-transform duration-300"></i>
-                        </div>
+                      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-gray-500">
+                        <i className="fas fa-building text-[#2e6171] text-[10px]"></i>
+                        <span className="font-medium">{listing.builderName}</span>
                       </div>
                     )}
                   </div>
-
-                  {/* Full card hover overlay */}
-                  <div className="absolute inset-0 bg-linear-to-t from-[#2e6171]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 </motion.div>
               ))
             ) : (

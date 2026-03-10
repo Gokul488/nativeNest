@@ -138,18 +138,23 @@ const PropertyDetails = () => {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ background: '#f8f6f1' }}>
         <Header />
-        <div className="grow flex-center pt-24">
+        <div className="grow flex items-center justify-center pt-24">
           <motion.div
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="text-[#2e6171] text-xl font-medium"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+            className="flex flex-col items-center gap-4"
           >
-            Fetching Property...
+            <div className="w-12 h-12 rounded-full border-2 border-[#2e6171]/30 border-t-[#2e6171]"
+              style={{ animation: 'spin 1s linear infinite' }} />
+            <p className="text-xl font-medium text-[#2e6171]">
+              Loading property…
+            </p>
           </motion.div>
         </div>
         <Footer />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -157,19 +162,19 @@ const PropertyDetails = () => {
   // Error State
   if (error) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ background: '#f8f6f1' }}>
         <Header />
-        <div className="grow flex-center pt-24 px-4">
+        <div className="grow flex items-center justify-center pt-24 px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-md w-full text-center"
+            className="bg-white border border-red-100 text-red-600 px-8 py-6 rounded-2xl max-w-md w-full text-center shadow-lg"
           >
-            <i className="fas fa-exclamation-triangle text-xl mb-2 block"></i>
-            {error}
+            <i className="fas fa-exclamation-triangle text-2xl mb-3 block"></i>
+            <p className="text-lg">{error}</p>
             <button
               onClick={fetchPropertyDetails}
-              className="mt-4 bg-[#2e6171] text-white px-6 py-2 rounded-full font-medium hover:bg-[#011936] transition"
+              className="mt-5 bg-[#2e6171] text-white px-8 py-2.5 rounded-full font-medium hover:bg-[#011936] transition-colors text-sm tracking-wider"
             >
               Retry
             </button>
@@ -182,10 +187,10 @@ const PropertyDetails = () => {
 
   if (!property) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ background: '#f8f6f1' }}>
         <Header />
-        <div className="grow flex-center pt-24">
-          <p className="text-gray-700 font-semibold text-lg">Property Not Found</p>
+        <div className="grow flex items-center justify-center pt-24">
+          <p className="text-xl text-gray-500">Property Not Found</p>
         </div>
         <Footer />
       </div>
@@ -193,169 +198,242 @@ const PropertyDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
+    <div className="min-h-screen font-sans" style={{ background: '#f5f3ee' }}>
       <Header />
 
-      {/* Background Orbs */}
-      <div className="hidden lg:block fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-linear-to-br from-[#2e6171] to-[#011936] rounded-full blur-3xl opacity-10 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-linear-to-tr from-[#2e6171]/70 to-[#011936]/70 rounded-full blur-3xl opacity-10 animate-pulse animation-delay-2000"></div>
-      </div>
+      <main style={{ paddingTop: '72px' }}>
 
-      <main className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-
-        {/* Hero */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative rounded-3xl overflow-hidden shadow-2xl mb-16"
+        {/* ── HERO ─────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="relative w-full overflow-hidden"
+          style={{ height: 'clamp(420px, 60vh, 680px)' }}
         >
           {property.cover_image ? (
-            <div className="relative h-[350px] sm:h-[450px] md:h-[550px]">
-              <img
-                src={property.cover_image}
-                alt={property.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent"></div>
-              <div className="absolute bottom-8 left-8 right-8 text-white">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold drop-shadow-lg">
-                  {property.title}
-                </h1>
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
-                  <div className="flex flex-col">
-                    <p className="text-xl sm:text-2xl font-bold flex items-center drop-shadow-md">
-                      <i className="fa-solid fa-indian-rupee-sign mr-2"></i>
-                      {property.property_type === 'Apartment' && selectedVariant
-                        ? formatPriceInINR(selectedVariant.price)
-                        : formatPriceInINR(property.price)}
-                    </p>
-                    <p className="text-sm opacity-80">Total Price</p>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <p className="text-xl sm:text-2xl font-bold flex items-center drop-shadow-md">
-                      <i className="fas fa-ruler-combined mr-2"></i>
-                      {property.property_type === 'Apartment' && selectedVariant
-                        ? selectedVariant.sqft.toLocaleString('en-IN')
-                        : (property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A')}
-                      <span className="text-sm ml-1 font-medium italic opacity-80">sq.ft</span>
-                    </p>
-                    <p className="text-sm opacity-80">Total Area</p>
-                  </div>
-                </div>
-
-                {property.property_type === 'Apartment' && property.variants && property.variants.length > 0 && (
-                  <div className="mt-6">
-                    <label className="block text-sm font-medium mb-2 opacity-90">Select Configuration:</label>
-                    <div className="flex flex-wrap gap-2">
-                      {property.variants.map((variant, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setSelectedVariant(variant)}
-                          className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border ${selectedVariant?.apartment_type === variant.apartment_type && selectedVariant?.sqft === variant.sqft
-                            ? 'bg-white text-[#2e6171] border-white shadow-lg scale-105'
-                            : 'bg-black/20 text-white border-white/30 hover:bg-black/30'
-                            }`}
-                        >
-                          {variant.apartment_type} ({variant.sqft} sq.ft)
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <p className="mt-6 text-sm sm:text-base font-light opacity-90 flex items-center">
-                  <i className="fas fa-map-marker-alt mr-2"></i>
-                  {property.address}, {property.city}, {property.state}
-                </p>
-              </div>
-            </div>
+            <img
+              src={property.cover_image}
+              alt={property.title}
+              className="w-full h-full object-cover"
+              style={{ filter: 'brightness(0.78)' }}
+            />
           ) : (
-            <div className="h-[350px] sm:h-[450px] md:h-[550px] bg-linear-to-br from-gray-200 to-gray-300 flex-center">
-              <i className="fas fa-home text-6xl text-gray-400"></i>
+            <div className="w-full h-full flex items-center justify-center" style={{ background: '#1a2e3a' }}>
+              <i className="fas fa-home text-7xl" style={{ color: 'rgba(255,255,255,0.2)' }}></i>
             </div>
           )}
-        </motion.section>
 
-        <div className="space-y-12">
+          {/* Rich dark gradient */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(1,25,54,0.92) 0%, rgba(1,25,54,0.45) 50%, transparent 100%)' }} />
 
-          {/* Description */}
+          {/* Back button */}
+          <motion.button
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => navigate(-1)}
+            className="absolute top-6 left-6 flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm font-medium tracking-wide"
+            style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', padding: '8px 16px', borderRadius: '100px' }}
+          >
+            <i className="fas fa-arrow-left text-xs"></i> Back
+          </motion.button>
+
+          {/* Property type badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="absolute top-6 right-6"
+          >
+            <span className="text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full text-white" style={{ background: 'rgba(46,97,113,0.8)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', letterSpacing: '0.15em' }}>
+              {property.property_type}
+            </span>
+          </motion.div>
+
+          {/* Hero content */}
+          <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-10 lg:px-16 pb-10">
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
+              <p className="text-white/100 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
+                <i className="fas fa-map-marker-alt text-[#ffffff]"></i>
+                {property.city}{property.state ? `, ${property.state}` : ''}
+              </p>
+              <h1 className="text-white mb-6 font-bold" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.2rem)', lineHeight: 1.15, letterSpacing: '-0.01em', textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}>
+                {property.title}
+              </h1>
+
+              {/* Stats row */}
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '14px', padding: '12px 20px', minWidth: '130px' }}>
+                  <span className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Total Price</span>
+                  <span className="text-white font-bold" style={{ fontSize: '1.15rem' }}>
+                    ₹ {property.property_type === 'Apartment' && selectedVariant
+                      ? formatPriceInINR(selectedVariant.price)
+                      : formatPriceInINR(property.price)}
+                  </span>
+                </div>
+
+                <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '14px', padding: '12px 20px', minWidth: '130px' }}>
+                  <span className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Area</span>
+                  <span className="text-white font-bold" style={{ fontSize: '1.15rem' }}>
+                    {property.property_type === 'Apartment' && selectedVariant
+                      ? selectedVariant.sqft.toLocaleString('en-IN')
+                      : (property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A')}
+                    <span className="text-white/50 text-xs font-normal ml-1">sq.ft</span>
+                  </span>
+                </div>
+
+                {getRatePerSqFt() !== 'N/A' && (
+                  <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '14px', padding: '12px 20px', minWidth: '130px' }}>
+                    <span className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Rate / sq.ft</span>
+                    <span className="text-white font-bold" style={{ fontSize: '1.15rem' }}>
+                      ₹ {getRatePerSqFt()}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Variant selector */}
+              {property.property_type === 'Apartment' && property.variants?.length > 0 && (
+                <div>
+                  <p className="text-white/50 text-[10px] uppercase tracking-widest mb-2">Select Configuration</p>
+                  <div className="flex flex-wrap gap-2">
+                    {property.variants.map((variant, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedVariant(variant)}
+                        className="text-xs font-semibold transition-all duration-300"
+                        style={{
+                          padding: '7px 16px',
+                          borderRadius: '100px',
+                          border: selectedVariant?.apartment_type === variant.apartment_type && selectedVariant?.sqft === variant.sqft
+                            ? '1px solid #7eb8c4'
+                            : '1px solid rgba(255,255,255,0.25)',
+                          background: selectedVariant?.apartment_type === variant.apartment_type && selectedVariant?.sqft === variant.sqft
+                            ? 'rgba(46,97,113,0.9)'
+                            : 'rgba(255,255,255,0.08)',
+                          color: 'white',
+                          backdropFilter: 'blur(8px)',
+                          letterSpacing: '0.04em'
+                        }}
+                      >
+                        {variant.apartment_type} · {variant.sqft.toLocaleString('en-IN')} sq.ft
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* ── CONTENT AREA ─────────────────────────────────────── */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10">
+
+          {/* ── ABOUT ── */}
           <motion.section
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100"
+            transition={{ duration: 0.6 }}
+            className="bg-white rounded-3xl overflow-hidden"
+            style={{ boxShadow: '0 2px 24px rgba(1,25,54,0.07)' }}
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#011936] mb-6 flex items-center gap-3 border-b-2 border-gray-200 pb-3">
-              <i className="fas fa-info-circle text-[#2e6171]"></i> About This Property
-            </h2>
-            <DescriptionRenderer html={property.description} />
+            <div className="px-8 pt-8 pb-2 flex items-center gap-3">
+              <div className="w-1 h-7 rounded-full" style={{ background: 'linear-gradient(to bottom, #2e6171, #011936)' }} />
+              <h2 className="text-2xl font-bold" style={{ color: '#011936' }}>
+                About This Property
+              </h2>
+            </div>
+            <div className="px-8 py-6">
+              <DescriptionRenderer html={property.description} />
+            </div>
           </motion.section>
 
-          {/* Images Gallery */}
-          {(property.cover_image || (property.images && property.images.length > 0)) && (
+          {/* ── GALLERY ── */}
+          {(property.cover_image || property.images?.length > 0) && (
             <motion.section
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
               viewport={{ once: true }}
-              className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100"
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-white rounded-3xl overflow-hidden"
+              style={{ boxShadow: '0 2px 24px rgba(1,25,54,0.07)' }}
             >
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#011936] mb-6 flex items-center gap-3 border-b-2 border-gray-200 pb-3">
-                <i className="fas fa-images text-[#2e6171]"></i> Gallery
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="px-8 pt-8 pb-6 flex items-center gap-3">
+                <div className="w-1 h-7 rounded-full" style={{ background: 'linear-gradient(to bottom, #2e6171, #011936)' }} />
+                <h2 className="text-2xl font-bold" style={{ color: '#011936' }}>
+                  Gallery
+                </h2>
+              </div>
+              <div className="px-8 pb-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {property.cover_image && (
                   <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    className="cursor-pointer"
+                    whileHover={{ scale: 1.03 }}
+                    transition={{ duration: 0.3 }}
+                    className="cursor-pointer rounded-2xl overflow-hidden relative group"
+                    style={{ height: '160px' }}
                     onClick={() => openImageModal(property.cover_image)}
                   >
-                    <img src={property.cover_image} alt="Cover" className="w-full h-40 object-cover rounded-xl shadow-md hover:shadow-lg transition-shadow" />
+                    <img src={property.cover_image} alt="Cover" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                      <i className="fas fa-expand text-white opacity-0 group-hover:opacity-100 transition-opacity text-lg"></i>
+                    </div>
+                    <span className="absolute top-2 left-2 text-[10px] font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full" style={{ background: 'rgba(46,97,113,0.85)' }}>Cover</span>
                   </motion.div>
                 )}
                 {property.images?.map((img, index) => (
                   <motion.div
                     key={index}
-                    whileHover={{ scale: 1.05 }}
-                    className="cursor-pointer"
+                    whileHover={{ scale: 1.03 }}
+                    transition={{ duration: 0.3 }}
+                    className="cursor-pointer rounded-2xl overflow-hidden relative group"
+                    style={{ height: '160px' }}
                     onClick={() => openImageModal(img)}
                   >
-                    <img src={img} alt={`Image ${index + 1}`} className="w-full h-40 object-cover rounded-xl shadow-md hover:shadow-lg transition-shadow" />
+                    <img src={img} alt={`Image ${index + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                      <i className="fas fa-expand text-white opacity-0 group-hover:opacity-100 transition-opacity text-lg"></i>
+                    </div>
                   </motion.div>
                 ))}
               </div>
             </motion.section>
           )}
 
-          {/* Amenities */}
-          {property.amenities && property.amenities.length > 0 && (
+          {/* ── AMENITIES ── */}
+          {property.amenities?.length > 0 && (
             <motion.section
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
               viewport={{ once: true }}
-              className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100"
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-white rounded-3xl overflow-hidden"
+              style={{ boxShadow: '0 2px 24px rgba(1,25,54,0.07)' }}
             >
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#011936] mb-6 flex items-center gap-3 border-b-2 border-gray-200 pb-3">
-                <i className="fas fa-star text-[#2e6171]"></i> Amenities
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div className="px-8 pt-8 pb-6 flex items-center gap-3">
+                <div className="w-1 h-7 rounded-full" style={{ background: 'linear-gradient(to bottom, #2e6171, #011936)' }} />
+                <h2 className="text-2xl font-bold" style={{ color: '#011936' }}>
+                  Amenities
+                </h2>
+              </div>
+              <div className="px-8 pb-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {property.amenities.map((amenity) => {
                   const iconClass = amenity.icon
                     ? (amenity.icon.startsWith('fa') ? `fas ${amenity.icon}` : amenity.icon)
                     : 'fas fa-check-circle';
-
                   return (
                     <motion.div
                       key={amenity.id}
-                      whileHover={{ y: -6, scale: 1.05 }}
-                      className="flex flex-col items-center p-5 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:border-[#2e6171]/40 hover:shadow-lg transition-all"
+                      whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(46,97,113,0.14)' }}
+                      transition={{ duration: 0.25 }}
+                      className="flex flex-col items-center text-center p-4 rounded-2xl cursor-default"
+                      style={{ background: '#f8f6f1', border: '1px solid #e8e4da' }}
                     >
-                      <i className={`${iconClass} text-3xl text-[#2e6171] mb-3`}></i>
-                      <p className="text-gray-800 font-medium text-center text-sm">{amenity.name}</p>
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: 'linear-gradient(135deg, #eaf4f7, #d0e9ef)' }}>
+                        <i className={`${iconClass} text-xl`} style={{ color: '#2e6171' }}></i>
+                      </div>
+                      <p className="text-sm font-semibold" style={{ color: '#011936' }}>{amenity.name}</p>
                     </motion.div>
                   );
                 })}
@@ -363,220 +441,226 @@ const PropertyDetails = () => {
             </motion.section>
           )}
 
-          {/* Location - Address + Map */}
+          {/* ── LOCATION ── */}
           {fullAddress && (
             <motion.section
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
               viewport={{ once: true }}
-              className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100"
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-white rounded-3xl overflow-hidden"
+              style={{ boxShadow: '0 2px 24px rgba(1,25,54,0.07)' }}
             >
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#011936] mb-6 flex items-center gap-3 border-b-2 border-gray-200 pb-3">
-                <i className="fas fa-map-marked-alt text-[#2e6171]"></i> Location
-              </h2>
+              {/* Section header */}
+              <div className="px-8 pt-8 pb-5 flex items-center gap-3">
+                <div className="w-1 h-7 rounded-full" style={{ background: 'linear-gradient(to bottom, #2e6171, #011936)' }} />
+                <h2 className="text-2xl font-bold" style={{ color: '#011936' }}>Location</h2>
+              </div>
 
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Left: Address Details */}
-                <div className="space-y-6">
+              {/* Full-width map */}
+              <div className="mx-8 rounded-2xl overflow-hidden" style={{ height: '340px', border: '1px solid #e8e4da' }}>
+                <iframe
+                  title="Property location map"
+                  width="100%" height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps?q=${encodedAddress}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                />
+              </div>
+
+              {/* Address strip below map */}
+              <div className="mx-8 mt-4 mb-8 flex flex-wrap gap-4">
+                {/* Address block */}
+                <div className="flex items-start gap-3 flex-1 min-w-[200px] rounded-2xl px-5 py-4" style={{ background: '#f8f6f1', border: '1px solid #e8e4da' }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #eaf4f7, #d0e9ef)' }}>
+                    <i className="fas fa-map-marker-alt text-sm" style={{ color: '#2e6171' }}></i>
+                  </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
-                      <i className="fas fa-map-marker-alt text-[#2e6171]"></i> Property Address
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      {property.address}<br />
-                      {property.city}, {property.state}<br />
-                      {property.pincode && `PIN: ${property.pincode}`}
+                    <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: '#2e6171' }}>Address</p>
+                    <p className="text-sm leading-relaxed" style={{ color: '#374151' }}>
+                      {property.address}, {property.city}, {property.state}
+                      {property.pincode && <span style={{ color: '#9ca3af' }}> – {property.pincode}</span>}
                     </p>
                   </div>
+                </div>
 
-                  {property.landmark && (
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
-                        <i className="fas fa-landmark text-[#2e6171]"></i> Landmark
-                      </h3>
-                      <p className="text-gray-700">{property.landmark}</p>
+                {/* Landmark block — only if exists */}
+                {property.landmark && (
+                  <div className="flex items-start gap-3 flex-1 min-w-[200px] rounded-2xl px-5 py-4" style={{ background: '#f8f6f1', border: '1px solid #e8e4da' }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #eaf4f7, #d0e9ef)' }}>
+                      <i className="fas fa-landmark text-sm" style={{ color: '#2e6171' }}></i>
                     </div>
-                  )}
-                </div>
-
-                {/* Right: Google Map Embed */}
-                <div className="rounded-xl overflow-hidden shadow-inner border border-gray-200 h-[400px] md:h-auto">
-                  <iframe
-                    title="Property location map"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://www.google.com/maps?q=${encodedAddress}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                  ></iframe>
-                </div>
-              </div>
-            </motion.section>
-          )}
-
-          {/* Builder Contact */}
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            viewport={{ once: true }}
-            className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100"
-          >
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#011936] mb-6 flex items-center gap-3 border-b-2 border-gray-200 pb-3">
-              <i className="fas fa-headset text-[#2e6171]"></i> Builder Contact
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <motion.div whileHover={{ y: -4 }} className="p-5 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:border-[#2e6171]/30 hover:shadow-lg transition-all">
-                <div className="flex items-center text-gray-700 mb-2">
-                  <i className="fas fa-user-tie mr-3 text-lg text-[#2e6171]"></i>
-                  <span className="font-semibold text-base">Builder Name:</span>
-                </div>
-                <p className="text-gray-700 text-sm">{property.builderName || 'N/A'}</p>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -4 }} className="p-5 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:border-[#2e6171]/30 hover:shadow-lg transition-all">
-                <div className="flex items-center text-gray-700 mb-2">
-                  <i className="fas fa-phone-alt mr-3 text-lg text-[#2e6171]"></i>
-                  <span className="font-semibold text-base">Mobile:</span>
-                </div>
-                <p className="text-sm">
-                  {property.mobile_number ? (
-                    <a href={`tel:${property.mobile_number}`} className="text-[#2e6171] hover:text-[#011936] font-medium">
-                      {property.mobile_number}
-                    </a>
-                  ) : 'N/A'}
-                </p>
-              </motion.div>
-
-              <motion.div whileHover={{ y: -4 }} className="p-5 bg-linear-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:border-[#2e6171]/30 hover:shadow-lg transition-all">
-                <div className="flex items-center text-gray-700 mb-2">
-                  <i className="fas fa-envelope mr-3 text-lg text-[#2e6171]"></i>
-                  <span className="font-semibold text-base">Email:</span>
-                </div>
-                <p className="text-sm">
-                  {property.email ? (
-                    <a href={`mailto:${property.email}`} className="text-[#2e6171] hover:text-[#011936] font-medium">
-                      {property.email}
-                    </a>
-                  ) : 'N/A'}
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Interested Button */}
-            <div className="mt-8 flex justify-center">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-[#2e6171] text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2"
-                onClick={handleInterested}
-              >
-                <i className="fab fa-whatsapp text-xl"></i> I'm Interested
-              </motion.button>
-            </div>
-          </motion.section>
-
-          {/* Video Tour */}
-          {property.video?.url && (
-            <motion.section
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              viewport={{ once: true }}
-              className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100"
-            >
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#011936] mb-6 flex items-center gap-3 border-b-2 border-gray-200 pb-3">
-                <i className="fas fa-video text-[#2e6171]"></i> Video Tour
-              </h2>
-              <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-200 shadow-inner">
-                <video controls className="w-full max-w-md rounded-lg shadow-lg" onError={handleVideoError} preload="metadata">
-                  <source src={property.video.url} type={property.video.mimeType} />
-                  Your browser does not support the video tag.
-                </video>
-                {videoError && (
-                  <div className="mt-4 bg-red-50 text-red-600 p-4 rounded-lg text-center border border-red-200 font-medium">
-                    {videoError}
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: '#2e6171' }}>Landmark</p>
+                      <p className="text-sm" style={{ color: '#374151' }}>{property.landmark}</p>
+                    </div>
                   </div>
                 )}
               </div>
             </motion.section>
           )}
+
+          {/* ── BUILDER CONTACT ── */}
+          <motion.section
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="rounded-3xl overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #011936 0%, #0d3347 50%, #2e6171 100%)', boxShadow: '0 8px 40px rgba(1,25,54,0.25)' }}
+          >
+            <div className="px-8 pt-8 pb-6 flex items-center gap-3">
+              <div className="w-1 h-7 rounded-full bg-white/40" />
+              <h2 className="text-2xl font-bold text-white">
+                Builder Contact
+              </h2>
+            </div>
+            <div className="px-8 pb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                {[
+                  { icon: 'fa-user-tie', label: 'Builder', value: property.builderName || 'N/A', href: null },
+                  { icon: 'fa-phone-alt', label: 'Mobile', value: property.mobile_number || 'N/A', href: property.mobile_number ? `tel:${property.mobile_number}` : null },
+                  { icon: 'fa-envelope', label: 'Email', value: property.email || 'N/A', href: property.email ? `mailto:${property.email}` : null },
+                ].map(({ icon, label, value, href }) => (
+                  <div key={label} className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <i className={`fas ${icon} text-sm`} style={{ color: '#7eb8c4' }}></i>
+                      <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+                    </div>
+                    {href ? (
+                      <a href={href} className="text-sm font-semibold hover:underline" style={{ color: '#b3dce6' }}>{value}</a>
+                    ) : (
+                      <p className="text-sm font-semibold text-white">{value}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA Button */}
+              <div className="flex justify-center">
+                <motion.button
+                  whileHover={{ scale: 1.04, boxShadow: '0 12px 32px rgba(37,211,102,0.35)' }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleInterested}
+                  className="flex items-center gap-3 px-10 py-4 rounded-2xl font-bold text-white transition-all"
+                  style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)', fontSize: '1rem', letterSpacing: '0.04em', boxShadow: '0 6px 20px rgba(37,211,102,0.25)' }}
+                >
+                  <i className="fab fa-whatsapp text-xl"></i>
+                  I'm Interested
+                </motion.button>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* ── VIDEO TOUR ── */}
+          {property.video?.url && (
+            <motion.section
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-white rounded-3xl overflow-hidden"
+              style={{ boxShadow: '0 2px 24px rgba(1,25,54,0.07)' }}
+            >
+              <div className="px-8 pt-8 pb-6 flex items-center gap-3">
+                <div className="w-1 h-7 rounded-full" style={{ background: 'linear-gradient(to bottom, #2e6171, #011936)' }} />
+                <h2 className="text-2xl font-bold" style={{ color: '#011936' }}>
+                  Video Tour
+                </h2>
+              </div>
+              <div className="px-8 pb-8">
+                <div className="rounded-2xl overflow-hidden" style={{ background: '#0a0a0a', maxWidth: '560px' }}>
+                  <video controls className="w-full rounded-2xl" onError={handleVideoError} preload="metadata">
+                    <source src={property.video.url} type={property.video.mimeType} />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                {videoError && (
+                  <p className="mt-4 text-sm text-red-500 flex items-center gap-2">
+                    <i className="fas fa-exclamation-circle"></i> {videoError}
+                  </p>
+                )}
+              </div>
+            </motion.section>
+          )}
+
         </div>
       </main>
 
-      {/* Lightbox Modal */}
+      {/* ── LIGHTBOX MODAL ── */}
       {selectedImage && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 z-50 flex-center p-4 md:p-8 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(1,10,20,0.92)', backdropFilter: 'blur(12px)' }}
           onClick={handleOverlayClick}
         >
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
-            className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full overflow-hidden"
+            initial={{ scale: 0.93, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.93, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full"
+            style={{ maxWidth: '900px' }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close */}
             <button
               onClick={closeModal}
-              className="absolute top-4 right-4 z-10 bg-white/90 text-gray-700 p-2 rounded-full hover:bg-white hover:shadow-lg transition"
+              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
+              style={{ background: 'rgba(1,25,54,0.08)', border: '1px solid rgba(1,25,54,0.12)' }}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-4 h-4" fill="none" stroke="#011936" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
 
-            <div className="relative w-full h-96 md:h-[500px] bg-gray-100 flex-center overflow-hidden">
+            {/* Main image */}
+            <div className="relative flex items-center justify-center" style={{ height: 'clamp(280px, 55vh, 520px)', background: '#f0ede6' }}>
               <img src={selectedImage} alt="Selected" className="max-w-full max-h-full object-contain" />
             </div>
 
-            <div className="p-4 bg-gray-50 border-t border-gray-200">
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-                {property.cover_image && (
-                  <img
-                    src={property.cover_image}
-                    alt="Cover thumb"
-                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all ${selectedImage === property.cover_image
-                      ? 'border-[#2e6171] shadow-md scale-105'
-                      : 'border-transparent hover:border-gray-300'
-                      }`}
-                    onClick={() => setSelectedImage(property.cover_image)}
-                  />
-                )}
-                {property.images?.map((img, i) => (
-                  <img
-                    key={i}
-                    src={img}
-                    alt={`Thumb ${i + 1}`}
-                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition-all ${selectedImage === img
-                      ? 'border-[#2e6171] shadow-md scale-105'
-                      : 'border-transparent hover:border-gray-300'
-                      }`}
-                    onClick={() => setSelectedImage(img)}
-                  />
-                ))}
-              </div>
+            {/* Thumbnails */}
+            <div className="p-4 flex gap-2.5 overflow-x-auto" style={{ background: '#faf9f6', borderTop: '1px solid #ece9e0' }}>
+              {property.cover_image && (
+                <img
+                  src={property.cover_image}
+                  alt="Cover"
+                  onClick={() => setSelectedImage(property.cover_image)}
+                  className="cursor-pointer object-cover flex-shrink-0 transition-all duration-200"
+                  style={{ width: '72px', height: '72px', borderRadius: '12px', border: selectedImage === property.cover_image ? '2px solid #2e6171' : '2px solid transparent', opacity: selectedImage === property.cover_image ? 1 : 0.65 }}
+                />
+              )}
+              {property.images?.map((img, i) => (
+                <img
+                  key={i}
+                  src={img}
+                  alt={`Thumb ${i + 1}`}
+                  onClick={() => setSelectedImage(img)}
+                  className="cursor-pointer object-cover flex-shrink-0 transition-all duration-200"
+                  style={{ width: '72px', height: '72px', borderRadius: '12px', border: selectedImage === img ? '2px solid #2e6171' : '2px solid transparent', opacity: selectedImage === img ? 1 : 0.65 }}
+                />
+              ))}
             </div>
           </motion.div>
         </motion.div>
       )}
 
-
       <Footer />
 
-      {/* Custom scrollbar */}
       <style>{`
-        .scrollbar-thin::-webkit-scrollbar { height: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-          background-color: rgba(156, 163, 175, 0.5);
-          border-radius: 3px;
-        }
+        
+        .scrollbar-thin::-webkit-scrollbar { height: 5px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #c9c3b5; border-radius: 3px; }
+        .blog-content { color: #374151; line-height: 1.8; font-size: 0.95rem; }
+        .blog-content p { margin-bottom: 1rem; }
+        .blog-content h2, .blog-content h3 { color: #011936; margin: 1.5rem 0 0.5rem; font-weight: 700; }
+        .blog-content ul, .blog-content ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+        .blog-content li { margin-bottom: 0.4rem; }
         .flex-center { display: flex; align-items: center; justify-content: center; }
       `}</style>
     </div>
