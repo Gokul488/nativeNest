@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FaBookmark, FaMapMarkerAlt, FaSpinner, FaBuilding, FaArrowRight } from "react-icons/fa";
+import { FaBookmark, FaMapMarkerAlt, FaSpinner, FaBuilding, FaArrowRight, FaVectorSquare } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
 
 const BookmarkedProperties = () => {
@@ -94,58 +94,112 @@ const BookmarkedProperties = () => {
           </button>
         </div>
       ) : (
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {properties.map((prop, index) => (
             <motion.div
               key={prop.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ y: -6, scale: 1.01 }}
               onClick={() => navigate(`/property/${prop.id}`)}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col cursor-pointer"
+              className="group relative bg-white rounded-3xl overflow-hidden cursor-pointer"
+              style={{
+                boxShadow: '0 4px 24px 0 rgba(1,25,54,0.08), 0 1px 4px 0 rgba(1,25,54,0.04)',
+                transition: 'box-shadow 0.4s ease, transform 0.4s ease',
+              }}
             >
               {/* Image Container */}
-              <div className="relative h-56 overflow-hidden">
+              <div className="relative h-60 sm:h-64 overflow-hidden">
                 {prop.img ? (
                   <img
                     src={prop.img}
                     alt={prop.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    style={{ transition: 'transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)' }}
                   />
                 ) : (
                   <div className="h-full bg-gray-50 flex items-center justify-center text-gray-300">
                     <FaBookmark size={40} />
                   </div>
                 )}
-                {/* Save Badge */}
-                <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/95 backdrop-blur-sm text-teal-600 px-3 py-1.5 rounded-lg shadow-sm font-bold text-xs">
-                  <FaBookmark /> SAVED
+
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{ background: 'linear-gradient(to top, rgba(1,25,54,0.55) 0%, rgba(1,25,54,0.1) 45%, transparent 100%)' }} />
+
+                {/* Top Badges Container - Prevents Overlap */}
+                <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
+                  {/* Save Badge */}
+                  <span className="px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest text-teal-600 flex items-center gap-1.5 shadow-sm shrink-0"
+                    style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(4px)' }}>
+                    <FaBookmark className="text-[10px]" /> SAVED
+                  </span>
+
+                  {/* Property Type Pill */}
+                  <span className="px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest text-white border border-white/20 sm:block hidden truncate"
+                    style={{ background: 'rgba(1,25,54,0.4)', backdropFilter: 'blur(4px)' }}>
+                    {prop.property_type || 'Property'}
+                  </span>
+                  {/* Smaller type pill for mobile to ensure no overlap */}
+                  <span className="px-2 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest text-white border border-white/20 block sm:hidden truncate max-w-[80px]"
+                    style={{ background: 'rgba(1,25,54,0.4)', backdropFilter: 'blur(4px)' }}>
+                    {prop.property_type || 'Prop'}
+                  </span>
+                </div>
+
+                {/* Sqft Badge Bottom Left */}
+                <div className="absolute bottom-4 left-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                  <FaVectorSquare className="text-white/80 text-[11px]" />
+                  <span className="text-white font-bold text-[13px] leading-none">
+                    {prop.property_type === 'Apartment' && prop.variants?.length > 0
+                      ? `${prop.variants[0].sqft.toLocaleString('en-IN')}–${prop.variants[prop.variants.length - 1].sqft.toLocaleString('en-IN')}`
+                      : (prop.sqft ? prop.sqft.toLocaleString('en-IN') : 'N/A')}
+                  </span>
+                  <span className="text-white/60 text-[10px] font-semibold uppercase tracking-wide">sq.ft</span>
                 </div>
               </div>
 
               {/* Info Content */}
-              <div className="p-6 flex-1 flex flex-col">
-                <h3 className="font-bold text-gray-800 mb-1 line-clamp-1 group-hover:text-teal-600 transition-colors">
+              <div className="p-5 flex-1 flex flex-col">
+                {/* Location */}
+                <p className="text-[11px] font-semibold text-[#2e6171] uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <FaMapMarkerAlt className="text-[10px]" />
+                  {prop.city}
+                </p>
+
+                {/* Title */}
+                <h3 className="text-[15px] font-bold text-[#011936] mb-3 line-clamp-2 leading-snug group-hover:text-teal-600 transition-colors h-[42px] flex items-start">
                   {prop.title}
                 </h3>
 
-                <div className="flex flex-col gap-1 mb-4">
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <FaMapMarkerAlt className="text-teal-500 text-xs" /> {prop.city}
-                  </p>
-                  {prop.builderName && (
-                    <p className="text-xs text-gray-400 flex items-center gap-1">
-                      <FaBuilding className="text-gray-300" /> {prop.builderName}
-                    </p>
-                  )}
-                </div>
+                {/* Divider */}
+                <div className="h-px bg-gradient-to-r from-[#2e6171]/20 via-[#2e6171]/10 to-transparent mb-3" />
 
-                <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                  <span className="text-xl font-black text-gray-900">{formatPrice(prop.price)}</span>
+                {/* Price & Actions Row */}
+                <div className="mt-auto flex items-end justify-between">
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-0.5">Price</p>
+                    <p className="text-[17px] font-extrabold text-[#011936] leading-none">
+                      {prop.property_type === 'Apartment' && prop.variants?.length > 0
+                        ? <>₹&nbsp;{Math.floor(prop.variants[0].price).toLocaleString('en-IN')} <span className="text-[11px] font-semibold text-gray-400">onwards</span></>
+                        : formatPrice(prop.price)}
+                    </p>
+                  </div>
+
                   <div className="p-3 bg-teal-50 text-teal-600 rounded-xl group-hover:bg-teal-600 group-hover:text-white transition-all shadow-sm">
                     <FaArrowRight size={18} />
                   </div>
                 </div>
+
+                {/* Builder name at bottom */}
+                {prop.builderName && (
+                  <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <FaBuilding className="text-[#2e6171] text-[10px]" />
+                    <span className="font-medium">{prop.builderName}</span>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}

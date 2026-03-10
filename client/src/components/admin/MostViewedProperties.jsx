@@ -84,50 +84,110 @@ const MostViewedProperties = () => {
           {properties.map((prop, index) => (
             <motion.div
               key={prop.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col"
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ y: -6, scale: 1.01 }}
+              className="group relative bg-white rounded-3xl overflow-hidden cursor-pointer"
+              style={{
+                boxShadow: '0 4px 24px 0 rgba(1,25,54,0.08), 0 1px 4px 0 rgba(1,25,54,0.04)',
+                transition: 'box-shadow 0.4s ease, transform 0.4s ease',
+              }}
             >
               {/* Image Container */}
-              <div className="relative h-56 overflow-hidden">
+              <div className="relative h-52 sm:h-56 overflow-hidden">
                 {prop.cover_image ? (
                   <img
                     src={prop.cover_image}
                     alt={prop.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    style={{ transition: 'transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)' }}
                   />
                 ) : (
                   <div className="h-full bg-gray-50 flex items-center justify-center text-gray-300">
-                    <FaEye size={40} />
+                    <i className="fas fa-image text-4xl" />
                   </div>
                 )}
-                {/* Views Badge */}
-                <div className="absolute top-4 left-4 flex items-center gap-2 bg-white/95 backdrop-blur-sm text-gray-800 px-3 py-1.5 rounded-lg shadow-sm font-bold text-xs uppercase tracking-wider">
-                  <span className="text-teal-600">#{index + 1}</span>
-                  <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                  <span className="flex items-center gap-1"><FaEye className="text-teal-500" /> {prop.views}</span>
+
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{ background: 'linear-gradient(to top, rgba(1,25,54,0.55) 0%, rgba(1,25,54,0.1) 45%, transparent 100%)' }} />
+
+                {/* Rank & Views Badge Top Left */}
+                <div className="absolute top-3 left-3">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-white flex items-center gap-2"
+                    style={{ background: 'rgba(46,97,113,0.85)', backdropFilter: 'blur(8px)', letterSpacing: '0.1em' }}>
+                    <span className="text-teal-200">#{index + 1}</span>
+                    <span className="w-1 h-1 bg-white/30 rounded-full"></span>
+                    <span className="flex items-center gap-1"><FaEye className="text-teal-300" /> {prop.views}</span>
+                  </span>
+                </div>
+
+                {/* Property Type Pill Top Right */}
+                <div className="absolute top-3 right-3">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white border border-white/20"
+                    style={{ background: 'rgba(1,25,54,0.4)', backdropFilter: 'blur(4px)' }}>
+                    {prop.property_type}
+                  </span>
+                </div>
+
+                {/* Sqft Badge Bottom Left */}
+                <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                  <i className="fas fa-vector-square text-white/80 text-[11px]"></i>
+                  <span className="text-white font-bold text-[13px] leading-none">
+                    {prop.property_type === 'Apartment' && prop.variants?.length > 0
+                      ? `${prop.variants[0].sqft.toLocaleString('en-IN')}–${prop.variants[prop.variants.length - 1].sqft.toLocaleString('en-IN')}`
+                      : (prop.sqft ? prop.sqft.toLocaleString('en-IN') : 'N/A')}
+                  </span>
+                  <span className="text-white/60 text-[10px] font-semibold uppercase tracking-wide">sq.ft</span>
                 </div>
               </div>
 
-              {/* Info Content */}
-              <div className="p-6 flex-1 flex flex-col">
-                <h3 className="font-bold text-gray-800 mb-1 line-clamp-1 group-hover:text-teal-600 transition-colors">
+              {/* Property Details */}
+              <div className="p-5 flex flex-col flex-1">
+                {/* Location */}
+                <p className="text-[11px] font-semibold text-[#2e6171] uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <i className="fas fa-location-dot text-[10px]"></i>
+                  {prop.city}
+                </p>
+
+                {/* Title */}
+                <h3 className="text-[15px] font-bold text-[#011936] mb-3 line-clamp-2 leading-snug group-hover:text-teal-600 transition-colors h-[42px] flex items-start">
                   {prop.title}
                 </h3>
-                <p className="text-sm text-gray-500 flex items-center gap-1 mb-3">
-                  <FaMapMarkerAlt className="text-teal-500 text-xs" /> {prop.city}
-                </p>
-                <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                  <span className="text-xl font-black text-gray-900">{formatPrice(prop.price)}</span>
+
+                {/* Divider */}
+                <div className="h-px bg-gradient-to-r from-[#2e6171]/20 via-[#2e6171]/10 to-transparent mb-3" />
+
+                {/* Price & Actions Row */}
+                <div className="mt-auto flex items-end justify-between">
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-0.5">Price</p>
+                    <p className="text-[17px] font-extrabold text-[#011936] leading-none">
+                      {prop.property_type === 'Apartment' && prop.variants?.length > 0
+                        ? <>₹&nbsp;{Math.floor(prop.variants[0].price).toLocaleString('en-IN')} <span className="text-[11px] font-semibold text-gray-400">onwards</span></>
+                        : formatPrice(prop.price)}
+                    </p>
+                  </div>
+
+                  {/* View Audience button */}
                   <button
                     onClick={() => navigate(`/admin-dashboard/property/${prop.id}/viewers`)}
-                    className="p-3 bg-teal-50 text-teal-600 rounded-xl hover:bg-teal-600 hover:text-white transition-all shadow-sm active:scale-95 group/btn"
+                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 border border-teal-100 bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white"
                     title="View Audience"
                   >
-                    <FaUsers size={18} />
+                    <FaUsers size={16} />
                   </button>
                 </div>
+
+                {/* Builder name at bottom */}
+                {prop.builderName && (
+                  <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <i className="fas fa-building text-[#2e6171] text-[10px]"></i>
+                    <span className="font-medium">{prop.builderName}</span>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}

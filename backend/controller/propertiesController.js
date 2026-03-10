@@ -687,10 +687,11 @@ const getMostViewedProperties = async (req, res) => {
         p.city,
         p.price,
         p.property_type,
+        p.sqft,
         p.views,
         p.created_at,
         p.cover_image,
-        b.name                  AS builderName       -- ← added
+        b.name                  AS builderName
       FROM properties p
       LEFT JOIN builders b ON p.builder_id = b.id
       WHERE p.views > 0
@@ -698,13 +699,32 @@ const getMostViewedProperties = async (req, res) => {
       LIMIT 50
     `);
 
-    const properties = rows.map(p => ({
-      ...p,
-      builderName: p.builderName || 'Unknown',
-      cover_image: p.cover_image
-        ? `data:image/jpeg;base64,${Buffer.from(p.cover_image).toString('base64')}`
-        : null
-    }));
+    const propertyIds = rows.map(p => p.id);
+    let variants = [];
+    if (propertyIds.length > 0) {
+      const [vRows] = await pool.query(
+        `SELECT property_id, apartment_type, price, sqft FROM property_variants WHERE property_id IN (?) ORDER BY price ASC`,
+        [propertyIds]
+      );
+      variants = vRows;
+    }
+
+    const properties = rows.map(p => {
+      const pVariants = variants.filter(v => v.property_id === p.id).map(v => ({
+        apartment_type: v.apartment_type,
+        price: v.price ? parseFloat(v.price) : null,
+        sqft: v.sqft ? Number(v.sqft) : null
+      }));
+
+      return {
+        ...p,
+        builderName: p.builderName || 'Unknown',
+        variants: pVariants,
+        cover_image: p.cover_image
+          ? `data:image/jpeg;base64,${Buffer.from(p.cover_image).toString('base64')}`
+          : null
+      };
+    });
 
     res.json({ properties });
   } catch (error) {

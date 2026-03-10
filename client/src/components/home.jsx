@@ -243,55 +243,95 @@ const PropertyCard = ({ property, index, onClick }) => (
     initial={{ opacity: 0, y: 30 }}
     whileInView={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay: index * 0.1 }}
-    whileHover={{ y: -8 }}
+    viewport={{ once: true }}
+    whileHover={{ y: -6, scale: 1.01 }}
     onClick={onClick}
-    className="group cursor-pointer bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all border border-gray-100"
+    className="group relative bg-white rounded-3xl overflow-hidden cursor-pointer"
+    style={{
+      boxShadow: '0 4px 24px 0 rgba(1,25,54,0.08), 0 1px 4px 0 rgba(1,25,54,0.04)',
+      transition: 'box-shadow 0.4s ease, transform 0.4s ease',
+    }}
+    onMouseEnter={e => e.currentTarget.style.boxShadow = '0 16px 48px 0 rgba(1,25,54,0.18), 0 4px 12px 0 rgba(46,97,113,0.12)'}
+    onMouseLeave={e => e.currentTarget.style.boxShadow = '0 4px 24px 0 rgba(1,25,54,0.08), 0 1px 4px 0 rgba(1,25,54,0.04)'}
   >
-    <div className="relative h-56 sm:h-64 overflow-hidden">
+    {/* Image Container */}
+    <div className="relative h-52 sm:h-56 overflow-hidden">
       <img
         src={property.img}
         alt={property.title}
-        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+        className="w-full h-full object-cover"
+        style={{ transition: 'transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)' }}
+        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
         loading="lazy"
       />
-      <div className="absolute inset-0 bg-linear-to-t from-black/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      {/* Gradient overlay at bottom */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'linear-gradient(to top, rgba(1,25,54,0.55) 0%, rgba(1,25,54,0.1) 45%, transparent 100%)' }} />
+
+      {/* Property type pill — top left */}
+      <div className="absolute top-3 left-3">
+        <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase text-white"
+          style={{ background: 'rgba(46,97,113,0.85)', backdropFilter: 'blur(8px)', letterSpacing: '0.1em' }}>
+          {property.property_type}
+        </span>
+      </div>
+
+      {/* Sqft badge — bottom left on image */}
+      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+        style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.3)' }}>
+        <i className="fas fa-vector-square text-[11px]" style={{ color: 'rgba(255,255,255,0.8)' }}></i>
+        <span className="text-white font-bold text-[13px] leading-none">
+          {property.property_type === 'Apartment' && property.variants?.length > 0
+            ? `${property.variants[0].sqft.toLocaleString('en-IN')}–${property.variants[property.variants.length - 1].sqft.toLocaleString('en-IN')}`
+            : (property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A')}
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.6)' }}>sq.ft</span>
+      </div>
     </div>
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-[#011936] line-clamp-2 mb-2">{property.title}</h3>
-      <p className="text-sm text-[#2e6171] font-semibold mb-3 flex items-center gap-2">
-        <i className="fas fa-location-dot"></i>
+
+    {/* Property Details */}
+    <div className="p-5">
+      {/* Location */}
+      <p className="text-[11px] font-semibold text-[#2e6171] uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+        <i className="fas fa-location-dot text-[10px]"></i>
         {property.city}
       </p>
 
-      <div className="flex flex-col mb-4">
-        <p className="text-lg font-extrabold text-[#011936]">
-          {property.property_type === 'Apartment' && property.variants?.length > 0
-            ? `₹ ${Math.floor(property.variants[0].price).toLocaleString('en-IN')} onwards`
-            : new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(property.price)}
-        </p>
-        <div className="flex items-center gap-3 text-sm text-gray-500 font-bold mt-1">
-          <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-            <i className="fas fa-ruler-combined text-[10px] text-teal-600"></i>
+      {/* Title */}
+      <h3 className="text-[15px] font-bold text-[#011936] mb-3 leading-snug"
+        style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        {property.title}
+      </h3>
+
+      {/* Divider */}
+      <div className="h-px mb-3"
+        style={{ background: 'linear-gradient(to right, rgba(46,97,113,0.2), rgba(46,97,113,0.1), transparent)' }} />
+
+      {/* Price row */}
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-0.5">Price</p>
+          <p className="text-[17px] font-extrabold text-[#011936] leading-none">
             {property.property_type === 'Apartment' && property.variants?.length > 0
-              ? `${property.variants[0].sqft} - ${property.variants[property.variants.length - 1].sqft}`
-              : (property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A')}
-            <span className="text-[10px] text-slate-400 uppercase">sq.ft</span>
-          </span>
-          <span className="bg-teal-50 text-teal-700 px-2 py-1 rounded-lg text-[10px] uppercase font-black border border-teal-100">
-            {property.property_type}
-          </span>
+              ? <>₹&nbsp;{Math.floor(property.variants[0].price).toLocaleString('en-IN')} <span className="text-[11px] font-semibold text-gray-400">onwards</span></>
+              : new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(property.price)}
+          </p>
+        </div>
+
+        {/* View arrow */}
+        <div className="w-9 h-9 rounded-full flex items-center justify-center border border-gray-200 group-hover:border-[#2e6171] transition-all duration-300 group-hover:scale-110"
+          style={{ background: 'transparent' }}>
+          <i className="fas fa-arrow-right text-[#2e6171] text-xs group-hover:translate-x-0.5 transition-transform duration-300"></i>
         </div>
       </div>
 
+      {/* Builder */}
       {property.builderName && (
-        <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-          <div className="flex items-center gap-2">
-            <i className="fas fa-building"></i>
-            {property.builderName}
-          </div>
-          <div className="flex items-center text-[#2e6171] font-semibold">
-            <i className="fas fa-arrow-right text-sm transform group-hover:translate-x-2 transition-transform duration-300"></i>
-          </div>
+        <div className="mt-3 flex items-center gap-1.5 text-[11px] text-gray-500">
+          <i className="fas fa-building text-[#2e6171] text-[10px]"></i>
+          <span className="font-medium">{property.builderName}</span>
         </div>
       )}
     </div>

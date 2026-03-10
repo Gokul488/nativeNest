@@ -67,7 +67,7 @@ const getBookmarkedProperties = async (req, res) => {
 
     const buyerId = decoded.userId;
     const connection = await pool.getConnection();
-    
+
     try {
       const [bookmarks] = await connection.query(
         'SELECT property_id FROM bookmarks WHERE buyer_id = ? ORDER BY created_at DESC',
@@ -87,6 +87,8 @@ const getBookmarkedProperties = async (req, res) => {
            p.title,
            p.price,
            p.city,
+           p.property_type,
+           p.sqft,
            b.name AS builderName,
            p.cover_image
          FROM properties p
@@ -95,6 +97,15 @@ const getBookmarkedProperties = async (req, res) => {
          ORDER BY FIELD(p.property_id, ${propertyIds.join(',')})`,
         propertyIds
       );
+
+      let allVariants = [];
+      if (propertyIds.length > 0) {
+        const [vRows] = await connection.query(
+          `SELECT property_id, apartment_type, price, sqft FROM property_variants WHERE property_id IN (?) ORDER BY price ASC`,
+          [propertyIds]
+        );
+        allVariants = vRows;
+      }
 
       const formatted = await Promise.all(
         properties.map(async (property) => {
@@ -112,13 +123,24 @@ const getBookmarkedProperties = async (req, res) => {
             }
           }
 
+          const propVariants = allVariants
+            .filter(v => v.property_id === property.id)
+            .map(v => ({
+              apartment_type: v.apartment_type,
+              price: v.price ? parseFloat(v.price) : null,
+              sqft: v.sqft ? Number(v.sqft) : null
+            }));
+
           return {
             id: property.id,
             title: property.title,
             city: property.city,
             price: parseFloat(property.price),
+            property_type: property.property_type,
+            sqft: property.sqft ? Number(property.sqft) : null,
             img,
-            builderName: property.builderName || null, 
+            builderName: property.builderName || null,
+            variants: propVariants
           };
         })
       );
