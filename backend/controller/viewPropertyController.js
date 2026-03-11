@@ -1,17 +1,14 @@
 const pool = require('../db');
-const jwt = require('jsonwebtoken');
+const jwt  = require('jsonwebtoken');
 
 const getProperties = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
+    if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const userId  = decoded.userId;
 
-    // Original lightweight query
     const [properties] = await pool.query(`
       SELECT 
         p.property_id AS id, 
@@ -37,32 +34,34 @@ const getProperties = async (req, res) => {
       ORDER BY p.created_at DESC
     `, [userId]);
 
-    // ====================== NEW: Attach variants ======================
-    const variantsMap = {};
+    // Attach variants (apartment_type = BHK value, block_name = block)
     if (properties.length > 0) {
       const propertyIds = properties.map(p => p.id);
       const [variantRows] = await pool.query(`
-        SELECT property_id, apartment_type, price, sqft 
+        SELECT property_id, apartment_type, block_name, price, sqft, quantity
         FROM property_variants 
         WHERE property_id IN (?)
-        ORDER BY apartment_type ASC
+        ORDER BY block_name, apartment_type ASC
       `, [propertyIds]);
 
+      const variantsMap = {};
       variantRows.forEach(row => {
         if (!variantsMap[row.property_id]) variantsMap[row.property_id] = [];
         variantsMap[row.property_id].push({
           apartment_type: row.apartment_type,
-          price: row.price ? parseFloat(row.price) : null,
-          sqft: row.sqft ? Number(row.sqft) : null,
+          block_name:     row.block_name || null,
+          price:          row.price    ? parseFloat(row.price)  : null,
+          sqft:           row.sqft     ? Number(row.sqft)        : null,
+          quantity:       row.quantity ? Number(row.quantity)    : null,
         });
       });
-    }
 
-    // Attach variants to each property
-    properties.forEach(prop => {
-      prop.variants = variantsMap[prop.id] || [];
-    });
-    // =================================================================
+      properties.forEach(prop => {
+        prop.variants = variantsMap[prop.id] || [];
+      });
+    } else {
+      properties.forEach(prop => { prop.variants = []; });
+    }
 
     res.json({ properties });
   } catch (error) {
@@ -100,9 +99,7 @@ const getPropertyById = async (req, res) => {
       WHERE p.property_id = ?
     `, [id]);
 
-    if (properties.length === 0) {
-      return res.status(404).json({ error: 'Property not found' });
-    }
+    if (properties.length === 0) return res.status(404).json({ error: 'Property not found' });
 
     const [images] = await pool.query(
       'SELECT image_id AS id, image FROM property_images WHERE property_id = ?',
@@ -117,22 +114,30 @@ const getPropertyById = async (req, res) => {
       [id]
     );
 
-    const [variants] = await pool.query(
-      'SELECT variant_id, apartment_type, price, sqft, quantity FROM property_variants WHERE property_id = ?', // ADDED quantity
+    // Fetch variants with block_name — apartment_type holds the BHK value
+    const [variantRows] = await pool.query(
+      `SELECT variant_id, apartment_type, block_name, price, sqft, quantity
+       FROM property_variants WHERE property_id = ?
+       ORDER BY block_name, apartment_type ASC`,
       [id]
     );
+
+    const variants = variantRows.map(v => ({
+      variant_id:     v.variant_id,
+      apartment_type: v.apartment_type,
+      block_name:     v.block_name || null,
+      price:          v.price    ? parseFloat(v.price)  : null,
+      sqft:           v.sqft     ? Number(v.sqft)        : null,
+      quantity:       v.quantity ? Number(v.quantity)    : 1,
+    }));
 
     const property = {
       ...properties[0],
       images,
-      sqft: properties[0].sqft || null,
+      sqft:     properties[0].sqft     || null,
       quantity: properties[0].quantity || 1,
       variants,
-      amenities: amenitiesResult.map(a => ({
-        id: a.amenity_id,
-        name: a.name,
-        icon: a.icon
-      }))
+      amenities: amenitiesResult.map(a => ({ id: a.amenity_id, name: a.name, icon: a.icon })),
     };
 
     res.json(property);
@@ -148,72 +153,54 @@ const updateProperty = async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
-    const { id } = req.params;
+    const userId  = decoded.userId;
+    const { id }  = req.params;
 
     const {
-      title,
-      builder_id,
-      description,
-      price,
-      address,
-      city,
-      state,
-      country,
-      pincode,
-      property_type,
-      sqft,
-      quantity,
+      title, builder_id, description,
+      price, address, city, state, country, pincode,
+      property_type, sqft, quantity,
       other_amenity,
-      variants
+      variants    // JSON string
     } = req.body;
 
     let amenityIds = req.body.amenities || req.body['amenities[]'] || [];
-    if (!Array.isArray(amenityIds)) {
-      amenityIds = [amenityIds].filter(Boolean);
-    }
+    if (!Array.isArray(amenityIds)) amenityIds = [amenityIds].filter(Boolean);
 
-    // ── Required fields validation ───────────────────────────────────────
+    // ── Required fields ──────────────────────────────────────────────────────
     const requiredFields = { title, builder_id, description, address, city, state, country, pincode, property_type };
     const missing = Object.entries(requiredFields)
-      .filter(([key, val]) => !val || String(val).trim() === '')
+      .filter(([, val]) => !val || String(val).trim() === '')
       .map(([key]) => key);
 
     if (missing.length > 0) {
-      return res.status(400).json({
-        error: 'All required fields must be filled',
-        missingFields: missing
-      });
+      return res.status(400).json({ error: 'All required fields must be filled', missingFields: missing });
     }
 
-    // ── Price, Sqft & Quantity Logic based on type ────────────────────────
-    let finalPrice = price ? Number(price) : null;
-    let finalSqft = sqft ? Number(sqft) : null;
+    // ── Price / sqft / qty ───────────────────────────────────────────────────
+    let finalPrice    = price ? Number(price) : null;
+    let finalSqft     = sqft  ? Number(sqft)  : null;
     let finalQuantity = (quantity && !isNaN(quantity)) ? Number(quantity) : 1;
 
     if (property_type === 'Apartment') {
-      // Force NULL in main properties table for Apartments
-      finalPrice = null;
-      finalSqft = null;
+      // NULLs in main row — all details live in property_variants
+      finalPrice    = null;
+      finalSqft     = null;
       finalQuantity = null;
     } else {
-      // Validation for non-apartment properties
       if (!price || isNaN(finalPrice) || finalPrice <= 0) {
         return res.status(400).json({ error: 'Valid price (> 0) is required for non-apartment properties' });
       }
     }
 
-    // ── Authorization check ──────────────────────────────────────────────
-    const [propCheck] = await pool.query(
-      'SELECT admin_id FROM properties WHERE property_id = ?',
-      [id]
-    );
+    // ── Authorization ────────────────────────────────────────────────────────
+    const [propCheck] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
     if (propCheck.length === 0) return res.status(404).json({ error: 'Property not found' });
     if (propCheck[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
 
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
-    const video = req.files?.['video']?.[0]?.buffer || null;
-    const images = req.files?.['images[]']
+    const video      = req.files?.['video']?.[0]?.buffer       || null;
+    const images     = req.files?.['images[]']
       ? (Array.isArray(req.files['images[]']) ? req.files['images[]'] : [req.files['images[]']])
       : [];
 
@@ -224,41 +211,19 @@ const updateProperty = async (req, res) => {
       // Update main property row
       await connection.query(
         `UPDATE properties SET 
-          title = ?, 
-          builder_id = ?, 
-          description = ?, 
-          price = ?, 
-          address = ?, 
-          city = ?, 
-          state = ?, 
-          country = ?, 
-          pincode = ?, 
-          property_type = ?, 
-          sqft = ?,
-          quantity = ?,
+          title = ?, builder_id = ?, description = ?, price = ?,
+          address = ?, city = ?, state = ?, country = ?, pincode = ?,
+          property_type = ?, sqft = ?, quantity = ?,
           cover_image = COALESCE(?, cover_image),
           video = COALESCE(?, video)
          WHERE property_id = ?`,
-        [
-          title,
-          builder_id,
-          description,
-          finalPrice,
-          address,
-          city,
-          state,
-          country,
-          pincode,
-          property_type,
-          finalSqft,
-          finalQuantity,
-          coverImage,
-          video,
-          id
-        ]
+        [title, builder_id, description, finalPrice,
+         address, city, state, country, pincode,
+         property_type, finalSqft, finalQuantity,
+         coverImage, video, id]
       );
 
-      // ── Handle Images ──────────────────────────────────────────────────
+      // ── Images ────────────────────────────────────────────────────────────
       if (images.length > 0) {
         await connection.query('DELETE FROM property_images WHERE property_id = ?', [id]);
         for (const image of images) {
@@ -271,14 +236,11 @@ const updateProperty = async (req, res) => {
         }
       }
 
-      // ── Handle Amenities ──────────────────────────────────────────────
+      // ── Amenities ─────────────────────────────────────────────────────────
       await connection.query('DELETE FROM property_amenities WHERE property_id = ?', [id]);
       if (amenityIds.length > 0) {
         const values = amenityIds.map(aid => [id, aid]);
-        await connection.query(
-          'INSERT INTO property_amenities (property_id, amenity_id) VALUES ?',
-          [values]
-        );
+        await connection.query('INSERT INTO property_amenities (property_id, amenity_id) VALUES ?', [values]);
       }
 
       if (other_amenity && other_amenity.trim()) {
@@ -287,50 +249,56 @@ const updateProperty = async (req, res) => {
           'SELECT amenity_id FROM amenities WHERE LOWER(name) = LOWER(?) LIMIT 1',
           [customName]
         );
-
         let customAmenityId;
         if (existing.length > 0) {
           customAmenityId = existing[0].amenity_id;
         } else {
-          const [insert] = await connection.query(
-            'INSERT INTO amenities (name, icon) VALUES (?, NULL)',
-            [customName]
-          );
+          const [insert] = await connection.query('INSERT INTO amenities (name, icon) VALUES (?, NULL)', [customName]);
           customAmenityId = insert.insertId;
         }
-
         await connection.query(
           'INSERT IGNORE INTO property_amenities (property_id, amenity_id) VALUES (?, ?)',
           [id, customAmenityId]
         );
       }
 
-      // ── Handle Variants (only for Apartment) ──────────────────────────
+      // ── Variants (Apartment blocks) ───────────────────────────────────────
+      // Always wipe and re-insert so edits are fully applied
       await connection.query('DELETE FROM property_variants WHERE property_id = ?', [id]);
 
       if (property_type === 'Apartment' && variants) {
         let variantData;
         try {
           variantData = JSON.parse(variants);
-        } catch (e) {
-          throw new Error("Invalid variants JSON format");
+        } catch {
+          throw new Error('Invalid variants JSON format');
         }
 
         if (Array.isArray(variantData) && variantData.length > 0) {
           for (const v of variantData) {
-            const aptType = (v.apartment_type || '').trim();
-            const vPrice = Number(v.price);
-            const vSqft = Number(v.sqft);
-            const vQty = Number(v.quantity) || 1;
+            const aptType   = (v.apartment_type || '').trim();  // BHK value
+            const blockName = (v.block_name     || '').trim();
+            const vPrice    = Number(v.price);
+            const vSqft     = Number(v.sqft);
+            const vQty      = Number(v.quantity) || 1;
 
-            if (!aptType || isNaN(vPrice) || vPrice <= 0 || isNaN(vSqft) || vSqft <= 0) {
-              throw new Error("Every apartment variant must have valid apartment_type, price (>0) and sqft (>0)");
+            if (!aptType) {
+              throw new Error('Each block must have an apartment_type (e.g. 2BHK)');
+            }
+            if (!blockName) {
+              throw new Error(`Variant "${aptType}" is missing a block_name`);
+            }
+            if (isNaN(vPrice) || vPrice <= 0) {
+              throw new Error(`Block "${blockName}" (${aptType}) has an invalid price`);
+            }
+            if (isNaN(vSqft) || vSqft <= 0) {
+              throw new Error(`Block "${blockName}" (${aptType}) has an invalid sqft`);
             }
 
             await connection.query(
-              `INSERT INTO property_variants (property_id, apartment_type, price, sqft, quantity) 
-              VALUES (?, ?, ?, ?, ?)`,
-              [id, aptType, vPrice, vSqft, vQty]
+              `INSERT INTO property_variants (property_id, apartment_type, block_name, price, sqft, quantity)
+               VALUES (?, ?, ?, ?, ?, ?)`,
+              [id, aptType, blockName, vPrice, vSqft, vQty]
             );
           }
         }
@@ -338,6 +306,7 @@ const updateProperty = async (req, res) => {
 
       await connection.commit();
       res.status(200).json({ message: 'Property updated successfully' });
+
     } catch (innerErr) {
       await connection.rollback();
       console.error('Update transaction failed:', innerErr);
@@ -357,14 +326,10 @@ const deleteProperty = async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
-    const { id } = req.params;
+    const userId  = decoded.userId;
+    const { id }  = req.params;
 
-    const [properties] = await pool.query(
-      'SELECT admin_id FROM properties WHERE property_id = ?',
-      [id]
-    );
-
+    const [properties] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
     if (properties.length === 0) return res.status(404).json({ error: 'Property not found' });
     if (properties[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
 
@@ -372,14 +337,12 @@ const deleteProperty = async (req, res) => {
     try {
       await connection.beginTransaction();
 
-      // 1. Delete from child tables FIRST to satisfy Foreign Key constraints
-      await connection.query('DELETE FROM property_images WHERE property_id = ?', [id]);
+      // Delete child tables first (FK constraints)
+      await connection.query('DELETE FROM property_images    WHERE property_id = ?', [id]);
       await connection.query('DELETE FROM property_amenities WHERE property_id = ?', [id]);
-      await connection.query('DELETE FROM property_views WHERE property_id = ?', [id]); // Fixed the error
-      await connection.query('DELETE FROM property_variants WHERE property_id = ?', [id]); // Added for variants
-
-      // 2. Delete the parent property LAST
-      await connection.query('DELETE FROM properties WHERE property_id = ?', [id]);
+      await connection.query('DELETE FROM property_views     WHERE property_id = ?', [id]);
+      await connection.query('DELETE FROM property_variants  WHERE property_id = ?', [id]);
+      await connection.query('DELETE FROM properties         WHERE property_id = ?', [id]);
 
       await connection.commit();
       res.status(200).json({ message: 'Property and all related data deleted successfully' });
