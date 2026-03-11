@@ -169,9 +169,12 @@ const BuilderEvents = () => {
                         {String(index + 1).padStart(2, '0')}
                       </td>
                       <td className="px-6 py-3 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors cursor-default">
+                        <Link
+                          to={`/builder-dashboard/events/${event.id}`}
+                          className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors cursor-pointer hover:underline"
+                        >
                           {event.event_name}
-                        </div>
+                        </Link>
                       </td>
                       <td className="px-6 py-3 border-b border-gray-100">
                         <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
@@ -224,7 +227,9 @@ const BuilderEvents = () => {
                           <FaMapMarkerAlt size={8} /> {event.city || "N/A"}
                         </span>
                       </div>
-                      <h4 className="font-bold text-gray-900 leading-tight">{event.event_name}</h4>
+                      <Link to={`/builder-dashboard/events/${event.id}`}>
+                        <h4 className="font-bold text-gray-900 leading-tight hover:text-teal-600 transition-colors">{event.event_name}</h4>
+                      </Link>
                     </div>
                   </div>
 

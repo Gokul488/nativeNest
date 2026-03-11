@@ -136,13 +136,12 @@ const getStallBookingsForEvent = async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.account_type !== 'admin') {
-      return res.status(403).json({ error: 'Access denied: Admin only' });
+    if (decoded.account_type !== 'admin' && decoded.account_type !== 'builder') {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     const { eventId } = req.params;
-
-    const [bookings] = await pool.query(`
+    let query = `
       SELECT 
         s.stall_id,
         s.stall_number,
@@ -154,9 +153,17 @@ const getStallBookingsForEvent = async (req, res) => {
       INNER JOIN builders b ON s.builder_id = b.id
       INNER JOIN stall_type st ON s.stall_type_id = st.stall_type_id
       WHERE s.event_id = ?
-      ORDER BY s.stall_number ASC
-    `, [eventId]);
+    `;
+    const params = [eventId];
 
+    if (decoded.account_type === 'builder') {
+      query += ` AND s.builder_id = ?`;
+      params.push(decoded.userId);
+    }
+
+    query += ` ORDER BY s.stall_number ASC`;
+
+    const [bookings] = await pool.query(query, params);
     res.json({ bookings });
   } catch (error) {
     console.error('Error fetching stall bookings:', error);

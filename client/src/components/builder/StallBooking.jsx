@@ -8,7 +8,8 @@ import {
   FaExclamationCircle,
   FaTag,
   FaInfoCircle,
-  FaLayerGroup
+  FaLayerGroup,
+  FaStoreAlt
 } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 
@@ -84,12 +85,18 @@ const StallBooking = () => {
     <div className="max-w-7xl mx-auto space-y-6">
 
       {/* Navigation */}
-      <div className="mb-4">
+      <div className="mb-4 flex justify-between items-center">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-600 hover:text-teal-600 transition-colors font-medium text-sm"
         >
           <FaArrowLeft size={12} /> Back to Events
+        </button>
+        <button
+          onClick={() => navigate(`/builder-dashboard/event-bookings/${eventId}`)}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-teal-200 text-teal-700 rounded-xl hover:bg-teal-50 transition-all font-bold text-sm shadow-sm"
+        >
+          <FaStoreAlt size={14} /> My Bookings
         </button>
       </div>
 

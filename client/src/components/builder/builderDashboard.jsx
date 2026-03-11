@@ -21,6 +21,8 @@ import EditProperty from "../admin/editProperty";
 import StallBooking from "./StallBooking";
 import BuilderStallInterests from "./BuilderStallInterests";
 import LogoutDialog from "../LogoutDialog";
+import EventDetails from "../buyer/EventDetails";
+import EventBookedStalls from "./EventBookedStalls";
 
 /**
  * Animated Stat Counter Component
@@ -289,7 +291,9 @@ const BuilderDashboard = () => {
 
             <Route path="/my-properties" element={<BuilderProperties />} />
             <Route path="/events" element={<BuilderEvents />} />
+            <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/stall-booking/:id" element={<StallBooking />} />
+            <Route path="/event-bookings/:id" element={<EventBookedStalls />} />
             <Route path="/profile-settings" element={<BuilderProfileSettings />} />
             <Route path="/interests" element={<BuilderStallInterests />} />
             <Route path="/post-property" element={<PostProperty />} />
