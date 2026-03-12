@@ -9,13 +9,16 @@ const Footer = () => {
   const [loanTerm, setLoanTerm] = useState("");
 
   const calculateMonthlyPayment = () => {
+    if (!totalAmount || !loanTerm || parseFloat(loanTerm) === 0) return 0;
     const principal = totalAmount - downPayment;
     const monthlyRate = interestRate / 100 / 12;
     const payments = loanTerm * 12;
-    if (monthlyRate === 0) return principal / payments || 0;
+    
+    if (monthlyRate === 0) return (principal / payments).toFixed(2);
+    
     const x = Math.pow(1 + monthlyRate, payments);
     const payment = (principal * x * monthlyRate) / (x - 1);
-    return isNaN(payment) ? 0 : payment.toFixed(2);
+    return isFinite(payment) ? payment.toFixed(2) : 0;
   };
 
   const quickLinks = [
@@ -26,11 +29,22 @@ const Footer = () => {
     { to: "/blog", label: "Blog" },
   ];
 
-  // Google Maps URL for the address
   const mapsUrl = "https://www.google.com/maps/search/?api=1&query=436+Serangoon+Road,+Singapore";
 
   return (
     <footer className="relative bg-[#011936] text-white overflow-hidden" aria-labelledby="footer-heading">
+      {/* CSS to hide number input spinners */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+      `}} />
+
       <h2 id="footer-heading" className="sr-only">Footer</h2>
 
       {/* Background Orbs */}
@@ -71,15 +85,31 @@ const Footer = () => {
                 { placeholder: "Interest Rate (%)", value: interestRate, set: setInterestRate },
                 { placeholder: "Loan Term (Years)", value: loanTerm, set: setLoanTerm },
               ].map((input, i) => (
-                <input
-                  key={i}
-                  type="number"
-                  placeholder={input.placeholder}
-                  value={input.value}
-                  onChange={(e) => input.set(e.target.value)}
-                  className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/50 transition"
-                  aria-label={input.placeholder}
-                />
+                <div key={i} className="relative group">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder={input.placeholder}
+                    value={input.value}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || parseFloat(val) >= 0) {
+                        input.set(val);
+                      }
+                    }}
+                    /* Added appearance-none for Tailwind support */
+                    className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/50 transition pr-10 appearance-none"
+                    aria-label={input.placeholder}
+                  />
+                  {input.value && (
+                    <button
+                      onClick={() => input.set("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      <i className="fas fa-times text-xs"></i>
+                    </button>
+                  )}
+                </div>
               ))}
               <output className="block text-lg font-semibold text-white bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
                 Monthly: ₹{calculateMonthlyPayment()}
@@ -194,7 +224,7 @@ const Footer = () => {
           className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-gray-400"
           role="contentinfo"
         >
-          &copy; {new Date().getFullYear()} NativeNest. All rights reserved.
+          © {new Date().getFullYear()} NativeNest. All rights reserved.
         </motion.div>
       </div>
     </footer>

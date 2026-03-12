@@ -28,21 +28,26 @@ const animatedComponents = makeAnimated();
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const BLOCK_LABELS     = ["Block A", "Block B", "Block C", "Block D", "Block E", "Others"];
+const BLOCK_LABELS = ["Block A", "Block B", "Block C", "Block D", "Block E", "Others"];
 const APT_TYPE_OPTIONS = ["1BHK", "2BHK", "3BHK", "4BHK", "Penthouse", "Studio", "Others"];
 
-// Each block maps to one row in property_variants:
-//   block_name → block_name column
+// Each block has a block_name and an array of configs.
+// Each config maps to one row in property_variants:
 //   apartment_type → apartment_type column (stores the BHK value)
 //   price, sqft, quantity → their respective columns
-const DEFAULT_BLOCK = () => ({
-  block_name:     "Block A",
-  isCustomBlock:  false,
+const DEFAULT_CONFIG = () => ({
+  id: Date.now() + Math.random(),
   apartment_type: "1BHK",
-  isCustomType:   false,
-  price:          "",
-  sqft:           "",
-  quantity:       "1",
+  isCustomType: false,
+  price: "",
+  sqft: "",
+  quantity: "1",
+});
+
+const DEFAULT_BLOCK = () => ({
+  block_name: "Block A",
+  isCustomBlock: false,
+  configs: [DEFAULT_CONFIG()],
 });
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -51,7 +56,7 @@ const PostProperty = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isAdmin  = location.pathname.includes("/admin-dashboard");
+  const isAdmin = location.pathname.includes("/admin-dashboard");
   const backPath = isAdmin
     ? "/admin-dashboard/manage-properties"
     : "/builder-dashboard/my-properties";
@@ -71,31 +76,31 @@ const PostProperty = () => {
     quantity: "1",
   });
 
-  const [accountType,       setAccountType]       = useState(null);
-  const [builderName,       setBuilderName]        = useState("");
-  const [selectedAmenities, setSelectedAmenities]  = useState([]);
-  const [amenityOptions,    setAmenityOptions]     = useState([]);
-  const [propertyTypes,     setPropertyTypes]      = useState([]);
+  const [accountType, setAccountType] = useState(null);
+  const [builderName, setBuilderName] = useState("");
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const [amenityOptions, setAmenityOptions] = useState([]);
+  const [propertyTypes, setPropertyTypes] = useState([]);
 
   // Flat list of blocks — each becomes one property_variants row
   const [blocks, setBlocks] = useState([DEFAULT_BLOCK()]);
 
-  const [showOtherInput,    setShowOtherInput]    = useState(false);
-  const [otherAmenityName,  setOtherAmenityName]  = useState("");
-  const [builders,          setBuilders]          = useState([]);
+  const [showOtherInput, setShowOtherInput] = useState(false);
+  const [otherAmenityName, setOtherAmenityName] = useState("");
+  const [builders, setBuilders] = useState([]);
   const [selectedBuilderId, setSelectedBuilderId] = useState("");
 
   // ── Media state ───────────────────────────────────────────────
-  const [coverImage,       setCoverImage]       = useState(null);
-  const [coverPreview,     setCoverPreview]     = useState(null);
-  const [video,            setVideo]            = useState(null);
-  const [images,           setImages]           = useState([]);
+  const [coverImage, setCoverImage] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [video, setVideo] = useState(null);
+  const [images, setImages] = useState([]);
   const [extraImageInputs, setExtraImageInputs] = useState([]);
 
   // ── UI state ──────────────────────────────────────────────────
-  const [error,          setError]          = useState("");
-  const [success,        setSuccess]        = useState("");
-  const [isSubmitting,   setIsSubmitting]   = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeMediaTab, setActiveMediaTab] = useState("cover");
 
   // ── Quill setup ───────────────────────────────────────────────
@@ -115,20 +120,20 @@ const PostProperty = () => {
         operationMenu: {
           items: {
             insertColumnRight: { text: "Insert Column Right" },
-            insertColumnLeft:  { text: "Insert Column Left"  },
-            insertRowUp:       { text: "Insert Row Above"    },
-            insertRowDown:     { text: "Insert Row Below"    },
-            mergeCells:        { text: "Merge Cells"         },
-            unmergeCells:      { text: "Unmerge Cells"       },
-            deleteColumn:      { text: "Delete Column"       },
-            deleteRow:         { text: "Delete Row"          },
-            deleteTable:       { text: "Delete Table"        },
+            insertColumnLeft: { text: "Insert Column Left" },
+            insertRowUp: { text: "Insert Row Above" },
+            insertRowDown: { text: "Insert Row Below" },
+            mergeCells: { text: "Merge Cells" },
+            unmergeCells: { text: "Unmerge Cells" },
+            deleteColumn: { text: "Delete Column" },
+            deleteRow: { text: "Delete Row" },
+            deleteTable: { text: "Delete Table" },
           },
         },
       },
       keyboard: { bindings: QuillTableBetter.keyboardBindings },
     },
-    formats: ["header","bold","italic","underline","list","link","align","color","background","table"],
+    formats: ["header", "bold", "italic", "underline", "list", "link", "align", "color", "background", "table"],
   });
 
   useEffect(() => {
@@ -207,7 +212,7 @@ const PostProperty = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleVideoChange          = (e) => setVideo(e.target.files[0]);
+  const handleVideoChange = (e) => setVideo(e.target.files[0]);
   const handleMultipleImagesChange = (e) => {
     const files = Array.from(e.target.files);
     setImages((prev) => [...prev, ...files].slice(0, 10));
@@ -237,6 +242,26 @@ const PostProperty = () => {
   const removeBlock = (idx) =>
     setBlocks((prev) => prev.filter((_, i) => i !== idx));
 
+  // ── Config helpers (per block) ────────────────────────────────
+  const addConfig = (blockIdx) =>
+    setBlocks((prev) => prev.map((b, i) =>
+      i === blockIdx ? { ...b, configs: [...b.configs, DEFAULT_CONFIG()] } : b
+    ));
+
+  const removeConfig = (blockIdx, configId) =>
+    setBlocks((prev) => prev.map((b, i) =>
+      i === blockIdx
+        ? { ...b, configs: b.configs.filter((c) => c.id !== configId) }
+        : b
+    ));
+
+  const updateConfig = (blockIdx, configId, field, value) =>
+    setBlocks((prev) => prev.map((b, i) =>
+      i === blockIdx
+        ? { ...b, configs: b.configs.map((c) => c.id === configId ? { ...c, [field]: value } : c) }
+        : b
+    ));
+
   // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -262,34 +287,42 @@ const PostProperty = () => {
           setIsSubmitting(false);
           return;
         }
-        if (!block.apartment_type?.trim()) {
-          setError(`Block "${block.block_name}" needs an apartment type (e.g. 2BHK).`);
+        if (!block.configs || block.configs.length === 0) {
+          setError(`Block "${block.block_name}" needs at least one apartment configuration.`);
           setIsSubmitting(false);
           return;
         }
-        if (!block.price || isNaN(block.price) || Number(block.price) <= 0) {
-          setError(`Block "${block.block_name}" needs a valid price.`);
-          setIsSubmitting(false);
-          return;
-        }
-        if (!block.sqft || isNaN(block.sqft) || Number(block.sqft) <= 0) {
-          setError(`Block "${block.block_name}" needs a valid sqft.`);
-          setIsSubmitting(false);
-          return;
+        for (const config of block.configs) {
+          if (!config.apartment_type?.trim()) {
+            setError(`Block "${block.block_name}" has a config missing an apartment type.`);
+            setIsSubmitting(false);
+            return;
+          }
+          if (!config.price || isNaN(config.price) || Number(config.price) <= 0) {
+            setError(`Block "${block.block_name}" › ${config.apartment_type} needs a valid price.`);
+            setIsSubmitting(false);
+            return;
+          }
+          if (!config.sqft || isNaN(config.sqft) || Number(config.sqft) <= 0) {
+            setError(`Block "${block.block_name}" › ${config.apartment_type} needs a valid sqft.`);
+            setIsSubmitting(false);
+            return;
+          }
         }
       }
     }
 
-    // Each block → one property_variants row
-    // apartment_type holds the BHK value (e.g. "2BHK")
+    // Each block config → one property_variants row
     const variants = formData.property_type === "Apartment"
-      ? blocks.map((block) => ({
-          apartment_type: block.apartment_type.trim(),
-          block_name:     block.block_name.trim(),
-          price:          Number(block.price),
-          sqft:           Number(block.sqft),
-          quantity:       Number(block.quantity) || 1,
+      ? blocks.flatMap((block) =>
+        block.configs.map((config) => ({
+          apartment_type: config.apartment_type.trim(),
+          block_name: block.block_name.trim(),
+          price: Number(config.price),
+          sqft: Number(config.sqft),
+          quantity: Number(config.quantity) || 1,
         }))
+      )
       : [];
 
     const data = new FormData();
@@ -300,7 +333,7 @@ const PostProperty = () => {
     images.forEach((img) => data.append("images[]", img));
     extraImageInputs.forEach((i) => i.file && data.append("images[]", i.file));
     if (coverImage) data.append("cover_image", coverImage);
-    if (video)      data.append("video", video);
+    if (video) data.append("video", video);
     data.append("variants", JSON.stringify(variants));
 
     try {
@@ -442,8 +475,8 @@ const PostProperty = () => {
           {/* ══════════════════════════════════════════════════
               APARTMENT BLOCK CONFIGURATIONS
               - Blocks are the top level (no outer type wrapper)
-              - apartment_type field stores the BHK value
-              - Each block = one row in property_variants
+              - Each block can have multiple apartment type configs
+              - Each config = one row in property_variants
           ══════════════════════════════════════════════════ */}
           {formData.property_type === "Apartment" && (
             <div className="space-y-3">
@@ -497,80 +530,108 @@ const PostProperty = () => {
                       )}
                     </div>
 
-                    {blocks.length > 1 && (
-                      <button type="button" onClick={() => removeBlock(idx)}
-                        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-semibold transition">
-                        <FaTrash className="text-xs" /> Remove
+                    <div className="flex items-center gap-3">
+                      {/* Add config inside this block */}
+                      <button type="button" onClick={() => addConfig(idx)}
+                        className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-semibold border border-teal-300 hover:border-teal-500 px-3 py-1.5 rounded-lg bg-white transition">
+                        <FaPlus className="text-xs" /> Add Type
                       </button>
-                    )}
-                  </div>
 
-                  {/* Block fields: Apartment Type | Price | Sqft | Qty */}
-                  <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-
-                    {/* Apartment Type (BHK) */}
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-600 uppercase">Apartment Type</label>
-                      {!block.isCustomType ? (
-                        <select
-                          value={block.apartment_type}
-                          onChange={(e) => {
-                            if (e.target.value === "Others") {
-                              updateBlock(idx, "isCustomType", true);
-                              updateBlock(idx, "apartment_type", "");
-                            } else {
-                              updateBlock(idx, "apartment_type", e.target.value);
-                            }
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-400 outline-none"
-                        >
-                          {APT_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                      ) : (
-                        <div className="flex gap-1">
-                          <input type="text" autoFocus placeholder="e.g. 5BHK"
-                            value={block.apartment_type}
-                            onChange={(e) => updateBlock(idx, "apartment_type", e.target.value)}
-                            className="w-full px-3 py-2 border border-teal-400 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                          />
-                          <button type="button"
-                            onClick={() => { updateBlock(idx, "isCustomType", false); updateBlock(idx, "apartment_type", "1BHK"); }}
-                            className="text-xs text-teal-600 underline whitespace-nowrap px-1">
-                            ↩
-                          </button>
-                        </div>
+                      {blocks.length > 1 && (
+                        <button type="button" onClick={() => removeBlock(idx)}
+                          className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-semibold transition">
+                          <FaTrash className="text-xs" /> Remove Block
+                        </button>
                       )}
                     </div>
+                  </div>
 
-                    {/* Price */}
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-600 uppercase">Price (₹)</label>
-                      <input type="number" min="1" placeholder="e.g. 5000000"
-                        value={block.price}
-                        onChange={(e) => updateBlock(idx, "price", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                      />
-                    </div>
+                  {/* Config rows inside this block */}
+                  <div className="divide-y divide-gray-100">
+                    {block.configs.map((config, cIdx) => (
+                      <div key={config.id} className="p-4">
+                        {/* Row label + remove */}
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            Configuration {cIdx + 1}
+                          </span>
+                          {block.configs.length > 1 && (
+                            <button type="button" onClick={() => removeConfig(idx, config.id)}
+                              className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition">
+                              <FaTrash className="text-xs" /> Remove
+                            </button>
+                          )}
+                        </div>
 
-                    {/* Sqft */}
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-600 uppercase">Sqft</label>
-                      <input type="number" min="1" placeholder="e.g. 1200"
-                        value={block.sqft}
-                        onChange={(e) => updateBlock(idx, "sqft", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                      />
-                    </div>
+                        {/* Fields: Apartment Type | Price | Sqft | Qty */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
-                    {/* Quantity */}
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-600 uppercase">Qty</label>
-                      <input type="number" min="1"
-                        value={block.quantity}
-                        onChange={(e) => updateBlock(idx, "quantity", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                      />
-                    </div>
+                          {/* Apartment Type (BHK) */}
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-600 uppercase">Apartment Type</label>
+                            {!config.isCustomType ? (
+                              <select
+                                value={config.apartment_type}
+                                onChange={(e) => {
+                                  if (e.target.value === "Others") {
+                                    updateConfig(idx, config.id, "isCustomType", true);
+                                    updateConfig(idx, config.id, "apartment_type", "");
+                                  } else {
+                                    updateConfig(idx, config.id, "apartment_type", e.target.value);
+                                  }
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-400 outline-none"
+                              >
+                                {APT_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                              </select>
+                            ) : (
+                              <div className="flex gap-1">
+                                <input type="text" autoFocus placeholder="e.g. 5BHK"
+                                  value={config.apartment_type}
+                                  onChange={(e) => updateConfig(idx, config.id, "apartment_type", e.target.value)}
+                                  className="w-full px-3 py-2 border border-teal-400 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
+                                />
+                                <button type="button"
+                                  onClick={() => { updateConfig(idx, config.id, "isCustomType", false); updateConfig(idx, config.id, "apartment_type", "1BHK"); }}
+                                  className="text-xs text-teal-600 underline whitespace-nowrap px-1">
+                                  ↩
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Price */}
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-600 uppercase">Price (₹)</label>
+                            <input type="number" min="1" placeholder="e.g. 5000000"
+                              value={config.price}
+                              onChange={(e) => updateConfig(idx, config.id, "price", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
+                            />
+                          </div>
+
+                          {/* Sqft */}
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-600 uppercase">Sqft</label>
+                            <input type="number" min="1" placeholder="e.g. 1200"
+                              value={config.sqft}
+                              onChange={(e) => updateConfig(idx, config.id, "sqft", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
+                            />
+                          </div>
+
+                          {/* Quantity */}
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-600 uppercase">Qty</label>
+                            <input type="number" min="1"
+                              value={config.quantity}
+                              onChange={(e) => updateConfig(idx, config.id, "quantity", e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -640,16 +701,15 @@ const PostProperty = () => {
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8">
                 {[
-                  { key: "cover",   icon: <FaImage  className="mr-2 h-5 w-5" />, label: "Cover Image" },
+                  { key: "cover", icon: <FaImage className="mr-2 h-5 w-5" />, label: "Cover Image" },
                   { key: "gallery", icon: <FaImages className="mr-2 h-5 w-5" />, label: `Gallery (${images.length + extraImageInputs.length}/10)` },
-                  { key: "video",   icon: <FaVideo  className="mr-2 h-5 w-5" />, label: "Video Tour" },
+                  { key: "video", icon: <FaVideo className="mr-2 h-5 w-5" />, label: "Video Tour" },
                 ].map(({ key, icon, label }) => (
                   <button key={key} type="button" onClick={() => setActiveMediaTab(key)}
-                    className={`group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeMediaTab === key
+                    className={`group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === key
                         ? "border-teal-500 text-teal-600"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}>
+                      }`}>
                     {icon}{label}
                   </button>
                 ))}

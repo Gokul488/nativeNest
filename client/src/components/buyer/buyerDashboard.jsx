@@ -93,7 +93,7 @@ const BuyerDashboard = () => {
   const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const isActive = (path) => {

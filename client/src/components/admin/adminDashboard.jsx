@@ -93,7 +93,7 @@ const AdminDashboard = () => {
   const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
