@@ -72,6 +72,7 @@ const EditPropertyEvent = () => {
         const event = response.data;
         setFormData({
           ...event,
+          banner_image: undefined,
           start_date: event.start_date ? event.start_date.split('T')[0] : "",
           end_date: event.end_date ? event.end_date.split('T')[0] : "",
           stall_count: event.stall_count || 0,
@@ -154,6 +155,7 @@ const EditPropertyEvent = () => {
 
       const data = new FormData();
       for (const key in formData) {
+        if (key === 'banner_image') continue;
         data.append(key, formData[key]);
       }
 

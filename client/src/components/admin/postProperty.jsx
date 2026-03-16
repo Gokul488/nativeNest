@@ -540,7 +540,7 @@ const PostProperty = () => {
                       {blocks.length > 1 && (
                         <button type="button" onClick={() => removeBlock(idx)}
                           className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-semibold transition">
-                          <FaTrash className="text-xs" /> Remove Block
+                          <FaTrash className="text-xs" />Block
                         </button>
                       )}
                     </div>
@@ -558,7 +558,7 @@ const PostProperty = () => {
                           {block.configs.length > 1 && (
                             <button type="button" onClick={() => removeConfig(idx, config.id)}
                               className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition">
-                              <FaTrash className="text-xs" /> Remove
+                              <FaTrash className="text-xs" />Type
                             </button>
                           )}
                         </div>

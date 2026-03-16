@@ -242,9 +242,22 @@ const getAllBuilders = async (req, res) => {
     }
 
     const [builders] = await pool.query(
-      `SELECT id, name, contact_person, mobile_number, email, created_at
-       FROM builders
-       ORDER BY created_at DESC`
+      `SELECT 
+        b.id, b.name, b.mobile_number, b.email, b.created_at,
+        COALESCE(SUM(
+          CASE 
+            WHEN p.property_type = 'Apartment' THEN (
+              SELECT COALESCE(SUM(pv.quantity), 0)
+              FROM property_variants pv
+              WHERE pv.property_id = p.property_id
+            )
+            ELSE COALESCE(p.quantity, 0)
+          END
+        ), 0) AS total_quantity
+       FROM builders b
+       LEFT JOIN properties p ON p.builder_id = b.id
+       GROUP BY b.id, b.name, b.mobile_number, b.email, b.created_at
+       ORDER BY b.created_at DESC`
     );
 
     res.json(builders);

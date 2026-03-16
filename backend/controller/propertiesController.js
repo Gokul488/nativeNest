@@ -389,7 +389,7 @@ const getPropertyById = async (req, res) => {
     // Fetch property
     const [properties] = await connection.query(
       `SELECT p.property_id AS id, p.title, p.description, p.price, p.address, p.city,
-              p.state, p.country, p.pincode, p.property_type, p.sqft, p.created_at,
+              p.state, p.country, p.pincode, p.property_type, p.sqft, p.quantity, p.created_at,
               p.cover_image, p.video, p.views, b.name,
               COALESCE(a.mobile_number, b.mobile_number) AS mobile_number,
               COALESCE(a.email, b.email) AS email,
@@ -449,6 +449,7 @@ const getPropertyById = async (req, res) => {
         pincode:       property.pincode,
         property_type: property.property_type,
         sqft:          property.sqft,
+        quantity:      property.quantity != null ? Number(property.quantity) : null,
         created_at:    property.created_at,
         cover_image:   coverImage,
         images:        imageBase64s,

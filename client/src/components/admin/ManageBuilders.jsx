@@ -12,10 +12,10 @@ import {
   FaSortUp,
   FaSortDown,
   FaBuilding,
-  FaUser,
   FaPhoneAlt,
   FaEnvelope,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaCubes
 } from "react-icons/fa";
 
 const ManageBuilders = () => {
@@ -50,7 +50,6 @@ const ManageBuilders = () => {
     if (searchQuery) {
       result = result.filter((b) =>
         b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (b.contact_person && b.contact_person.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (b.mobile_number && b.mobile_number.includes(searchQuery)) ||
         (b.email && b.email.toLowerCase().includes(searchQuery.toLowerCase()))
       );
@@ -125,11 +124,11 @@ const ManageBuilders = () => {
                     <th onClick={() => requestSort("name")} className="min-w-[160px] px-3 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
                       <div className="flex items-center">Company {getSortIcon("name")}</div>
                     </th>
-                    <th onClick={() => requestSort("contact_person")} className="min-w-[130px] px-3 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center">Contact {getSortIcon("contact_person")}</div>
-                    </th>
                     <th className="min-w-[120px] px-3 py-4 text-left border-b border-gray-200">Mobile</th>
                     <th className="min-w-[200px] px-3 py-4 text-left border-b border-gray-200">Email Address</th>
+                    <th onClick={() => requestSort("total_quantity")} className="min-w-[120px] px-3 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center justify-center">Quantities {getSortIcon("total_quantity")}</div>
+                    </th>
                     <th onClick={() => requestSort("created_at")} className="px-3 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
                       <div className="flex items-center justify-center">Registered {getSortIcon("created_at")}</div>
                     </th>
@@ -150,21 +149,21 @@ const ManageBuilders = () => {
                           <span className="hover:underline decoration-teal-500/30 decoration-2 underline-offset-4">{builder.name}</span>
                         </button>
                       </td>
-                      <td className="px-3 py-3 border-b border-gray-100">
-                        <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                          <FaUser className="text-gray-400 text-xs shrink-0" />
-                          <span>{builder.contact_person || "—"}</span>
-                        </div>
-                      </td>
                       <td className="px-3 py-3 border-b border-gray-100 text-sm text-gray-700">
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           <FaPhoneAlt className="text-[10px] text-gray-400 shrink-0" /> {builder.mobile_number || "—"}
                         </div>
                       </td>
                       <td className="px-3 py-3 border-b border-gray-100 text-sm text-gray-500">
-                        <div className="flex items-center gap-2 truncate max-w-[220px]" title={builder.email}>
-                          <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> <span className="truncate">{builder.email || "—"}</span>
+                        <div className="flex items-center gap-2" title={builder.email}>
+                          <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> <span className="break-all">{builder.email || "—"}</span>
                         </div>
+                      </td>
+                      <td className="px-3 py-3 border-b border-gray-100 text-center">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-bold">
+                          <FaCubes className="text-[10px]" />
+                          {builder.total_quantity ?? 0}
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-center border-b border-gray-100">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
@@ -200,16 +199,16 @@ const ManageBuilders = () => {
 
                   <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                      <FaUser className="text-gray-400 text-xs" />
-                      <span className="truncate">{builder.contact_person || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
                       <FaPhoneAlt className="text-gray-400 text-xs" />
                       <span>{builder.mobile_number || "—"}</span>
                     </div>
-                    <div className="flex items-center gap-2 truncate">
-                      <FaEnvelope className="text-gray-400 text-xs" />
-                      <span className="truncate">{builder.email || "—"}</span>
+                    <div className="flex items-center gap-2">
+                      <FaEnvelope className="text-gray-400 text-xs shrink-0" />
+                      <span className="break-all">{builder.email || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <FaCubes className="text-teal-500 text-xs" />
+                      <span className="font-semibold text-teal-700">{builder.total_quantity ?? 0} units</span>
                     </div>
                   </div>
                 </div>

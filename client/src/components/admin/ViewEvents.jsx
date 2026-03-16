@@ -19,6 +19,8 @@ import {
   FaSearch,
   FaExclamationTriangle,
   FaInfoCircle,
+  FaCheckCircle,
+  FaClock,
 } from "react-icons/fa";
 import API_BASE_URL from "../../config.js";
 import FRONTEND_URL from "../../frontendConfig.js";
@@ -29,6 +31,13 @@ const formatDateRange = (start, end) => {
   return `${new Date(start).toLocaleDateString("en-IN", options)} – ${new Date(end).toLocaleDateString("en-IN", options)}`;
 };
 
+const isEventCompleted = (endDate) => {
+  if (!endDate) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return new Date(endDate) < today;
+};
+
 const ViewEvents = () => {
   const [events, setEvents] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,6 +46,8 @@ const ViewEvents = () => {
   const [showQRModal, setShowQRModal] = useState(false);
   const [activeQR, setActiveQR] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: "start_date", direction: "desc" });
+  const [activeTab, setActiveTab] = useState("active");
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,8 +69,14 @@ const ViewEvents = () => {
     fetchEvents();
   }, [navigate]);
 
+
+
+  const activeEvents = useMemo(() => events.filter(e => !isEventCompleted(e.end_date)), [events]);
+  const completedEvents = useMemo(() => events.filter(e => isEventCompleted(e.end_date)), [events]);
+
   const filteredAndSortedEvents = useMemo(() => {
-    let result = [...events];
+    const pool = activeTab === "completed" ? completedEvents : activeEvents;
+    let result = [...pool];
     if (searchQuery) {
       result = result.filter(e =>
         e.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,7 +93,13 @@ const ViewEvents = () => {
       });
     }
     return result;
-  }, [events, searchQuery, sortConfig]);
+  }, [activeEvents, completedEvents, activeTab, searchQuery, sortConfig]);
+
+  const handleTabSwitch = (tab) => {
+    if (tab === activeTab) return;
+    setActiveTab(tab);
+    setSearchQuery("");
+  };
 
   const requestSort = (key) => {
     let direction = "asc";
@@ -86,7 +109,9 @@ const ViewEvents = () => {
 
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return <FaSort className="ml-2 opacity-20" />;
-    return sortConfig.direction === "asc" ? <FaSortUp className="ml-2 text-teal-600" /> : <FaSortDown className="ml-2 text-teal-600" />;
+    return sortConfig.direction === "asc"
+      ? <FaSortUp className="ml-2 text-teal-600" />
+      : <FaSortDown className="ml-2 text-teal-600" />;
   };
 
   const handleDownload = async (eventId, eventName) => {
@@ -109,8 +134,11 @@ const ViewEvents = () => {
     setShowQRModal(true);
   };
 
+  const isCompleted = activeTab === "completed";
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
+
       {/* Header */}
       <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
@@ -119,7 +147,6 @@ const ViewEvents = () => {
             {events.length} Total
           </span>
         </div>
-
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-1 sm:w-64">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -140,34 +167,70 @@ const ViewEvents = () => {
         </div>
       </div>
 
-      {/* Table Content */}
-      <div className="relative flex-1">
+      {/* Tab Toggle */}
+      {/* Tab Toggle */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8 px-6">
+          {[
+            { key: "active", icon: <FaClock className="mr-2 h-5 w-5" />, label: `Active Events (${activeEvents.length})` },
+            { key: "completed", icon: <FaCheckCircle className="mr-2 h-5 w-5" />, label: `Completed Events (${completedEvents.length})` },
+          ].map(({ key, icon, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleTabSwitch(key)}
+              className={`group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === key
+                ? "border-teal-500 text-teal-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+            >
+              {icon}{label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* All content — fades as one unit, never unmounts */}
+      <div className="flex-1 flex flex-col">
+        {/* Completed banner — height-animates to avoid layout shift */}
+
+
+        {/* Loading */}
         {loading && (
-          <div className="absolute inset-0 bg-white/80 z-20 flex justify-center items-center gap-3 text-gray-500">
+          <div className="flex-1 flex justify-center items-center gap-3 text-gray-500 py-24">
             <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
             Loading events...
           </div>
         )}
 
-        {error && (
+        {/* Error */}
+        {!loading && error && (
           <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
             <FaExclamationTriangle /> {error}
           </div>
         )}
 
+        {/* Empty */}
         {!loading && !error && filteredAndSortedEvents.length === 0 && (
-          <div className="py-20 text-center text-gray-500 flex flex-col items-center gap-3">
+          <div className="flex-1 py-20 text-center text-gray-500 flex flex-col items-center gap-3">
             <FaInfoCircle className="text-4xl opacity-50" />
-            <p className="text-lg">No events found matching your search.</p>
+            <p className="text-lg">
+              {searchQuery
+                ? "No events found matching your search."
+                : isCompleted
+                  ? "No completed events yet."
+                  : "No active events. Create one to get started!"}
+            </p>
           </div>
         )}
 
+        {/* Table — stable DOM, no conditional unmounting between tabs */}
         {!loading && !error && filteredAndSortedEvents.length > 0 && (
           <>
-            {/* Desktop Table View */}
+            {/* Desktop Table */}
             <div className="hidden xl:block overflow-x-auto">
               <table className="w-full table-fixed border-separate border-spacing-0">
-                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                <thead className={`text-xs font-semibold uppercase ${isCompleted ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-500"}`}>
                   <tr>
                     <th className="w-12 px-4 py-3 text-left border-b border-gray-200">#</th>
                     <th onClick={() => requestSort("event_name")} className="w-1/4 px-6 py-3 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
@@ -184,16 +247,27 @@ const ViewEvents = () => {
                 </thead>
                 <tbody className="bg-white">
                   {filteredAndSortedEvents.map((event, index) => (
-                    <tr key={event.id} className="hover:bg-gray-50/80 transition-colors group">
+                    <tr
+                      key={event.id}
+                      className={`transition-colors group ${isCompleted ? "hover:bg-green-50/40" : "hover:bg-gray-50/80"}`}
+                    >
                       <td className="px-4 py-2.5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                        {String(index + 1).padStart(2, '0')}
+                        {String(index + 1).padStart(2, "0")}
                       </td>
                       <td className="px-6 py-2.5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900" title={event.event_name}>{event.event_name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-900" title={event.event_name}>{event.event_name}</span>
+                          {isCompleted && (
+                            <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">
+                              Done
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-2.5 border-b border-gray-100">
                         <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
-                          <FaCalendarAlt className="text-teal-500" /> {formatDateRange(event.start_date, event.end_date)}
+                          <FaCalendarAlt className={isCompleted ? "text-green-400" : "text-teal-500"} />
+                          {formatDateRange(event.start_date, event.end_date)}
                         </div>
                       </td>
                       <td className="px-4 py-2.5 text-center border-b border-gray-100">
@@ -213,9 +287,16 @@ const ViewEvents = () => {
                       </td>
                       <td className="px-6 py-2.5 text-right border-b border-gray-100">
                         <div className="flex justify-end gap-1.5">
-                          <button onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)} className="p-2 text-blue-500 hover:bg-blue-50 rounded transition" title="Edit">
-                            <FaEdit size={18} />
-                          </button>
+                          {/* Edit — hidden via style (not conditional) to keep DOM stable */}
+                          <div style={{ display: isCompleted ? "none" : "" }}>
+                            <button
+                              onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
+                              className="p-2 text-blue-500 hover:bg-blue-50 rounded transition"
+                              title="Edit"
+                            >
+                              <FaEdit size={18} />
+                            </button>
+                          </div>
                           <button onClick={() => openQR(event)} className="p-2 text-purple-500 hover:bg-purple-50 rounded transition" title="Attendance QR">
                             <FaQrcode size={18} />
                           </button>
@@ -233,14 +314,22 @@ const ViewEvents = () => {
             {/* Mobile Card View */}
             <div className="xl:hidden p-4 space-y-4">
               {filteredAndSortedEvents.map((event, index) => (
-                <div key={event.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-4">
+                <div
+                  key={event.id}
+                  className={`rounded-xl p-4 border shadow-sm space-y-4 ${isCompleted ? "bg-green-50/40 border-green-100" : "bg-gray-50 border-gray-100"}`}
+                >
                   <div className="flex justify-between items-start border-b border-gray-200 pb-2">
                     <div className="flex items-center gap-2">
-                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${isCompleted ? "bg-green-100 text-green-700" : "bg-teal-100 text-teal-600"}`}>
                         {index + 1}
                       </div>
-                      <div className="font-bold text-gray-900 truncate max-w-[170px]">{event.event_name}</div>
+                      <div className="font-bold text-gray-900 truncate max-w-[160px]">{event.event_name}</div>
                     </div>
+                    {isCompleted && (
+                      <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+                        Done
+                      </span>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
@@ -270,9 +359,14 @@ const ViewEvents = () => {
                   </div>
 
                   <div className="flex gap-1 pt-2 border-t border-gray-200">
-                    <button onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">
-                      <FaEdit /> Edit
-                    </button>
+                    <div style={{ display: isCompleted ? "none" : "", flex: 1 }}>
+                      <button
+                        onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold"
+                      >
+                        <FaEdit /> Edit
+                      </button>
+                    </div>
                     <button onClick={() => openQR(event)} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-50 text-purple-600 rounded-lg text-xs font-bold">
                       <FaQrcode /> QR
                     </button>

@@ -1,7 +1,7 @@
 // src/components/ViewProperties.jsx  ← FULL REPLACEMENT
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle, FaCubes, FaBuilding } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
 
@@ -58,16 +58,38 @@ const ViewProperties = () => {
     fetchProperties();
   }, [navigate]);
 
+  // Helper: get currently selected variant for an apartment property
+  const getSelectedVariant = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) return null;
+    const selSqft = selectedConfigs[prop.id] !== undefined
+      ? selectedConfigs[prop.id]
+      : (prop.variants[0] ? prop.variants[0].sqft : 0);
+    return prop.variants.find(v => v.sqft === selSqft) || prop.variants[0];
+  };
+
   // Helper functions for Apartment display
   const getDisplayPrice = (prop) => {
     if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
       return prop.price ? parseFloat(prop.price) : 0;
     }
-    const selSqft = selectedConfigs[prop.id] !== undefined
-      ? selectedConfigs[prop.id]
-      : (prop.variants[0] ? prop.variants[0].sqft : 0);
-    const variant = prop.variants.find(v => v.sqft === selSqft) || prop.variants[0];
+    const variant = getSelectedVariant(prop);
     return variant && variant.price ? variant.price : 0;
+  };
+
+  const getDisplayQuantity = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
+      return prop.quantity != null ? Number(prop.quantity) : 'N/A';
+    }
+    const variant = getSelectedVariant(prop);
+    return variant && variant.quantity != null ? variant.quantity : 'N/A';
+  };
+
+  const getDisplayBlockName = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
+      return 'N/A';
+    }
+    const variant = getSelectedVariant(prop);
+    return variant && variant.block_name ? variant.block_name : 'N/A';
   };
 
   const getSqftSelectValue = (prop) => {
@@ -180,12 +202,14 @@ const ViewProperties = () => {
               <table className="w-full border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
-                    <th className="w-[4%] px-3 py-3 text-left border-b border-gray-200">#</th>
+                    <th className="w-[3%] px-3 py-3 text-left border-b border-gray-200">#</th>
                     <th className="w-[30%] px-3 py-3 text-left border-b border-gray-200">Property Details</th>
-                    <th className="w-[18%] px-3 py-3 text-left border-b border-gray-200 whitespace-nowrap">Builder Name</th>
-                    <th className="w-[20%] px-3 py-3 text-center border-b border-gray-200">Sqft</th>
-                    <th className="w-[16%] px-3 py-3 text-center border-b border-gray-200">Price</th>
-                    <th className="w-[12%] px-3 py-3 text-center border-b border-gray-200">Actions</th>
+                    <th className="w-[12%] px-3 py-3 text-left border-b border-gray-200 whitespace-nowrap">Builder Name</th>
+                    <th className="w-[13%] px-3 py-3 text-center border-b border-gray-200">Sqft</th>
+                    <th className="w-[9%] px-3 py-3 text-center border-b border-gray-200">Block Type</th>
+                    <th className="w-[6%] px-3 py-3 text-center border-b border-gray-200">Qty</th>
+                    <th className="w-[12%] px-3 py-3 text-center border-b border-gray-200">Price</th>
+                    <th className="w-[8%] px-3 py-3 text-center border-b border-gray-200">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
@@ -240,6 +264,22 @@ const ViewProperties = () => {
                               <span className="text-[10px] text-slate-400 font-medium uppercase shrink-0">sq.ft</span>
                             </div>
                           )}
+                        </div>
+                      </td>
+
+                      {/* BLOCK TYPE COLUMN */}
+                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-purple-50/50 border border-purple-100 rounded-lg text-sm font-bold text-purple-700 shadow-sm">
+                          <FaBuilding className="text-purple-400 text-[10px] shrink-0" />
+                          <span className="truncate">{getDisplayBlockName(property)}</span>
+                        </div>
+                      </td>
+
+                      {/* QUANTITY COLUMN */}
+                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-amber-50/50 border border-amber-100 rounded-lg text-sm font-bold text-amber-700 shadow-sm">
+                          <FaCubes className="text-amber-400 text-[10px] shrink-0" />
+                          <span>{getDisplayQuantity(property)}</span>
                         </div>
                       </td>
 
@@ -319,6 +359,24 @@ const ViewProperties = () => {
                           <span>{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'} <span className="text-[8px] text-slate-400 uppercase">sq.ft</span></span>
                         </div>
                       )}
+                    </div>
+
+                    {/* Block Type */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs font-medium">Block Type</span>
+                      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-50/50 text-purple-700 border border-purple-100 shadow-sm">
+                        <FaBuilding className="text-purple-400 text-[9px]" />
+                        {getDisplayBlockName(property)}
+                      </div>
+                    </div>
+
+                    {/* Quantity */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs font-medium">Quantity</span>
+                      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-50/50 text-amber-700 border border-amber-100 shadow-sm">
+                        <FaCubes className="text-amber-400 text-[9px]" />
+                        {getDisplayQuantity(property)}
+                      </div>
                     </div>
 
                     {/* Price (updates when sqft dropdown changes) */}
