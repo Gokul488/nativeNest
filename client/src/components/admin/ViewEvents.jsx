@@ -140,14 +140,14 @@ const ViewEvents = () => {
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
 
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
+      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Property Events</h2>
           <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
             {events.length} Total
           </span>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative flex-1 sm:w-64">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -160,7 +160,7 @@ const ViewEvents = () => {
           </div>
           <Link
             to="/admin-dashboard/create-property-event"
-            className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm"
+            className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm whitespace-nowrap"
           >
             <FaCalendarAlt /> Create Event
           </Link>
@@ -312,65 +312,74 @@ const ViewEvents = () => {
             </div>
 
             {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4">
+            <div className="xl:hidden p-4 space-y-4 bg-gray-50/50">
               {filteredAndSortedEvents.map((event, index) => (
                 <div
                   key={event.id}
-                  className={`rounded-xl p-4 border shadow-sm space-y-4 ${isCompleted ? "bg-green-50/40 border-green-100" : "bg-gray-50 border-gray-100"}`}
+                  className={`rounded-xl p-4 border shadow-sm space-y-4 bg-white ${isCompleted ? "border-green-100" : "border-gray-100"}`}
                 >
-                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${isCompleted ? "bg-green-100 text-green-700" : "bg-teal-100 text-teal-600"}`}>
+                  <div className="flex justify-between items-start border-b border-gray-100 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${isCompleted ? "bg-green-100 text-green-700" : "bg-teal-100 text-teal-600"}`}>
                         {index + 1}
                       </div>
-                      <div className="font-bold text-gray-900 truncate max-w-[160px]">{event.event_name}</div>
+                      <div className="flex flex-col">
+                        <div className="font-bold text-gray-900 text-base leading-tight">{event.event_name}</div>
+                        <div className="flex items-center gap-1 mt-1">
+                          <FaMapMarkerAlt className="text-gray-400 text-[10px]" />
+                          <span className="text-teal-600 font-semibold text-xs">{event.city}</span>
+                        </div>
+                      </div>
                     </div>
                     {isCompleted && (
-                      <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+                      <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full uppercase tracking-wider">
                         Done
                       </span>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <FaMapMarkerAlt className="text-gray-400 text-xs" />
-                      <span className="text-teal-600 font-medium">{event.city}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FaCalendarAlt className="text-gray-400 text-xs" />
-                      <span className="text-gray-500 text-xs">{formatDateRange(event.start_date, event.end_date)}</span>
-                    </div>
+                  <div className="flex items-center gap-2 text-gray-600 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100">
+                    <FaCalendarAlt className="text-teal-500 text-xs shrink-0" />
+                    <span className="text-xs font-medium">{formatDateRange(event.start_date, event.end_date)}</span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-gray-200">
-                      <FaStore className="text-teal-600" />
-                      <span className="text-[10px] font-bold text-gray-700">{event.stall_count || 0} Stalls</span>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-teal-500 hover:shadow-md transition-all group">
+                      <FaStore className="text-teal-600 group-hover:scale-110 transition-transform" />
+                      <div className="text-center">
+                        <span className="block text-xs font-bold text-gray-900">{event.stall_count || 0}</span>
+                        <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">Stalls</span>
+                      </div>
                     </Link>
-                    <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-gray-200">
-                      <FaTicketAlt className="text-indigo-600" />
-                      <span className="text-[10px] font-bold text-gray-700">{event.booked_stall_count || 0} Booked</span>
+                    <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-md transition-all group">
+                      <FaTicketAlt className="text-indigo-600 group-hover:scale-110 transition-transform" />
+                      <div className="text-center">
+                        <span className="block text-xs font-bold text-gray-900">{event.booked_stall_count || 0}</span>
+                        <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">Booked</span>
+                      </div>
                     </Link>
-                    <Link to={`/admin-dashboard/events/${event.id}/participants`} className="flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-gray-200">
-                      <FaUserCheck className="text-purple-600" />
-                      <span className="text-[10px] font-bold text-gray-700">View</span>
+                    <Link to={`/admin-dashboard/events/${event.id}/participants`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-purple-500 hover:shadow-md transition-all group">
+                      <FaUserCheck className="text-purple-600 group-hover:scale-110 transition-transform" />
+                      <div className="text-center">
+                        <span className="block text-xs font-bold text-gray-900">View</span>
+                        <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">People</span>
+                      </div>
                     </Link>
                   </div>
 
-                  <div className="flex gap-1 pt-2 border-t border-gray-200">
-                    <div style={{ display: isCompleted ? "none" : "", flex: 1 }}>
+                  <div className="flex gap-2 pt-2">
+                    {!isCompleted && (
                       <button
                         onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors"
                       >
                         <FaEdit /> Edit
                       </button>
-                    </div>
-                    <button onClick={() => openQR(event)} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-50 text-purple-600 rounded-lg text-xs font-bold">
-                      <FaQrcode /> QR
+                    )}
+                    <button onClick={() => openQR(event)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-100 transition-colors">
+                      <FaQrcode /> QR Code
                     </button>
-                    <button onClick={() => handleDownload(event.id, event.event_name)} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-teal-50 text-teal-600 rounded-lg text-xs font-bold">
+                    <button onClick={() => handleDownload(event.id, event.event_name)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-50 text-teal-600 rounded-xl text-xs font-bold hover:bg-teal-100 transition-colors">
                       <FaDownload /> PDF
                     </button>
                   </div>
