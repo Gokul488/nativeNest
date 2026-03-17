@@ -37,7 +37,7 @@ function AppContent() {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
         <Route element={<ProtectedRoute allowedRole="buyer" />}>
-              <Route path="/buyer-dashboard/*" element={<BuyerDashboard />} />
+          <Route path="/buyer-dashboard/*" element={<BuyerDashboard />} />
         </Route>
 
         <Route path="/blog/:id" element={<BlogDetail />} />
@@ -46,11 +46,11 @@ function AppContent() {
         <Route path="/buy" element={<Buy />} />
 
         <Route element={<ProtectedRoute allowedRole="admin" />}>
-               <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+          <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
         </Route>
 
-         <Route element={<ProtectedRoute allowedRole="builder" />}>
-               <Route path="/builder-dashboard/*" element={<BuilderDashboard />} />
+        <Route element={<ProtectedRoute allowedRole="builder" />}>
+          <Route path="/builder-dashboard/*" element={<BuilderDashboard />} />
         </Route>
       </Routes>
 

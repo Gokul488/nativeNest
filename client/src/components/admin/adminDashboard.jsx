@@ -27,11 +27,12 @@ import ManageStallTypes from "./ManageStallTypes";
 import EventStallBookings from "./EventStallBookings";
 import ManageBuilders from "./ManageBuilders";
 import AddEditStallType from "./AddEditStallType";
+import SoldProperties from "./SoldProperties";
 import LogoutDialog from "../LogoutDialog";
 
 import {
   FaBars, FaChartBar, FaUser, FaHome, FaUsers, FaBuilding,
-  FaBlog, FaCog, FaCalendarAlt, FaEnvelope, FaSpinner, FaPlusCircle
+  FaBlog, FaCog, FaCalendarAlt, FaEnvelope, FaSpinner, FaPlusCircle, FaHistory
 } from "react-icons/fa";
 
 /**
@@ -291,6 +292,7 @@ const AdminDashboard = () => {
               <Route path="add" element={<PostProperty />} />
               <Route path="edit/:id" element={<EditProperty />} />
             </Route>
+            <Route path="/sold-properties" element={<SoldProperties />} />
             <Route path="/manage-blogs">
               <Route index element={<ViewBlogs />} />
               <Route path="add" element={<AddBlog />} />

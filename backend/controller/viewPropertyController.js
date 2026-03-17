@@ -20,6 +20,7 @@ const getProperties = async (req, res) => {
         p.property_type,
         p.sqft,
         p.quantity,
+        p.sold,
         p.created_at,
         b.name AS builder_name,
         COALESCE(pi.image_count, 0) AS image_count
@@ -38,7 +39,7 @@ const getProperties = async (req, res) => {
     if (properties.length > 0) {
       const propertyIds = properties.map(p => p.id);
       const [variantRows] = await pool.query(`
-        SELECT property_id, apartment_type, block_name, price, sqft, quantity
+        SELECT variant_id, property_id, apartment_type, block_name, price, sqft, quantity, sold
         FROM property_variants 
         WHERE property_id IN (?)
         ORDER BY block_name, apartment_type ASC
@@ -53,6 +54,8 @@ const getProperties = async (req, res) => {
           price:          row.price    ? parseFloat(row.price)  : null,
           sqft:           row.sqft     ? Number(row.sqft)        : null,
           quantity:       row.quantity ? Number(row.quantity)    : null,
+          sold:           row.sold     ? Number(row.sold)        : 0,
+          variant_id:     row.variant_id
         });
       });
 
@@ -358,4 +361,85 @@ const deleteProperty = async (req, res) => {
   }
 };
 
-module.exports = { getProperties, getPropertyById, updateProperty, deleteProperty };
+const sellProperty = async (req, res) => {
+  try {
+    const { id } = req.params; // property_id
+    const { variant_id } = req.body;
+
+    if (variant_id) {
+      // Sell a specific variant
+      const [result] = await pool.query(
+        'UPDATE property_variants SET quantity = quantity - 1, sold = sold + 1 WHERE variant_id = ? AND quantity > 0',
+        [variant_id]
+      );
+      if (result.affectedRows === 0) {
+        return res.status(400).json({ error: 'Property variant out of stock or not found' });
+      }
+    } else {
+      // Sell the main property
+      const [result] = await pool.query(
+        'UPDATE properties SET quantity = quantity - 1, sold = sold + 1 WHERE property_id = ? AND quantity > 0',
+        [id]
+      );
+      if (result.affectedRows === 0) {
+        return res.status(400).json({ error: 'Property out of stock or not found' });
+      }
+    }
+
+    res.json({ message: 'Property sold successfully' });
+  } catch (error) {
+    console.error('Error selling property:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+const getSoldProperties = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId  = decoded.userId;
+
+    // Fetch sold properties from properties table
+    const [soldMain] = await pool.query(`
+      SELECT 
+        p.property_id AS id, 
+        p.title, 
+        p.property_type,
+        p.price,
+        p.sqft,
+        p.sold,
+        'Main' as unit_type,
+        NULL as block_name,
+        NULL as apartment_type
+      FROM properties p
+      WHERE p.admin_id = ? AND p.sold > 0 AND p.property_type != 'Apartment'
+    `, [userId]);
+
+    // Fetch sold variants from property_variants table
+    const [soldVariants] = await pool.query(`
+      SELECT 
+        p.property_id AS id, 
+        p.title, 
+        p.property_type,
+        v.price,
+        v.sqft,
+        v.sold,
+        'Variant' as unit_type,
+        v.block_name,
+        v.apartment_type
+      FROM property_variants v
+      JOIN properties p ON v.property_id = p.property_id
+      WHERE p.admin_id = ? AND v.sold > 0
+    `, [userId]);
+
+    const soldProperties = [...soldMain, ...soldVariants];
+    res.json({ soldProperties });
+  } catch (error) {
+    console.error('Error fetching sold properties:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+module.exports = { getProperties, getPropertyById, updateProperty, deleteProperty, sellProperty, getSoldProperties };

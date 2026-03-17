@@ -1,7 +1,7 @@
 // Modified viewPropertyRoutes.js
 const express = require('express');
 const router = express.Router();
-const {getProperties, getPropertyById, updateProperty, deleteProperty } = require('../controller/viewPropertyController');
+const {getProperties, getPropertyById, updateProperty, deleteProperty, sellProperty, getSoldProperties } = require('../controller/viewPropertyController');
 const multer = require('multer');
 
 const upload = multer({
@@ -19,7 +19,11 @@ const upload = multer({
 
 router.get('/', getProperties);
 
+router.get('/sold', getSoldProperties);
+
 router.get('/:id', getPropertyById);
+
+router.put('/sell/:id', sellProperty);
 
 router.put('/:id', upload.fields([
   { name: 'cover_image', maxCount: 1 },

@@ -1,7 +1,7 @@
 // src/components/ViewProperties.jsx  ← FULL REPLACEMENT
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle, FaCubes, FaBuilding } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle, FaCubes, FaBuilding, FaHistory } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
 
@@ -92,6 +92,14 @@ const ViewProperties = () => {
     return variant && variant.block_name ? variant.block_name : 'N/A';
   };
 
+  const getDisplaySold = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
+      return prop.sold != null ? Number(prop.sold) : 0;
+    }
+    const variant = getSelectedVariant(prop);
+    return variant && variant.sold != null ? variant.sold : 0;
+  };
+
   const getSqftSelectValue = (prop) => {
     if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) return null;
     return selectedConfigs[prop.id] !== undefined
@@ -146,6 +154,50 @@ const ViewProperties = () => {
     }
   };
 
+  const handleSell = async (property) => {
+    try {
+      const token = localStorage.getItem('token');
+      const variant = getSelectedVariant(property);
+      const payload = variant ? { variant_id: variant.variant_id } : {};
+
+      const response = await fetch(`${API_BASE_URL}/api/viewproperties/sell/${property.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to sell property');
+      }
+
+      // Update local state
+      setProperties(prev => prev.map(p => {
+        if (p.id === property.id) {
+          if (variant) {
+            return {
+              ...p,
+              variants: p.variants.map(v =>
+                v.variant_id === variant.variant_id
+                  ? { ...v, quantity: v.quantity - 1, sold: v.sold + 1 }
+                  : v
+              )
+            };
+          } else {
+            return { ...p, quantity: p.quantity - 1, sold: p.sold + 1 };
+          }
+        }
+        return p;
+      }));
+
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
@@ -169,12 +221,20 @@ const ViewProperties = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
             />
           </div>
-          <Link
-            to="/admin-dashboard/manage-properties/add"
-            className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm"
-          >
-            <FaPlus /> Add Property
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              to="/admin-dashboard/sold-properties"
+              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm"
+            >
+              <FaHistory /> Sold Properties
+            </Link>
+            <Link
+              to="/admin-dashboard/manage-properties/add"
+              className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm"
+            >
+              <FaPlus /> Add Property
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -202,38 +262,38 @@ const ViewProperties = () => {
               <table className="w-full border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
-                    <th className="w-[3%] px-3 py-3 text-left border-b border-gray-200">#</th>
-                    <th className="w-[30%] px-3 py-3 text-left border-b border-gray-200">Property Details</th>
-                    <th className="w-[12%] px-3 py-3 text-left border-b border-gray-200 whitespace-nowrap">Builder Name</th>
-                    <th className="w-[13%] px-3 py-3 text-center border-b border-gray-200">Sqft</th>
-                    <th className="w-[9%] px-3 py-3 text-center border-b border-gray-200">Block Type</th>
-                    <th className="w-[6%] px-3 py-3 text-center border-b border-gray-200">Qty</th>
-                    <th className="w-[12%] px-3 py-3 text-center border-b border-gray-200">Price</th>
-                    <th className="w-[8%] px-3 py-3 text-center border-b border-gray-200">Actions</th>
+                    <th className="w-[2%] px-2 py-3 text-left border-b border-gray-200">#</th>
+                    <th className="w-[24%] px-2 py-3 text-left border-b border-gray-200">Property Details</th>
+                    <th className="w-[10%] px-2 py-3 text-left border-b border-gray-200 whitespace-nowrap">Builder</th>
+                    <th className="w-[18%] px-2 py-3 text-center border-b border-gray-200">Sqft / Configuration</th>
+                    <th className="w-[10%] px-2 py-3 text-center border-b border-gray-200">Block</th>
+                    <th className="w-[5%] px-2 py-3 text-center border-b border-gray-200">Qty</th>
+                    <th className="w-[5%] px-2 py-3 text-center border-b border-gray-200">Sold</th>
+                    <th className="w-[11%] px-2 py-3 text-center border-b border-gray-200">Price</th>
+                    <th className="w-[15%] px-2 py-3 text-center border-b border-gray-200">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {filteredProperties.map((property, index) => (
                     <tr key={property.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-3 py-2.5 text-base text-gray-500 font-mono border-b border-gray-100">
+                      <td className="px-2 py-2 text-sm text-gray-500 font-mono border-b border-gray-100">
                         {String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="px-3 py-2.5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 mb-0.5 line-clamp-2 leading-tight">{property.title}</div>
+                      <td className="px-2 py-2 border-b border-gray-100">
+                        <div className="font-bold text-gray-900 text-sm leading-tight break-words">{property.title}</div>
                       </td>
-                      <td className="px-3 py-2.5 text-left border-b border-gray-100">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-sm font-bold whitespace-nowrap">
+                      <td className="px-2 py-2 text-left border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[11px] font-bold whitespace-nowrap">
                           <FaUserTie className="text-teal-600 shrink-0" />
-                          <span>{property.builder_name || 'N/A'}</span>
+                          <span className="truncate max-w-[80px]">{property.builder_name || 'N/A'}</span>
                         </div>
                       </td>
 
                       {/* SQFT COLUMN */}
-                      <td className="px-3 py-2.5 text-right border-b border-gray-100">
-                        <div className="flex justify-end items-center">
+                      <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <div className="flex justify-center items-center">
                           {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
-                            <div className="relative group/select inline-flex items-center w-40">
-                              <FaRulerCombined className="absolute left-2 text-teal-400 text-[10px] pointer-events-none z-10" />
+                            <div className="relative group/select inline-flex items-center w-full max-w-[140px]">
                               <select
                                 value={getSqftSelectValue(property)}
                                 onChange={(e) => {
@@ -242,12 +302,12 @@ const ViewProperties = () => {
                                     [property.id]: parseInt(e.target.value, 10)
                                   }));
                                 }}
-                                className="w-full pl-6 pr-6 py-1.5 bg-white border border-slate-200 text-sm font-bold text-slate-700 rounded-lg shadow-sm hover:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-50/50 cursor-pointer appearance-none transition-all text-center"
+                                className="w-full px-2 py-1 bg-white border border-slate-200 text-[11px] font-bold text-slate-700 rounded-md shadow-sm hover:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-50 cursor-pointer appearance-none transition-all text-center pr-6"
                                 style={{
                                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230d9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                                   backgroundRepeat: 'no-repeat',
-                                  backgroundPosition: 'right 0.4rem center',
-                                  backgroundSize: '0.8em',
+                                  backgroundPosition: 'right 0.2rem center',
+                                  backgroundSize: '0.7em',
                                 }}
                               >
                                 {property.variants.map((variant, vIdx) => (
@@ -258,48 +318,64 @@ const ViewProperties = () => {
                               </select>
                             </div>
                           ) : (
-                            <div className="inline-flex items-center justify-center gap-1 w-40 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 shadow-sm">
-                              <FaRulerCombined className="text-teal-500 text-[10px] shrink-0" />
-                              <span className="truncate">{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'}</span>
-                              <span className="text-[10px] text-slate-400 font-medium uppercase shrink-0">sq.ft</span>
+                            <div className="inline-flex items-center justify-center gap-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-md text-[11px] font-bold text-slate-700">
+                              <span>{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'}</span>
+                              <span className="text-[9px] text-slate-400 uppercase shrink-0">sq.ft</span>
                             </div>
                           )}
                         </div>
                       </td>
 
                       {/* BLOCK TYPE COLUMN */}
-                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
-                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-purple-50/50 border border-purple-100 rounded-lg text-sm font-bold text-purple-700 shadow-sm">
-                          <FaBuilding className="text-purple-400 text-[10px] shrink-0" />
-                          <span className="truncate">{getDisplayBlockName(property)}</span>
+                      <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-purple-50/50 border border-purple-100 rounded text-[11px] font-bold text-purple-700">
+                          <span className="truncate max-w-[60px]">{getDisplayBlockName(property)}</span>
                         </div>
                       </td>
 
                       {/* QUANTITY COLUMN */}
-                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
-                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-amber-50/50 border border-amber-100 rounded-lg text-sm font-bold text-amber-700 shadow-sm">
-                          <FaCubes className="text-amber-400 text-[10px] shrink-0" />
+                      <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-amber-50/50 border border-amber-100 rounded text-[11px] font-bold text-amber-700">
                           <span>{getDisplayQuantity(property)}</span>
                         </div>
                       </td>
 
-                      {/* PRICE COLUMN */}
-                      <td className="px-3 py-2.5 text-center border-b border-gray-100">
-                        <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-green-50/50 border border-green-100 rounded-lg text-sm font-bold text-green-700 shadow-sm">
-                          <span className="text-[11px] opacity-70">₹</span>
-                          <span className="tracking-tight">{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}</span>
+                      {/* SOLD COLUMN */}
+                      <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-blue-50/50 border border-blue-100 rounded text-[11px] font-bold text-blue-700">
+                          <span>{getDisplaySold(property)}</span>
                         </div>
                       </td>
 
-                      <td className="px-3 py-2.5 text-right border-b border-gray-100">
-                        <div className="flex justify-center gap-1.5">
+                      {/* PRICE COLUMN */}
+                      <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <div className="inline-flex items-center gap-0.5 px-1.5 py-1 bg-green-50/50 border border-green-100 rounded text-[11px] font-bold text-green-700 whitespace-nowrap">
+                          <span className="text-[9px] opacity-70">₹</span>
+                          <span>{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}</span>
+                        </div>
+                      </td>
+
+                      <td className="px-2 py-2 text-right border-b border-gray-100">
+                        <div className="flex justify-center items-center gap-1">
+                          {getDisplayQuantity(property) > 0 ? (
+                            <button
+                              onClick={() => handleSell(property)}
+                              className="px-2.5 py-1 bg-teal-600 text-white text-[10px] font-bold rounded-md hover:bg-teal-700 transition active:scale-95 shadow-sm"
+                            >
+                              Sold
+                            </button>
+                          ) : (
+                            <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
+                              Out of Stock
+                            </span>
+                          )}
                           <button onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
-                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Edit">
-                            <FaEdit size={14} />
+                            className="p-1 text-blue-500 hover:bg-blue-50 rounded transition" title="Edit">
+                            <FaEdit size={12} />
                           </button>
                           <button onClick={() => handleDelete(property.id)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete">
-                            <FaTrash size={14} />
+                            className="p-1 text-red-500 hover:bg-red-50 rounded transition" title="Delete">
+                            <FaTrash size={12} />
                           </button>
                         </div>
                       </td>
@@ -379,6 +455,14 @@ const ViewProperties = () => {
                       </div>
                     </div>
 
+                    {/* Sold Count */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-xs font-medium">Sold Count</span>
+                      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-blue-50/50 text-blue-700 border border-blue-100 shadow-sm">
+                        {getDisplaySold(property)}
+                      </div>
+                    </div>
+
                     {/* Price (updates when sqft dropdown changes) */}
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500 text-xs font-medium">Price</span>
@@ -389,6 +473,18 @@ const ViewProperties = () => {
                   </div>
 
                   <div className="flex gap-2 pt-2 border-t border-gray-200">
+                    {getDisplayQuantity(property) > 0 ? (
+                      <button
+                        onClick={() => handleSell(property)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-teal-600 text-white rounded-lg text-sm font-bold hover:bg-teal-700 transition active:scale-95"
+                      >
+                        Sold
+                      </button>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold border border-red-100">
+                        Out of Stock
+                      </div>
+                    )}
                     <button onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
                       className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold">
                       <FaEdit /> Edit
