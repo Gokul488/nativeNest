@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaRulerCombined } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
+import Pagination from '../common/Pagination.jsx';
 
 
 const BuilderProperties = () => {
@@ -14,6 +15,8 @@ const BuilderProperties = () => {
   const [selectedConfigs, setSelectedConfigs] = useState({}); // per-property selected sqft for apartments
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const navigate = useNavigate();
 
@@ -68,6 +71,16 @@ const BuilderProperties = () => {
       p.city?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [properties, searchQuery]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const paginatedProperties = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredProperties.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProperties, currentPage]);
 
   const handleDelete = (id) => {
     setPropertyToDelete(id);
@@ -142,8 +155,8 @@ const BuilderProperties = () => {
 
         {/* Desktop Table View */}
         {!loading && filteredProperties.length > 0 && (
-          <>
-            <div className="hidden xl:block overflow-x-auto">
+          <div className="flex flex-col h-full">
+            <div className="hidden xl:block overflow-x-auto flex-1">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
@@ -156,10 +169,12 @@ const BuilderProperties = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredProperties.map((property, index) => (
+                  {paginatedProperties.map((property, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                    return (
                     <tr key={property.property_id} className="hover:bg-gray-50/80 transition-colors group">
                       <td className="px-3 py-2.5 text-base text-gray-500 font-mono border-b border-gray-100">
-                        {String(index + 1).padStart(2, '0')}
+                        {String(globalIndex).padStart(2, '0')}
                       </td>
                       <td className="px-3 py-2.5 border-b border-gray-100">
                         <div className="font-bold text-gray-900 mb-0.5 line-clamp-2 leading-tight">{property.title}</div>
@@ -235,19 +250,22 @@ const BuilderProperties = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile/Tablet Card View */}
-            <div className="xl:hidden grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
-              {filteredProperties.map((property, index) => (
+            <div className="xl:hidden grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 flex-1">
+              {paginatedProperties.map((property, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
                 <div key={property.property_id} className="bg-gray-50 rounded-xl p-3 border border-gray-100 shadow-sm space-y-2">
                   <div className="flex justify-between items-start border-b border-gray-200 pb-2">
                     <div className="flex items-center gap-2">
                       <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
-                        {index + 1}
+                        {globalIndex}
                       </div>
                       <div className="font-bold text-gray-900 truncate max-w-[180px]">{property.title}</div>
                     </div>
@@ -318,9 +336,17 @@ const BuilderProperties = () => {
                     </button>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
-          </>
+            
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredProperties.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
 

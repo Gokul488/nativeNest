@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
 import axios from "axios";
+import Pagination from '../common/Pagination.jsx';
 
 const formatDateRange = (start, end) => {
   if (!start) return "TBD";
@@ -45,6 +46,8 @@ const BuilderEvents = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "start_date", direction: "asc" });
   const [activeTab, setActiveTab] = useState("active");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const navigate = useNavigate();
 
@@ -92,6 +95,16 @@ const BuilderEvents = () => {
     }
     return result;
   }, [activeEvents, completedEvents, activeTab, searchQuery, sortConfig]);
+
+  // Reset page when search or tab or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTab, sortConfig]);
+
+  const paginatedEvents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedEvents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedEvents, currentPage]);
 
   const handleTabSwitch = (tab) => {
     if (tab === activeTab) return;
@@ -199,9 +212,9 @@ const BuilderEvents = () => {
 
         {/* Table — stable DOM, no conditional unmounting */}
         {!loading && !error && filteredAndSortedEvents.length > 0 && (
-          <>
+          <div className="flex flex-col h-full">
             {/* Desktop Table */}
-            <div className="hidden xl:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto flex-1">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className={`text-[11px] font-bold uppercase tracking-wider ${isCompleted ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-400"}`}>
                   <tr>
@@ -224,10 +237,12 @@ const BuilderEvents = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredAndSortedEvents.map((event, index) => (
+                  {paginatedEvents.map((event, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                    return (
                     <tr key={event.id} className={`transition-colors group ${isCompleted ? "hover:bg-green-50/40" : "hover:bg-gray-50"}`}>
                       <td className="px-6 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
-                        {String(index + 1).padStart(2, "0")}
+                        {String(globalIndex).padStart(2, "0")}
                       </td>
                       <td className="px-6 py-3 border-b border-gray-100">
                         <div className="flex items-center gap-2">
@@ -281,14 +296,17 @@ const BuilderEvents = () => {
                         </Link>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile/Tablet Cards */}
-            <div className="xl:hidden grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
-              {filteredAndSortedEvents.map((event, index) => (
+            <div className="xl:hidden grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 flex-1">
+              {paginatedEvents.map((event, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
                 <div
                   key={event.id}
                   className={`border rounded-2xl p-4 shadow-sm space-y-4 ${isCompleted ? "bg-green-50/40 border-green-100" : "bg-gray-50 border-gray-200"}`}
@@ -297,7 +315,7 @@ const BuilderEvents = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-mono text-[10px] text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100">
-                          #{String(index + 1).padStart(2, "0")}
+                          #{String(globalIndex).padStart(2, "0")}
                         </span>
                         <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${isCompleted ? "text-green-600 bg-green-50" : "text-teal-600 bg-teal-50"}`}>
                           <FaMapMarkerAlt size={8} /> {event.city || "N/A"}
@@ -341,9 +359,17 @@ const BuilderEvents = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
-          </>
+            
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredAndSortedEvents.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
     </div>
