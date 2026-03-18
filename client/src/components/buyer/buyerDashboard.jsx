@@ -1,4 +1,4 @@
-// src/components/BuyerDashboard.jsx (or wherever this file lives)
+// src/components/buyer/buyerDashboard.jsx
 import React, { useState, useEffect } from "react";
 import {
   Link,
@@ -8,17 +8,9 @@ import {
   useLocation
 } from "react-router-dom";
 import {
-  FaBars,
-  FaArrowLeft,
-  FaUser,
-  FaHome,
-  FaCog,
-  FaCalendarAlt,
-  FaBookmark,
-  FaSpinner,
-  FaChartBar,
-  FaPlusCircle
-} from "react-icons/fa";
+  LayoutDashboard, Bookmark, CalendarDays, Settings, LogOut, Menu, User, Loader2,
+  ArrowLeft, Compass, Sparkles
+} from "lucide-react";
 import axios from "axios";
 import API_BASE_URL from "../../config.js";
 
@@ -28,7 +20,7 @@ import BookmarkedProperties from "./BookmarkedProperties";
 import EventCheckIn from "./EventCheckIn";
 import StallCheckIn from "./StallCheckIn";
 import EventDetails from "./EventDetails";
-import LogoutDialog from "../LogoutDialog";
+import LogoutDialog from "../../components/LogoutDialog";
 import EventBookedBuilders from "./EventBookedBuilders";
 
 const StatCounter = ({ targetValue, duration = 1500 }) => {
@@ -99,51 +91,56 @@ const BuyerDashboard = () => {
   const isActive = (path) => {
     const isRoot = path === "/buyer-dashboard" || path === "/buyer-dashboard/";
     if (isRoot) {
-      return (location.pathname === "/buyer-dashboard" || location.pathname === "/buyer-dashboard/")
-        ? "bg-teal-700 shadow-inner"
-        : "";
+      return (location.pathname === "/buyer-dashboard" || location.pathname === "/buyer-dashboard/");
     }
-    return location.pathname.startsWith(path) ? "bg-teal-700 shadow-inner" : "";
+    return location.pathname.startsWith(path);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex relative font-sans">
+    <div className="min-h-screen bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
       {/* ================= SIDEBAR ================= */}
       <div
-        className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0
+        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          bg-linear-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}
+          bg-gradient-to-b from-slate-800 to-slate-900 shadow-[0_4px_24px_rgba(15,23,42,0.15)] z-50`}
       >
-        <div className="p-6 border-b border-teal-400/40">
-          <h1 className="text-3xl font-bold text-white tracking-tight">NativeNest</h1>
-          <p className="text-sm text-teal-100 mt-1 opacity-90 uppercase tracking-widest font-bold">Buyer Portal</p>
+        <div className="p-8 pb-6 border-b border-slate-700/50">
+          <h1 className="text-3xl font-bold text-white tracking-[-1px]">NativeNest</h1>
+          <p className="text-[11px] text-sky-400 mt-1 uppercase tracking-widest font-semibold">Buyer Portal</p>
         </div>
 
-        <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 overflow-y-auto scrollbar-hide hover:scrollbar-show transition-all space-y-1">
           {[
-            { to: "/buyer-dashboard", label: "Dashboard", icon: <FaHome /> },
-            { to: "/buyer-dashboard/bookmarks", label: "Saved Properties", icon: <FaBookmark /> },
-            { to: "/buyer-dashboard/events", label: "Explore Events", icon: <FaCalendarAlt /> },
-            { to: "/buyer-dashboard/profile-settings", label: "Profile Settings", icon: <FaCog /> },
-          ].map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={closeSidebar}
-              className={`flex items-center gap-3 py-3 px-4 rounded-lg text-base font-medium transition-all duration-200 text-white hover:bg-teal-400/40 ${isActive(link.to)}`}
-            >
-              {link.icon}
-              <span className="truncate">{link.label}</span>
-            </Link>
-          ))}
+            { to: "/buyer-dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+            { to: "/buyer-dashboard/bookmarks", label: "Saved Properties", icon: <Bookmark className="w-5 h-5" /> },
+            { to: "/buyer-dashboard/events", label: "Explore Events", icon: <CalendarDays className="w-5 h-5" /> },
+            { to: "/buyer-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
+          ].map((link) => {
+            const active = isActive(link.to);
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={closeSidebar}
+                className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${
+                  active 
+                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20" 
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+              >
+                <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{link.icon}</span>
+                <span className="truncate">{link.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="p-4 mt-auto border-t border-teal-400/40">
+        <div className="p-6 border-t border-slate-700/50">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full py-3 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded-lg transition font-bold shadow-sm"
+            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-200 group"
           >
-            <span className="material-symbols-outlined text-xl">logout</span>
+            <LogOut className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
             <span>Logout</span>
           </button>
         </div>
@@ -152,80 +149,91 @@ const BuyerDashboard = () => {
       {/* MOBILE OVERLAY */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
           onClick={closeSidebar}
         />
       )}
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="flex-1 md:ml-72 transition-all duration-300 flex flex-col min-h-screen">
-        <header className="bg-white shadow-sm p-3 sm:p-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-200">
-          <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex-1 md:ml-[280px] w-full min-w-0 transition-all duration-300 flex flex-col min-h-screen">
+        <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 p-4 px-6 flex justify-between items-center sticky top-0 z-30">
+          <div className="flex items-center gap-4">
             <button
               onClick={toggleSidebar}
-              className="text-teal-600 md:hidden p-1.5 hover:bg-teal-50 rounded-lg"
+              className="text-slate-500 hover:text-sky-500 transition-colors md:hidden"
             >
-              <FaBars className="w-5 h-5" />
+              <Menu className="w-6 h-6" />
             </button>
-            <Link
-              to="/buy"
-              className="flex items-center gap-1 sm:gap-2 text-teal-600 hover:text-teal-800 transition-colors font-bold text-[10px] sm:text-sm uppercase tracking-tight"
-            >
-              <FaArrowLeft className="w-3 h-3 sm:w-4" />
-              <span>Browse</span>
-            </Link>
+            <div className="hidden md:flex items-center gap-2">
+              <Link
+                to="/buy"
+                className="flex items-center gap-2 text-slate-400 hover:text-sky-500 transition-colors text-sm font-semibold uppercase tracking-tight group"
+              >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                <span>Browse</span>
+              </Link>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 bg-teal-50 py-1 sm:py-2 px-3 sm:px-4 rounded-full border border-teal-100">
-            <FaUser className="text-teal-600 text-[10px] sm:text-base" />
-            <span className="text-teal-800 font-bold text-[10px] sm:text-sm uppercase truncate max-w-[100px] sm:max-w-none">
+          <div className="flex items-center gap-3 bg-sky-50 py-1.5 px-4 rounded-full border border-sky-100">
+            <User className="text-sky-600 w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-sky-900 font-bold text-xs sm:text-sm uppercase truncate max-w-[100px] sm:max-w-none">
               Welcome, {user.name || "Buyer"}
             </span>
           </div>
         </header>
 
-        <main className="p-5 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        <main className="p-6 md:p-8 max-w-[1600px] w-full mx-auto flex-1">
           <Routes>
             <Route
               path="/"
               element={
-                <div className="space-y-8">
-                  {/* Statistics Cards - removed Registered Events */}
+                <div className="space-y-8 animate-in fade-in duration-500">
+                  
+                  {/* Title Section */}
+                  <div>
+                    <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+                    <p className="text-[15px] text-slate-500 mt-1">Monitor your platform's key metrics and activities</p>
+                  </div>
+                  
+                  {/* Statistics Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                     {[
                       {
                         label: "Available Events",
                         val: stats.totalEvents,
-                        icon: <FaCalendarAlt />,
-                        color: "text-orange-600",
-                        bg: "bg-orange-50",
+                        icon: <CalendarDays className="w-6 h-6" />,
+                        color: "text-sky-500",
+                        bg: "bg-sky-50",
                         path: "/buyer-dashboard/events"
                       },
                       {
                         label: "Saved Properties",
                         val: stats.bookmarks,
-                        icon: <FaBookmark />,
-                        color: "text-teal-600",
-                        bg: "bg-teal-50",
+                        icon: <Bookmark className="w-6 h-6" />,
+                        color: "text-indigo-500",
+                        bg: "bg-indigo-50",
                         path: "/buyer-dashboard/bookmarks"
                       },
                     ].map((card, idx) => (
                       <Link
                         key={idx}
                         to={card.path}
-                        className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:border-teal-200 group"
+                        className="bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex items-center justify-between transition-all duration-300 hover:border-sky-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:scale-[1.02] group"
                       >
                         <div>
-                          <p className="text-sm font-medium text-gray-500 uppercase tracking-wide group-hover:text-teal-600">{card.label}</p>
-                          <h4 className="text-3xl font-bold text-gray-800 mt-1">
+                          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                            {card.label}
+                          </p>
+                          <h4 className="text-[32px] font-bold text-slate-900 mt-3 leading-none group-hover:text-emerald-500 transition-colors duration-300">
                             {loadingStats ? (
-                              <FaSpinner className="animate-spin text-sm" />
+                              <Loader2 className="animate-spin w-6 h-6 text-slate-400 mt-2" />
                             ) : (
                               <StatCounter targetValue={card.val} />
                             )}
                           </h4>
                         </div>
-                        <div className={`${card.bg} ${card.color} p-4 rounded-xl text-2xl group-hover:scale-110 transition-transform`}>
+                        <div className={`${card.bg} ${card.color} w-[56px] h-[56px] rounded-[16px] flex items-center justify-center group-hover:scale-[1.1] transition-transform duration-300`}>
                           {card.icon}
                         </div>
                       </Link>
@@ -234,43 +242,59 @@ const BuyerDashboard = () => {
 
                   {/* Welcome Area & Quick Actions */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                      <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                        Great to see you, {user.name || "Buyer"}!
-                      </h3>
-                      <p className="text-gray-600 leading-relaxed mb-6">
-                        Stay ahead in your property search. Manage your saved properties,
-                        discover upcoming events and connect with builders across NativeNest.
-                      </p>
-                      <div className="bg-teal-50 border-l-4 border-teal-500 p-4 rounded-r-xl">
-                        <p className="text-teal-800 text-sm font-medium italic">
-                          "Find a place where your story can unfold. Your journey to a new home starts with the right connections."
+                    {/* Main Intro Card */}
+                    <div className="lg:col-span-2 bg-white p-8 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 relative overflow-hidden flex flex-col justify-center min-h-[320px]">
+                      {/* Decorative fade */}
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-sky-50 rounded-full blur-3xl opacity-60 -translate-y-1/2 translate-x-1/3"></div>
+                      
+                      <div className="relative z-10">
+                        <h3 className="text-3xl font-bold text-slate-900 mb-4 tracking-[-0.5px]">
+                          Great to see you, {user.name || "Buyer"}!
+                        </h3>
+                        <p className="text-slate-600 leading-relaxed mb-8 max-w-lg text-[15px]">
+                          Stay ahead in your property search. Manage your saved properties,
+                          discover upcoming events and connect with builders across NativeNest.
                         </p>
+                        <div className="bg-gradient-to-r from-sky-50 to-white border-l-4 border-sky-400 p-5 rounded-r-[16px] max-w-xl shadow-[0_2px_8px_rgba(14,165,233,0.04)]">
+                          <p className="text-sky-900 text-[14px] font-medium italic">
+                            "Find a place where your story can unfold. Your journey to a new home starts with the right connections."
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-6">
-                      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Links</h3>
+                    <div className="space-y-6 flex flex-col">
+                      <div className="bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200">
+                        <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Links</h3>
                         <div className="grid gap-3">
-                          <Link to="/buy" className="flex items-center gap-3 p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition-colors group">
-                            <FaArrowLeft className="text-teal-600 group-hover:-translate-x-1 transition-transform" />
-                            <span className="text-sm font-bold text-teal-800">Browse Properties</span>
+                          <Link to="/buy" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                              <Compass className="w-5 h-5" />
+                            </div>
+                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Browse Properties</span>
                           </Link>
-                          <Link to="/buyer-dashboard/events" className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-teal-50 transition-colors group">
-                            <FaPlusCircle className="text-teal-600 group-hover:scale-110 transition-transform" />
-                            <span className="text-sm font-semibold text-gray-700">Explore Events</span>
+                          <Link to="/buyer-dashboard/events" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                              <CalendarDays className="w-5 h-5" />
+                            </div>
+                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Explore Events</span>
                           </Link>
-                          <Link to="/buyer-dashboard/profile-settings" className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-teal-50 transition-colors group">
-                            <FaPlusCircle className="text-teal-600 group-hover:scale-110 transition-transform" />
-                            <span className="text-sm font-semibold text-gray-700">Edit Profile</span>
+                          <Link to="/buyer-dashboard/profile-settings" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                              <Settings className="w-5 h-5" />
+                            </div>
+                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Edit Profile</span>
                           </Link>
                         </div>
                       </div>
 
-                      <div className="bg-linear-to-br from-teal-600 to-teal-700 p-6 rounded-2xl text-white shadow-lg">
-                        <h4 className="font-bold flex items-center gap-2 mb-2"><FaChartBar /> Dashboard Tip</h4>
-                        <p className="text-sm text-teal-50 leading-relaxed">
+                      <div className="bg-gradient-to-br from-indigo-50 to-white p-7 rounded-[20px] border border-indigo-100 shadow-[0_4px_12px_rgba(99,102,241,0.04)] relative overflow-hidden flex-1">
+                        <div className="absolute -top-6 -right-6 w-24 h-24 bg-indigo-200/40 rounded-full blur-2xl"></div>
+                        <h4 className="font-bold flex items-center gap-2 mb-3 text-indigo-900 z-10 relative">
+                          <Sparkles className="w-5 h-5 text-indigo-500" /> 
+                          Dashboard Tip
+                        </h4>
+                        <p className="text-sm text-slate-600 leading-relaxed font-medium z-10 relative">
                           Use the "Saved Properties" section to keep track of listings you liked during events. It makes comparing options much easier later!
                         </p>
                       </div>

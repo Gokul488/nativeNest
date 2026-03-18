@@ -1,4 +1,4 @@
-// src/components/builderDashboard.jsx
+// src/components/builder/builderDashboard.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, Routes, Route, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -6,9 +6,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import {
-  FaBars, FaUser, FaHome, FaBuilding, FaCalendarAlt, FaCog,
-  FaEnvelope, FaPlusCircle, FaFireAlt, FaArrowRight, FaChartLine, FaSpinner
-} from "react-icons/fa";
+  LayoutDashboard, Building2, CalendarDays, Settings, LogOut, Menu, User, Loader2,
+  Flame, PlusCircle, ArrowRight, TrendingUp, Sparkles 
+} from "lucide-react";
 import { isAfter, isBefore, addDays } from "date-fns";
 import API_BASE_URL from "../../config.js";
 
@@ -16,17 +16,16 @@ import API_BASE_URL from "../../config.js";
 import BuilderProfileSettings from "./builderProfileSettings";
 import BuilderEvents from "./BuilderEvents";
 import BuilderProperties from "./BuilderProperties";
-import PostProperty from "../admin/postProperty";
-import EditProperty from "../admin/editProperty";
+import PostProperty from "../../components/admin/postProperty";
+import EditProperty from "../../components/admin/editProperty";
 import StallBooking from "./StallBooking";
 import BuilderStallInterests from "./BuilderStallInterests";
-import LogoutDialog from "../LogoutDialog";
+import LogoutDialog from "../../components/LogoutDialog";
 import EventDetails from "../buyer/EventDetails";
 import EventBookedStalls from "./EventBookedStalls";
 
 /**
  * Animated Stat Counter Component
- * Transitions a number from 0 to the target value
  */
 const StatCounter = ({ targetValue, duration = 1500 }) => {
   const [count, setCount] = useState(0);
@@ -74,9 +73,7 @@ const BuilderDashboard = () => {
   };
 
   const isActive = (path) =>
-    location.pathname === path || (path !== "/builder-dashboard/" && location.pathname.startsWith(path))
-      ? "bg-teal-700 shadow-inner"
-      : "";
+    location.pathname === path || (path !== "/builder-dashboard/" && location.pathname.startsWith(path));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -117,108 +114,136 @@ const BuilderDashboard = () => {
   }, [upcomingEvents]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex relative font-sans">
+    <div className="min-h-screen bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
+      
       {/* ================= SIDEBAR ================= */}
       {/* Backdrop for mobile */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
           onClick={closeSidebar}
         />
       )}
 
-      <div className={`fixed top-0 left-0 h-full w-72 flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} bg-linear-to-b from-teal-600 to-teal-500 shadow-2xl z-50`}>
-        <div className="p-6 border-b border-teal-400/40">
-          <h1 className="text-3xl font-bold text-white tracking-tight">NativeNest</h1>
-          <p className="text-sm text-teal-100 mt-1 opacity-90 uppercase tracking-widest font-bold">Builder Portal</p>
+      <div 
+        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } bg-gradient-to-b from-slate-800 to-slate-900 shadow-[0_4px_24px_rgba(15,23,42,0.15)] z-50`}
+      >
+        <div className="p-8 pb-6 border-b border-slate-700/50">
+          <h1 className="text-3xl font-bold text-white tracking-[-1px]">NativeNest</h1>
+          <p className="text-[11px] text-sky-400 mt-1 uppercase tracking-widest font-semibold">Builder Portal</p>
         </div>
 
-        <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 overflow-y-auto scrollbar-hide hover:scrollbar-show transition-all space-y-1">
           {[
-            { to: "/builder-dashboard/", label: "Dashboard", icon: <FaHome /> },
-            { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <FaBuilding /> },
-            { to: "/builder-dashboard/events", label: "Event Stalls", icon: <FaCalendarAlt /> },
-            { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <FaCog /> },
-          ].map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={closeSidebar}
-              className={`flex items-center gap-3 py-3 px-4 rounded-lg text-base font-medium transition-all duration-200 text-white hover:bg-teal-400/40 ${isActive(item.to)}`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </Link>
-          ))}
+            { to: "/builder-dashboard/", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+            { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <Building2 className="w-5 h-5" /> },
+            { to: "/builder-dashboard/events", label: "Event Stalls", icon: <CalendarDays className="w-5 h-5" /> },
+            { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
+          ].map((item) => {
+            const active = isActive(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={closeSidebar}
+                className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${
+                  active 
+                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20" 
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+              >
+                <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="p-4 mt-auto border-t border-teal-400/40">
-          <button onClick={handleLogout} className="flex items-center gap-3 w-full py-3 px-4 bg-teal-700 hover:bg-teal-800 text-white rounded-lg transition shadow-sm font-bold">
-            <span className="material-symbols-outlined">logout</span>
+        <div className="p-6 border-t border-slate-700/50">
+          <button 
+            onClick={handleLogout} 
+            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-200 group"
+          >
+            <LogOut className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
             <span>Logout</span>
           </button>
         </div>
       </div>
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="flex-1 md:ml-72 transition-all duration-300 flex flex-col min-h-screen">
-        <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-200">
+      <div className="flex-1 md:ml-[280px] w-full min-w-0 transition-all duration-300 flex flex-col min-h-screen">
+        <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 p-4 px-6 flex justify-between items-center sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <button onClick={toggleSidebar} className="text-teal-600 md:hidden p-2 hover:bg-teal-50 rounded-lg">
-              <FaBars className="w-6 h-6" />
+            <button onClick={toggleSidebar} className="text-slate-500 hover:text-sky-500 transition-colors md:hidden">
+              <Menu className="w-6 h-6" />
             </button>
+            <div className="hidden md:block">
+              <h2 className="text-lg font-semibold text-slate-900 capitalize">
+                {location.pathname === '/builder-dashboard/' ? 'Dashboard Overview' : location.pathname.split('/').pop().replace('-', ' ')}
+              </h2>
+            </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-teal-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-full border border-teal-100">
-            <FaUser className="text-teal-600 text-sm sm:text-base" />
-            <span className="text-teal-800 font-bold text-xs sm:text-sm uppercase truncate max-w-[120px] sm:max-w-none">
-              {user.name || "Builder"}
+          <div className="flex items-center gap-3">
+            <span className="text-slate-600 font-medium text-sm hidden sm:block">
+              Welcome, <span className="text-slate-900">{user.name || "Builder"}</span>
             </span>
+            <div className="w-10 h-10 rounded-full bg-sky-50 flex items-center justify-center border border-sky-100 shadow-sm text-sky-500">
+              <User className="w-5 h-5" />
+            </div>
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
+        <main className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex-1">
           <Routes>
             <Route path="/" element={
-              <div className="space-y-8">
+              <div className="space-y-8 animate-in fade-in duration-500">
+                
+                {/* Title Section */}
+                <div>
+                  <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+                  <p className="text-[15px] text-slate-500 mt-1">Monitor your platform's key metrics and activities</p>
+                </div>
 
-                {/* Statistics Cards - Standardized Size & Stat Counter (Buyer Interest Count Removed) */}
+                {/* Statistics Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                   {[
                     {
                       label: "Total Properties",
                       val: stats?.totals.properties,
-                      icon: <FaBuilding />,
-                      color: "text-teal-600",
-                      bg: "bg-teal-50",
+                      icon: <Building2 className="w-6 h-6" />,
+                      color: "text-sky-500",
+                      bg: "bg-sky-50",
                       path: "/builder-dashboard/my-properties"
                     },
                     {
                       label: "Events Attended",
                       val: stats?.totals.eventsAttended,
-                      icon: <FaCalendarAlt />,
-                      color: "text-orange-600",
-                      bg: "bg-orange-50",
+                      icon: <CalendarDays className="w-6 h-6" />,
+                      color: "text-indigo-500",
+                      bg: "bg-indigo-50",
                       path: "/builder-dashboard/events"
                     },
                   ].map((card, idx) => (
                     <Link
                       key={idx}
                       to={card.path}
-                      className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:border-teal-200 group"
+                      className="bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex items-center justify-between transition-all duration-300 hover:border-sky-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:scale-[1.02] group"
                     >
                       <div>
-                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide group-hover:text-teal-600 transition-colors">
+                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none">
                           {card.label}
                         </p>
-                        <h4 className="text-3xl font-bold text-gray-800 mt-1">
+                        <h4 className="text-[32px] font-bold text-slate-900 mt-3 leading-none group-hover:text-emerald-500 transition-colors duration-300">
                           {loading ? (
-                            <FaSpinner className="animate-spin text-sm" />
+                            <Loader2 className="animate-spin w-6 h-6 text-slate-400 mt-2" />
                           ) : (
                             <StatCounter targetValue={card.val} />
                           )}
                         </h4>
                       </div>
-                      <div className={`${card.bg} ${card.color} p-4 rounded-xl text-2xl group-hover:scale-110 transition-transform`}>
+                      <div className={`${card.bg} ${card.color} w-[56px] h-[56px] rounded-[16px] flex items-center justify-center group-hover:scale-[1.1] transition-transform duration-300`}>
                         {card.icon}
                       </div>
                     </Link>
@@ -227,26 +252,47 @@ const BuilderDashboard = () => {
 
                 {/* Charts & Hot Events */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <div className="lg:col-span-2 bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex flex-col">
                     <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <FaChartLine className="text-teal-600" /> Listing Activity
+                      <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-sky-500" /> Listing Activity
                       </h3>
-                      <span className="text-xs font-bold text-gray-400 uppercase">Last 6 Months</span>
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Last 6 Months</span>
                     </div>
-                    <div className="h-72 w-full">
+                    <div className="flex-1 w-full min-h-[320px]">
                       {loading ? (
-                        <div className="h-full flex items-center justify-center"><FaSpinner className="animate-spin text-teal-500 text-3xl" /></div>
+                        <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-sky-500 w-8 h-8" /></div>
                       ) : (
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={stats?.monthlyStats}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                            <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
-                            <Bar dataKey="count" name="Properties" fill="#0d9488" radius={[6, 6, 0, 0]} barSize={35}>
-                              {stats?.monthlyStats.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={index === stats.monthlyStats.length - 1 ? '#0d9488' : '#99f6e4'} />
+                          <BarChart data={stats?.monthlyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                            <XAxis 
+                              dataKey="month" 
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
+                              dy={15} 
+                            />
+                            <YAxis 
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
+                              dx={-10}
+                            />
+                            <Tooltip 
+                              cursor={{ fill: '#F8FAFC' }} 
+                              contentStyle={{ 
+                                borderRadius: '12px', 
+                                border: '1px solid #E2E8F0', 
+                                boxShadow: '0 10px 15px -3px rgba(15,23,42,0.08)',
+                                color: '#0F172A',
+                                fontWeight: 500,
+                                fontFamily: '"Inter", sans-serif'
+                              }} 
+                            />
+                            <Bar dataKey="count" name="Properties" fill="#0EA5E9" radius={[6, 6, 0, 0]} barSize={24}>
+                              {stats?.monthlyStats?.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={index === stats?.monthlyStats.length - 1 ? '#0EA5E9' : '#7DD3FC'} />
                               ))}
                             </Bar>
                           </BarChart>
@@ -255,32 +301,32 @@ const BuilderDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-6 flex flex-col">
                     {hotEvents.length > 0 && (
-                      <div className="bg-linear-to-br from-orange-500 to-amber-600 p-6 rounded-2xl text-white shadow-lg relative overflow-hidden">
-                        <FaFireAlt className="absolute -right-4 -bottom-4 text-8xl opacity-20" />
-                        <h4 className="text-xl font-bold flex items-center gap-2 mb-2">
-                          Trending Events
+                      <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-7 rounded-[20px] shadow-[0_4px_12px_rgba(249,115,22,0.15)] relative overflow-hidden">
+                        <Flame className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 text-white" />
+                        <h4 className="text-xl font-bold flex items-center gap-2 mb-3 text-white z-10 relative">
+                          <Flame className="w-5 h-5 text-orange-200" /> Trending Events
                         </h4>
-                        <p className="text-sm opacity-90 mb-4">
+                        <p className="text-sm text-white/90 mb-6 z-10 relative font-medium leading-relaxed">
                           {hotEvents.length} exhibitions are currently active or starting soon. Don't miss out on stall bookings!
                         </p>
-                        <Link to="/builder-dashboard/events" className="inline-flex items-center gap-2 bg-white text-orange-600 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-orange-50 transition-colors">
-                          View & Book <FaArrowRight size={12} />
+                        <Link to="/builder-dashboard/events" className="inline-flex items-center gap-2 bg-white text-orange-600 px-5 py-2.5 rounded-[12px] font-bold text-sm hover:scale-[1.02] transition-transform z-10 relative shadow-sm">
+                          View & Book <ArrowRight className="w-4 h-4" />
                         </Link>
                       </div>
                     )}
 
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                      <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-                      <div className="space-y-3">
-                        <Link to="/builder-dashboard/post-property" className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-teal-50 transition-colors group">
-                          <div className="p-2 bg-white rounded-lg shadow-sm text-teal-600 group-hover:scale-110 transition-transform"><FaPlusCircle /></div>
-                          <span className="text-sm font-bold text-gray-700">Add New Property</span>
+                    <div className="bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex-1">
+                      <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Actions</h3>
+                      <div className="grid gap-3">
+                        <Link to="/builder-dashboard/post-property" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all"><PlusCircle className="w-5 h-5" /></div>
+                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Add New Property</span>
                         </Link>
-                        <Link to="/builder-dashboard/events" className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-teal-50 transition-colors group">
-                          <div className="p-2 bg-white rounded-lg shadow-sm text-orange-600 group-hover:scale-110 transition-transform"><FaCalendarAlt /></div>
-                          <span className="text-sm font-bold text-gray-700">Book Event Stalls</span>
+                        <Link to="/builder-dashboard/events" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all"><CalendarDays className="w-5 h-5" /></div>
+                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Book Event Stalls</span>
                         </Link>
                       </div>
                     </div>
