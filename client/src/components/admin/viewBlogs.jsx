@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaNewspaper } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
+import Pagination from '../common/Pagination.jsx';
 
 
 const ViewBlogs = () => {
@@ -13,6 +14,8 @@ const ViewBlogs = () => {
   const [error, setError] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [blogToDelete, setBlogToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const navigate = useNavigate();
 
@@ -51,6 +54,16 @@ const ViewBlogs = () => {
       blog.title?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [blogs, searchQuery]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const paginatedBlogs = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredBlogs.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredBlogs, currentPage]);
 
   const handleDelete = (id) => {
     setBlogToDelete(id);
@@ -134,9 +147,9 @@ const ViewBlogs = () => {
         )}
 
         {!loading && filteredBlogs.length > 0 && (
-          <>
+          <div className="flex flex-col h-full">
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto flex-1 uppercase">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
@@ -146,76 +159,89 @@ const ViewBlogs = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredBlogs.map((blog, index) => (
-                    <tr key={blog.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                        {String(index + 1).padStart(2, '0')}
-                      </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 mb-1">{blog.title}</div>
-                        <div className="text-xs text-gray-500 italic">
-                          Created on: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right border-b border-gray-100">
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
-                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
-                            title="Edit"
-                          >
-                            <FaEdit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(blog.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                            title="Delete"
-                          >
-                            <FaTrash size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {paginatedBlogs.map((blog, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                    return (
+                      <tr key={blog.id} className="hover:bg-gray-50/80 transition-colors group">
+                        <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                          {String(globalIndex).padStart(2, '0')}
+                        </td>
+                        <td className="px-6 py-5 border-b border-gray-100">
+                          <div className="font-bold text-gray-900 mb-1">{blog.title}</div>
+                          <div className="text-xs text-gray-500 italic">
+                            Created on: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN')}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-right border-b border-gray-100">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
+                              className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                              title="Edit"
+                            >
+                              <FaEdit size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(blog.id)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                              title="Delete"
+                            >
+                              <FaTrash size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile Card View */}
-            <div className="md:hidden p-4 space-y-4">
-              {filteredBlogs.map((blog, index) => (
-                <div key={blog.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
-                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
-                        {index + 1}
+            <div className="md:hidden p-4 space-y-4 flex-1">
+              {paginatedBlogs.map((blog, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
+                  <div key={blog.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs uppercase">
+                          {globalIndex}
+                        </div>
+                        <div className="font-bold text-gray-900 truncate max-w-[200px] uppercase">{blog.title}</div>
                       </div>
-                      <div className="font-bold text-gray-900 truncate max-w-[200px]">{blog.title}</div>
+                    </div>
+
+                    <div className="text-xs text-gray-500 italic">
+                      Created: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t border-gray-200 uppercase">
+                      <button
+                        onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold"
+                      >
+                        <FaEdit /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(blog.id)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold"
+                      >
+                        <FaTrash size={14} /> Delete
+                      </button>
                     </div>
                   </div>
-
-                  <div className="text-xs text-gray-500 italic">
-                    Created: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </div>
-
-                  <div className="flex gap-2 pt-2 border-t border-gray-200">
-                    <button
-                      onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold"
-                    >
-                      <FaEdit /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(blog.id)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold"
-                    >
-                      <FaTrash size={14} /> Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </>
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredBlogs.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
 

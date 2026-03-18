@@ -262,16 +262,16 @@ const getMaxPrice = async (req, res) => {
 const getFeaturedProperties = async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    const { location, priceRange, propertyType, builder } = req.query;
+    const { location, priceRange, propertyType, builder, page = 1, limit = 12 } = req.query;
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 12;
+    const offset = (pageNum - 1) * limitNum;
 
-    let query = `
-      SELECT p.property_id AS id, p.title, p.price, p.city, p.pincode,
-             p.property_type, p.sqft, p.created_at, p.cover_image,
-             b.name AS builderName
+    let baseQuery = `
       FROM properties p
       LEFT JOIN builders b ON p.builder_id = b.id
     `;
-    const params     = [];
+    const params = [];
     const conditions = [];
 
     if (location) {
@@ -289,13 +289,33 @@ const getFeaturedProperties = async (req, res) => {
       }
     }
     if (propertyType && propertyType !== 'All') { conditions.push(`p.property_type = ?`); params.push(propertyType); }
-    if (builder      && builder      !== 'All') { conditions.push(`b.name = ?`);          params.push(builder);      }
+    if (builder && builder !== 'All') { conditions.push(`b.name = ?`); params.push(builder); }
 
-    if (conditions.length > 0) query += ` WHERE ` + conditions.join(' AND ');
-    query += ` ORDER BY p.created_at DESC`;
+    if (conditions.length > 0) baseQuery += ` WHERE ` + conditions.join(' AND ');
 
-    const [properties] = await connection.query(query, params);
-    if (properties.length === 0) return res.status(200).json({ properties: [] });
+    // Get total count for pagination
+    const [countResult] = await connection.query(`SELECT COUNT(*) AS total ${baseQuery}`, params);
+    const total = countResult[0].total;
+
+    // Get paginated data
+    let dataQuery = `
+      SELECT p.property_id AS id, p.title, p.price, p.city, p.pincode,
+             p.property_type, p.sqft, p.created_at, p.cover_image,
+             b.name AS builderName
+      ${baseQuery}
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    const dataParams = [...params, limitNum, offset];
+
+    const [properties] = await connection.query(dataQuery, dataParams);
+    
+    if (properties.length === 0) {
+      return res.status(200).json({ 
+        properties: [], 
+        pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) } 
+      });
+    }
 
     const featuredProperties = await Promise.all(properties.map(async (property) => {
       const [imgs] = await connection.query(
@@ -320,21 +340,29 @@ const getFeaturedProperties = async (req, res) => {
       }
 
       return {
-        id:            property.id,
-        title:         property.title,
-        city:          property.city,
-        price:         parseFloat(property.price),
-        pincode:       property.pincode,
+        id: property.id,
+        title: property.title,
+        city: property.city,
+        price: parseFloat(property.price),
+        pincode: property.pincode,
         property_type: property.property_type,
-        sqft:          property.sqft || null,
-        created_at:    property.created_at,
-        img:           imageBase64,
-        builderName:   property.builderName,
+        sqft: property.sqft || null,
+        created_at: property.created_at,
+        img: imageBase64,
+        builderName: property.builderName,
         variants,
       };
     }));
 
-    res.status(200).json({ properties: featuredProperties });
+    res.status(200).json({ 
+      properties: featuredProperties,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
   } catch (error) {
     console.error('Error fetching featured properties:', error.message, error.stack);
     res.status(500).json({ error: 'Internal server error' });

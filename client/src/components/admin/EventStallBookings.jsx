@@ -1,11 +1,12 @@
 // EventStallBookings.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUsers, FaStore, FaBuilding, FaQrcode, FaTimes, FaDownload } from "react-icons/fa";
+import { FaUsers, FaStore, FaBuilding, FaQrcode, FaTimes, FaDownload, FaSearch } from "react-icons/fa";
 import { QRCodeCanvas } from "qrcode.react";
 import API_BASE_URL from '../../config.js';
 import FRONTEND_URL from "../../frontendConfig.js";
+import Pagination from "../common/Pagination.jsx";
 
 const EventStallBookings = () => {
   const { eventId } = useParams();
@@ -15,6 +16,9 @@ const EventStallBookings = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Modal State for QR Code
   const [showQRModal, setShowQRModal] = useState(false);
@@ -55,6 +59,25 @@ const EventStallBookings = () => {
     }
   };
 
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(b =>
+      b.builder_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.stall_number?.toString().includes(searchQuery) ||
+      b.mobile_number?.includes(searchQuery) ||
+      b.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [bookings, searchQuery]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const paginatedBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredBookings, currentPage]);
+
   const openQR = (booking) => {
     setActiveQR({
       stallNumber: booking.stall_number,
@@ -83,107 +106,143 @@ const EventStallBookings = () => {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[600px]">
       {/* Header Section */}
-      <div className="p-6 md:p-8 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="p-6 md:p-8 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 sticky top-0 z-10">
         <div>
           <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">
             Stall Bookings for {event?.event_name || `Event #${eventId}`}
           </h2>
           <p className="text-gray-500 text-sm mt-1">Manage builders and generate unique stall check-in QR codes</p>
         </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto items-center">
+          <div className="relative w-full sm:w-64">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search builder, stall, or contact..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-50 outline-none transition-all text-sm"
+            />
+          </div>
+          <div className="bg-teal-600 text-white px-6 py-2 rounded-xl shadow-lg shadow-teal-100 whitespace-nowrap">
+            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Total Bookings</span>
+            <div className="text-lg font-bold leading-none">{bookings.length}</div>
+          </div>
+        </div>
       </div>
 
-      {bookings.length === 0 ? (
-        <div className="px-8 py-20 text-center">
-          <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaUsers className="text-gray-400 text-2xl" />
+      <div className="flex-1">
+        {filteredBookings.length === 0 ? (
+          <div className="px-8 py-20 text-center">
+            <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaUsers className="text-gray-400 text-2xl" />
+            </div>
+            <p className="text-gray-600 font-medium">No bookings found.</p>
+            <p className="text-gray-400 text-sm italic uppercase">NativeNest Attendance System</p>
           </div>
-          <p className="text-gray-600 font-medium">No bookings yet.</p>
-          <p className="text-gray-400 text-sm">Builders have not booked any stalls for this event.</p>
-        </div>
-      ) : (
-        <>
-          {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50/80 border-b border-gray-100">
-                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Stall Number</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Builder Name</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Contact</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">QR Code</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {bookings.map((booking, index) => (
-                  <tr key={index} className="group hover:bg-teal-50/30 transition-colors">
-                    <td className="px-6 py-5 text-sm text-gray-900 font-bold">
-                      #{booking.stall_number}
-                    </td>
-                    <td className="px-6 py-5 text-sm text-gray-900 font-medium">
-                      {booking.builder_name}
-                    </td>
-                    <td className="px-6 py-5 text-sm text-gray-700">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs">{booking.stall_type_name}</span>
-                    </td>
-                    <td className="px-6 py-5 text-sm text-gray-600">
-                      <div>{booking.mobile_number}</div>
-                      <div className="text-xs text-gray-400">{booking.email}</div>
-                    </td>
-                    <td className="px-6 py-5 text-center">
+        ) : (
+          <div className="flex flex-col h-full uppercase">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto flex-1">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/80 border-b border-gray-100">
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">#</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Stall Number</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Builder Name</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Type</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">QR Code</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {paginatedBookings.map((booking, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                    return (
+                      <tr key={index} className="group hover:bg-teal-50/30 transition-colors">
+                        <td className="px-6 py-5 text-sm text-gray-400 font-mono">
+                          {String(globalIndex).padStart(2, '0')}
+                        </td>
+                        <td className="px-6 py-5 text-sm text-gray-900 font-bold">
+                          #{booking.stall_number}
+                        </td>
+                        <td className="px-6 py-5 text-sm text-gray-900 font-medium">
+                          {booking.builder_name}
+                        </td>
+                        <td className="px-6 py-5 text-sm text-gray-700">
+                          <span className="px-2 py-1 bg-gray-100 rounded text-xs">{booking.stall_type_name}</span>
+                        </td>
+                        <td className="px-6 py-5 text-sm text-gray-600">
+                          <div>{booking.mobile_number}</div>
+                          <div className="text-xs text-gray-400">{booking.email}</div>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <button
+                            onClick={() => openQR(booking)}
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-600 hover:text-white transition-all text-xs font-bold"
+                            title="Generate QR"
+                          >
+                            <FaQrcode size={22} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden p-4 space-y-4 flex-1">
+              {paginatedBookings.map((booking, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
+                  <div key={index} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                          {globalIndex}
+                        </div>
+                        <div className="font-bold text-gray-900 truncate max-w-[150px] uppercase">#{booking.stall_number} • {booking.builder_name}</div>
+                      </div>
                       <button
                         onClick={() => openQR(booking)}
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-600 hover:text-white transition-all text-xs font-bold"
+                        className="p-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-600 hover:text-white transition-all"
                         title="Generate QR"
                       >
-                        <FaQrcode size={22} />
+                        <FaQrcode size={18} />
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Card View */}
-          <div className="md:hidden p-4 space-y-4">
-            {bookings.map((booking, index) => (
-              <div key={index} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
-                <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
-                      #{booking.stall_number}
                     </div>
-                    <div className="font-bold text-gray-900 truncate max-w-[150px]">{booking.builder_name}</div>
-                  </div>
-                  <button
-                    onClick={() => openQR(booking)}
-                    className="p-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-600 hover:text-white transition-all"
-                    title="Generate QR"
-                  >
-                    <FaQrcode size={18} />
-                  </button>
-                </div>
 
-                <div className="text-sm text-gray-600 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-white border border-gray-200 rounded text-[10px] font-bold text-gray-500">{booking.stall_type_name}</span>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div className="flex items-center gap-2 uppercase">
+                        <span className="px-2 py-0.5 bg-white border border-gray-200 rounded text-[10px] font-bold text-gray-500">{booking.stall_type_name}</span>
+                      </div>
+                      <div className="pt-1 text-xs font-medium uppercase">{booking.mobile_number}</div>
+                      <div className="text-[11px] text-gray-400 truncate uppercase">{booking.email}</div>
+                    </div>
                   </div>
-                  <div className="pt-1 text-xs font-medium">{booking.mobile_number}</div>
-                  <div className="text-[11px] text-gray-400 truncate">{booking.email}</div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredBookings.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       {/* QR MODAL */}
       {showQRModal && activeQR && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full relative shadow-2xl animate-in zoom-in duration-200">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full relative shadow-2xl animate-in zoom-in duration-200 uppercase text-center">
             <button
               onClick={() => setShowQRModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -218,7 +277,7 @@ const EventStallBookings = () => {
                   link.download = `QR-Stall-${activeQR.stallNumber}-${activeQR.builder}.png`;
                   link.click();
                 }}
-                className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-teal-700 shadow-lg shadow-teal-100 transition-all"
+                className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-teal-700 shadow-lg shadow-teal-100 transition-all uppercase"
               >
                 <FaDownload /> Download Image
               </button>

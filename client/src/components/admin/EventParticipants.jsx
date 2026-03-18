@@ -14,6 +14,7 @@ import {
   FaTimesCircle
 } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
+import Pagination from "../common/Pagination.jsx";
 
 const EventParticipants = () => {
   const { eventId } = useParams();
@@ -23,6 +24,8 @@ const EventParticipants = () => {
   const [attendanceFilter, setAttendanceFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,6 +64,16 @@ const EventParticipants = () => {
       return matchesSearch;
     });
   }, [participants, searchQuery, attendanceFilter]);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, attendanceFilter]);
+
+  const paginatedParticipants = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredParticipants.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredParticipants, currentPage]);
 
   const stats = useMemo(() => {
     const attended = participants.filter(p => p.is_attended === 1 || p.is_attended === "1" || p.is_attended === true).length;
@@ -153,9 +166,9 @@ const EventParticipants = () => {
         )}
 
         {!loading && !error && filteredParticipants.length > 0 && (
-          <>
+          <div className="flex flex-col h-full uppercase">
             {/* Desktop Table View */}
-            <div className="hidden xl:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto flex-1 h-full">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
@@ -167,12 +180,13 @@ const EventParticipants = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredParticipants.map((p, index) => {
+                  {paginatedParticipants.map((p, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                     const isAttended = p.is_attended === 1 || p.is_attended === "1" || p.is_attended === true;
                     return (
                       <tr key={p.id} className="hover:bg-gray-50/80 transition-colors group">
                         <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                          {String(index + 1).padStart(2, '0')}
+                          {String(globalIndex).padStart(2, '0')}
                         </td>
                         <td className="px-6 py-5 border-b border-gray-100">
                           <div className="font-bold text-gray-900 flex items-center gap-2">
@@ -212,17 +226,18 @@ const EventParticipants = () => {
             </div>
 
             {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4">
-              {filteredParticipants.map((p, index) => {
+            <div className="xl:hidden p-4 space-y-4 flex-1">
+              {paginatedParticipants.map((p, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                 const isAttended = p.is_attended === 1 || p.is_attended === "1" || p.is_attended === true;
                 return (
                   <div key={p.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
                     <div className="flex justify-between items-start border-b border-gray-200 pb-2">
                       <div className="flex items-center gap-2">
                         <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
-                          {index + 1}
+                          {globalIndex}
                         </div>
-                        <div className="font-bold text-gray-900 truncate max-w-[150px]">{p.name}</div>
+                        <div className="font-bold text-gray-900 truncate max-w-[150px] uppercase">{p.name}</div>
                       </div>
                       <div>
                         {isAttended ? (
@@ -238,17 +253,17 @@ const EventParticipants = () => {
                     </div>
 
                     <div className="text-sm text-gray-600 space-y-1">
-                      <div className="flex items-center gap-2 text-xs">
+                      <div className="flex items-center gap-2 text-xs uppercase">
                         <FaPhoneAlt className="text-gray-400 text-[10px]" />
                         <span>{p.phone}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs">
+                      <div className="flex items-center gap-2 text-xs uppercase">
                         <FaEnvelope className="text-gray-400 text-[10px]" />
                         <span className="truncate">{p.email || "No Email"}</span>
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400 font-semibold italic">
+                    <div className="pt-2 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400 font-semibold italic uppercase">
                       <span>Registered</span>
                       <span>{new Date(p.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}</span>
                     </div>
@@ -256,7 +271,14 @@ const EventParticipants = () => {
                 );
               })}
             </div>
-          </>
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredParticipants.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
     </div>

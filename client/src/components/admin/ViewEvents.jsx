@@ -24,6 +24,7 @@ import {
 } from "react-icons/fa";
 import API_BASE_URL from "../../config.js";
 import FRONTEND_URL from "../../frontendConfig.js";
+import Pagination from "../common/Pagination.jsx";
 
 const formatDateRange = (start, end) => {
   if (!start || !end) return "—";
@@ -47,6 +48,8 @@ const ViewEvents = () => {
   const [activeQR, setActiveQR] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: "start_date", direction: "desc" });
   const [activeTab, setActiveTab] = useState("active");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const navigate = useNavigate();
 
@@ -94,6 +97,16 @@ const ViewEvents = () => {
     }
     return result;
   }, [activeEvents, completedEvents, activeTab, searchQuery, sortConfig]);
+
+  // Reset page when search, tab or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortConfig, activeTab]);
+
+  const paginatedEvents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedEvents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedEvents, currentPage]);
 
   const handleTabSwitch = (tab) => {
     if (tab === activeTab) return;
@@ -168,7 +181,6 @@ const ViewEvents = () => {
       </div>
 
       {/* Tab Toggle */}
-      {/* Tab Toggle */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8 px-6">
           {[
@@ -192,9 +204,6 @@ const ViewEvents = () => {
 
       {/* All content — fades as one unit, never unmounts */}
       <div className="flex-1 flex flex-col">
-        {/* Completed banner — height-animates to avoid layout shift */}
-
-
         {/* Loading */}
         {loading && (
           <div className="flex-1 flex justify-center items-center gap-3 text-gray-500 py-24">
@@ -226,9 +235,9 @@ const ViewEvents = () => {
 
         {/* Table — stable DOM, no conditional unmounting between tabs */}
         {!loading && !error && filteredAndSortedEvents.length > 0 && (
-          <>
+          <div className="flex flex-col h-full uppercase">
             {/* Desktop Table */}
-            <div className="hidden xl:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto flex-1">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className={`text-xs font-semibold uppercase ${isCompleted ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-500"}`}>
                   <tr>
@@ -246,147 +255,159 @@ const ViewEvents = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredAndSortedEvents.map((event, index) => (
-                    <tr
-                      key={event.id}
-                      className={`transition-colors group ${isCompleted ? "hover:bg-green-50/40" : "hover:bg-gray-50/80"}`}
-                    >
-                      <td className="px-4 py-2.5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                        {String(index + 1).padStart(2, "0")}
-                      </td>
-                      <td className="px-6 py-2.5 border-b border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-gray-900" title={event.event_name}>{event.event_name}</span>
-                          {isCompleted && (
-                            <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">
-                              Done
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-2.5 border-b border-gray-100">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
-                          <FaCalendarAlt className={isCompleted ? "text-green-400" : "text-teal-500"} />
-                          {formatDateRange(event.start_date, event.end_date)}
-                        </div>
-                      </td>
-                      <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                        <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-bold hover:bg-teal-600 hover:text-white transition-all">
-                          {event.stall_count || 0}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                        <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded text-sm font-bold hover:bg-indigo-600 hover:text-white transition-all">
-                          {event.booked_stall_count || 0}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                        <Link to={`/admin-dashboard/events/${event.id}/participants`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded text-sm font-bold hover:bg-purple-600 hover:text-white transition-all whitespace-nowrap">
-                          View
-                        </Link>
-                      </td>
-                      <td className="px-6 py-2.5 text-right border-b border-gray-100">
-                        <div className="flex justify-end gap-1.5">
-                          {/* Edit — hidden via style (not conditional) to keep DOM stable */}
-                          <div style={{ display: isCompleted ? "none" : "" }}>
-                            <button
-                              onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
-                              className="p-2 text-blue-500 hover:bg-blue-50 rounded transition"
-                              title="Edit"
-                            >
-                              <FaEdit size={18} />
+                  {paginatedEvents.map((event, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                    return (
+                      <tr
+                        key={event.id}
+                        className={`transition-colors group ${isCompleted ? "hover:bg-green-50/40" : "hover:bg-gray-50/80"}`}
+                      >
+                        <td className="px-4 py-2.5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                          {String(globalIndex).padStart(2, "0")}
+                        </td>
+                        <td className="px-6 py-2.5 border-b border-gray-100">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-gray-900" title={event.event_name}>{event.event_name}</span>
+                            {isCompleted && (
+                              <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">
+                                Done
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-2.5 border-b border-gray-100">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
+                            <FaCalendarAlt className={isCompleted ? "text-green-400" : "text-teal-500"} />
+                            {formatDateRange(event.start_date, event.end_date)}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-center border-b border-gray-100">
+                          <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-bold hover:bg-teal-600 hover:text-white transition-all">
+                            {event.stall_count || 0}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2.5 text-center border-b border-gray-100">
+                          <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded text-sm font-bold hover:bg-indigo-600 hover:text-white transition-all">
+                            {event.booked_stall_count || 0}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2.5 text-center border-b border-gray-100">
+                          <Link to={`/admin-dashboard/events/${event.id}/participants`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded text-sm font-bold hover:bg-purple-600 hover:text-white transition-all whitespace-nowrap">
+                            View
+                          </Link>
+                        </td>
+                        <td className="px-6 py-2.5 text-right border-b border-gray-100">
+                          <div className="flex justify-end gap-1.5">
+                            <div style={{ display: isCompleted ? "none" : "" }}>
+                              <button
+                                onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
+                                className="p-2 text-blue-500 hover:bg-blue-50 rounded transition"
+                                title="Edit"
+                              >
+                                <FaEdit size={18} />
+                              </button>
+                            </div>
+                            <button onClick={() => openQR(event)} className="p-2 text-purple-500 hover:bg-purple-50 rounded transition" title="Attendance QR">
+                              <FaQrcode size={18} />
+                            </button>
+                            <button onClick={() => handleDownload(event.id, event.event_name)} className="p-2 text-teal-500 hover:bg-teal-50 rounded transition" title="Download Invitation">
+                              <FaDownload size={18} />
                             </button>
                           </div>
-                          <button onClick={() => openQR(event)} className="p-2 text-purple-500 hover:bg-purple-50 rounded transition" title="Attendance QR">
-                            <FaQrcode size={18} />
-                          </button>
-                          <button onClick={() => handleDownload(event.id, event.event_name)} className="p-2 text-teal-500 hover:bg-teal-50 rounded transition" title="Download Invitation">
-                            <FaDownload size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4 bg-gray-50/50">
-              {filteredAndSortedEvents.map((event, index) => (
-                <div
-                  key={event.id}
-                  className={`rounded-xl p-4 border shadow-sm space-y-4 bg-white ${isCompleted ? "border-green-100" : "border-gray-100"}`}
-                >
-                  <div className="flex justify-between items-start border-b border-gray-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${isCompleted ? "bg-green-100 text-green-700" : "bg-teal-100 text-teal-600"}`}>
-                        {index + 1}
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="font-bold text-gray-900 text-base leading-tight">{event.event_name}</div>
-                        <div className="flex items-center gap-1 mt-1">
-                          <FaMapMarkerAlt className="text-gray-400 text-[10px]" />
-                          <span className="text-teal-600 font-semibold text-xs">{event.city}</span>
+            <div className="xl:hidden p-4 space-y-4 bg-gray-50/50 flex-1">
+              {paginatedEvents.map((event, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
+                  <div
+                    key={event.id}
+                    className={`rounded-xl p-4 border shadow-sm space-y-4 bg-white ${isCompleted ? "border-green-100" : "border-gray-100"}`}
+                  >
+                    <div className="flex justify-between items-start border-b border-gray-100 pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${isCompleted ? "bg-green-100 text-green-700" : "bg-teal-100 text-teal-600"}`}>
+                          {globalIndex}
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="font-bold text-gray-900 text-base leading-tight">{event.event_name}</div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <FaMapMarkerAlt className="text-gray-400 text-[10px]" />
+                            <span className="text-teal-600 font-semibold text-xs">{event.city}</span>
+                          </div>
                         </div>
                       </div>
+                      {isCompleted && (
+                        <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                          Done
+                        </span>
+                      )}
                     </div>
-                    {isCompleted && (
-                      <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                        Done
-                      </span>
-                    )}
-                  </div>
 
-                  <div className="flex items-center gap-2 text-gray-600 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100">
-                    <FaCalendarAlt className="text-teal-500 text-xs shrink-0" />
-                    <span className="text-xs font-medium">{formatDateRange(event.start_date, event.end_date)}</span>
-                  </div>
+                    <div className="flex items-center gap-2 text-gray-600 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100">
+                      <FaCalendarAlt className="text-teal-500 text-xs shrink-0" />
+                      <span className="text-xs font-medium">{formatDateRange(event.start_date, event.end_date)}</span>
+                    </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-teal-500 hover:shadow-md transition-all group">
-                      <FaStore className="text-teal-600 group-hover:scale-110 transition-transform" />
-                      <div className="text-center">
-                        <span className="block text-xs font-bold text-gray-900">{event.stall_count || 0}</span>
-                        <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">Stalls</span>
-                      </div>
-                    </Link>
-                    <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-md transition-all group">
-                      <FaTicketAlt className="text-indigo-600 group-hover:scale-110 transition-transform" />
-                      <div className="text-center">
-                        <span className="block text-xs font-bold text-gray-900">{event.booked_stall_count || 0}</span>
-                        <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">Booked</span>
-                      </div>
-                    </Link>
-                    <Link to={`/admin-dashboard/events/${event.id}/participants`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-purple-500 hover:shadow-md transition-all group">
-                      <FaUserCheck className="text-purple-600 group-hover:scale-110 transition-transform" />
-                      <div className="text-center">
-                        <span className="block text-xs font-bold text-gray-900">View</span>
-                        <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">People</span>
-                      </div>
-                    </Link>
-                  </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-teal-500 hover:shadow-md transition-all group">
+                        <FaStore className="text-teal-600 group-hover:scale-110 transition-transform" />
+                        <div className="text-center">
+                          <span className="block text-xs font-bold text-gray-900">{event.stall_count || 0}</span>
+                          <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">Stalls</span>
+                        </div>
+                      </Link>
+                      <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-md transition-all group">
+                        <FaTicketAlt className="text-indigo-600 group-hover:scale-110 transition-transform" />
+                        <div className="text-center">
+                          <span className="block text-xs font-bold text-gray-900">{event.booked_stall_count || 0}</span>
+                          <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">Booked</span>
+                        </div>
+                      </Link>
+                      <Link to={`/admin-dashboard/events/${event.id}/participants`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-purple-500 hover:shadow-md transition-all group">
+                        <FaUserCheck className="text-purple-600 group-hover:scale-110 transition-transform" />
+                        <div className="text-center">
+                          <span className="block text-xs font-bold text-gray-900">View</span>
+                          <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">People</span>
+                        </div>
+                      </Link>
+                    </div>
 
-                  <div className="flex gap-2 pt-2">
-                    {!isCompleted && (
-                      <button
-                        onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors"
-                      >
-                        <FaEdit /> Edit
+                    <div className="flex gap-2 pt-2">
+                      {!isCompleted && (
+                        <button
+                          onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors"
+                        >
+                          <FaEdit /> Edit
+                        </button>
+                      )}
+                      <button onClick={() => openQR(event)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-100 transition-colors">
+                        <FaQrcode /> QR Code
                       </button>
-                    )}
-                    <button onClick={() => openQR(event)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-100 transition-colors">
-                      <FaQrcode /> QR Code
-                    </button>
-                    <button onClick={() => handleDownload(event.id, event.event_name)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-50 text-teal-600 rounded-xl text-xs font-bold hover:bg-teal-100 transition-colors">
-                      <FaDownload /> PDF
-                    </button>
+                      <button onClick={() => handleDownload(event.id, event.event_name)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-50 text-teal-600 rounded-xl text-xs font-bold hover:bg-teal-100 transition-colors">
+                        <FaDownload /> PDF
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </>
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredAndSortedEvents.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
 

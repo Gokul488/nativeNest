@@ -18,13 +18,12 @@ const Buy = () => {
   const [selectedPropertyType, setSelectedPropertyType] = useState('All');
   const [builders, setBuilders] = useState([]);
   const [selectedBuilder, setSelectedBuilder] = useState('All');
-
-  const [toast, setToast] = useState(null);
-  const HEADER_HEIGHT = 72;
-  // Mobile sidebar state
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 12, totalPages: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
-
+  const [toast, setToast] = useState(null);
+  
+  const HEADER_HEIGHT = 72;
   const navigate = useNavigate();
   const location = useLocation();
   const isInitialLoad = useRef(true);
@@ -32,6 +31,8 @@ const Buy = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isLoggedIn = !!token && user.account_type === 'buyer';
+
+  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -45,13 +46,11 @@ const Buy = () => {
     return Number(value.toString().replace(/[^0-9.-]+/g, '')) || 0;
   };
 
-  // Toast Notification Function
   const showToast = (message, type = 'success', action = null) => {
     setToast({ message, type, action });
-    setTimeout(() => setToast(null), 4000); // Auto hide after 4s
+    setTimeout(() => setToast(null), 4000);
   };
 
-  // Fetch user's bookmarks
   const fetchBookmarks = useCallback(async () => {
     if (!isLoggedIn) {
       setBookmarks(new Set());
@@ -70,18 +69,14 @@ const Buy = () => {
     }
   }, [isLoggedIn, token]);
 
-  // Toggle bookmark
   const toggleBookmark = async (e, propertyId, propertyTitle) => {
     e.stopPropagation();
-
     if (!isLoggedIn) {
       navigate('/login', { state: { from: location.pathname + location.search } });
       return;
     }
-
     const wasBookmarked = bookmarks.has(propertyId);
     const method = wasBookmarked ? 'DELETE' : 'POST';
-
     try {
       const response = await fetch(`${API_BASE_URL}/api/bookmarks/${propertyId}`, {
         method,
@@ -90,7 +85,6 @@ const Buy = () => {
           'Content-Type': 'application/json'
         }
       });
-
       if (response.ok) {
         setBookmarks(prev => {
           const newSet = new Set(prev);
@@ -98,29 +92,19 @@ const Buy = () => {
           else newSet.add(propertyId);
           return newSet;
         });
-
-        // Show appropriate toast
         if (!wasBookmarked) {
-          showToast(
-            `The property has been bookmarked!`,
-            'success',
-            () => navigate('/buyer-dashboard/bookmarks')
-          );
+          showToast(`The property has been bookmarked!`, 'success', () => navigate('/buyer-dashboard/bookmarks'));
         } else {
           showToast(`"${propertyTitle}" removed from bookmarks.`, 'info');
         }
       } else {
-        const error = await response.json();
-        console.error('Bookmark error:', error);
-        showToast('Failed to update bookmark. Try again.', 'error');
+        showToast('Failed to update bookmark.', 'error');
       }
     } catch (err) {
-      console.error('Network error on bookmark:', err);
-      showToast('Network error. Please check your connection.', 'error');
+      showToast('Network error.', 'error');
     }
   };
 
-  // Memoized fetch functions
   const fetchPropertyTypes = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/properties/types`);
@@ -128,7 +112,7 @@ const Buy = () => {
       const data = await response.json();
       setPropertyTypes(['All', ...(data.propertyTypes || [])]);
     } catch (err) {
-      console.error('Property types fetch error:', err.message);
+      console.error('Property types error:', err.message);
     }
   }, []);
 
@@ -139,7 +123,7 @@ const Buy = () => {
       const data = await response.json();
       setBuilders(['All', ...(data.builders || [])]);
     } catch (err) {
-      console.error('Builders fetch error:', err.message);
+      console.error('Builders error:', err.message);
     }
   }, []);
 
@@ -152,38 +136,35 @@ const Buy = () => {
       setMaxPrice(fetchedMaxPrice);
       setSelectedMaxPrice(prev => (prev === 0 || prev > fetchedMaxPrice) ? fetchedMaxPrice : prev);
     } catch (err) {
-      console.error('Max price fetch error:', err.message);
+      console.error('Max price error:', err.message);
     }
   }, []);
 
-  const fetchProperties = useCallback(async (filters = {}) => {
+  const fetchProperties = useCallback(async (filters = {}, page = 1) => {
     setPropertyError('');
     try {
       const queryParams = new URLSearchParams();
       if (filters.location) queryParams.append('location', filters.location);
-      if (filters.minPrice > 0 || filters.maxPrice < maxPrice) {
+      if (filters.minPrice > 0 || (maxPrice > 0 && filters.maxPrice < maxPrice)) {
         queryParams.append('priceRange', `${filters.minPrice}-${filters.maxPrice}`);
       }
       if (filters.propertyType && filters.propertyType !== 'All') queryParams.append('propertyType', filters.propertyType);
       if (filters.builder && filters.builder !== 'All') queryParams.append('builder', filters.builder);
+      queryParams.append('page', page);
+      queryParams.append('limit', 12);
 
       const url = `${API_BASE_URL}/api/properties/featured?${queryParams.toString()}`;
       const response = await fetch(url);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch properties: ${response.status} - ${errorText}`);
-      }
+      if (!response.ok) throw new Error(`Failed to fetch properties`);
       const data = await response.json();
       setProperties(data.properties || []);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
-      console.error('Property fetch error:', err.message);
       setPropertyError(`Unable to load properties: ${err.message}.`);
       setProperties([]);
     }
   }, [maxPrice]);
 
-  // Initial data fetches
   useEffect(() => {
     fetchPropertyTypes();
     fetchMaxPrice();
@@ -191,45 +172,39 @@ const Buy = () => {
     fetchBookmarks();
   }, [fetchPropertyTypes, fetchMaxPrice, fetchBuilders, fetchBookmarks]);
 
-  // Handle URL params and initial load
   useEffect(() => {
     if (maxPrice === 0 && isInitialLoad.current) return;
-
     const params = new URLSearchParams(location.search);
     const initialLocation = params.get('location') || '';
     const initialPriceRange = params.get('priceRange') || '';
     const initialPropertyType = params.get('propertyType') || 'All';
     const initialBuilder = params.get('builder') || 'All';
+    const initialPage = parseInt(params.get('page')) || 1;
 
     setSearchLocation(initialLocation);
     setSelectedPropertyType(initialPropertyType);
     setSelectedBuilder(initialBuilder);
+    setCurrentPage(initialPage);
 
-    let minPriceParam = 0;
-    let maxPriceParam = maxPrice;
-
+    let min = 0, max = maxPrice;
     if (initialPriceRange) {
-      const [min, max] = initialPriceRange.split('-').map(Number);
-      minPriceParam = min || 0;
-      maxPriceParam = max || maxPrice;
+      [min, max] = initialPriceRange.split('-').map(Number);
     }
+    setSelectedMinPrice(Math.max(0, Math.min(min, maxPrice)));
+    setSelectedMaxPrice(Math.min(maxPrice, Math.max(max, 0)));
 
-    setSelectedMinPrice(Math.max(0, Math.min(minPriceParam, maxPrice)));
-    setSelectedMaxPrice(Math.min(maxPrice, Math.max(maxPriceParam, 0)));
-
-    const filters = {
+    fetchProperties({
       location: initialLocation,
-      minPrice: Math.max(0, Math.min(minPriceParam, maxPrice)),
-      maxPrice: Math.min(maxPrice, Math.max(maxPriceParam, 0)),
+      minPrice: Math.max(0, Math.min(min, maxPrice)),
+      maxPrice: Math.min(maxPrice, Math.max(max, 0)),
       propertyType: initialPropertyType,
       builder: initialBuilder,
-    };
-
-    fetchProperties(filters);
+    }, initialPage);
     isInitialLoad.current = false;
   }, [fetchProperties, location.search, maxPrice]);
 
   const applyFilters = useCallback(() => {
+    setCurrentPage(1);
     const filters = {
       location: searchLocation,
       minPrice: selectedMinPrice,
@@ -237,31 +212,23 @@ const Buy = () => {
       propertyType: selectedPropertyType,
       builder: selectedBuilder,
     };
-    fetchProperties(filters);
-
+    fetchProperties(filters, 1);
     const queryParams = new URLSearchParams();
     if (searchLocation) queryParams.append('location', searchLocation);
-    if (selectedMinPrice > 0 || selectedMaxPrice < maxPrice) {
-      queryParams.append('priceRange', `${selectedMinPrice}-${selectedMaxPrice}`);
-    }
-    if (selectedPropertyType && selectedPropertyType !== 'All') queryParams.append('propertyType', selectedPropertyType);
-    if (selectedBuilder && selectedBuilder !== 'All') queryParams.append('builder', selectedBuilder);
+    if (selectedMinPrice > 0 || selectedMaxPrice < maxPrice) queryParams.append('priceRange', `${selectedMinPrice}-${selectedMaxPrice}`);
+    if (selectedPropertyType !== 'All') queryParams.append('propertyType', selectedPropertyType);
+    if (selectedBuilder !== 'All') queryParams.append('builder', selectedBuilder);
+    queryParams.append('page', '1');
     navigate(`/buy?${queryParams.toString()}`);
-
     setIsSidebarOpen(false);
   }, [searchLocation, selectedMinPrice, selectedMaxPrice, selectedPropertyType, selectedBuilder, maxPrice, fetchProperties, navigate]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    applyFilters();
-  };
-
-  const handlePropertyClick = (id) => {
-    navigate(`/property/${id}`);
-  };
+  const handleSearch = (e) => { e.preventDefault(); applyFilters(); };
+  const handlePropertyClick = (id) => navigate(`/property/${id}`);
 
   const updateFiltersAndNavigate = useCallback((newFilters) => {
-    const combinedFilters = {
+    setCurrentPage(1);
+    const combined = {
       location: searchLocation,
       minPrice: selectedMinPrice,
       maxPrice: selectedMaxPrice,
@@ -269,22 +236,17 @@ const Buy = () => {
       builder: selectedBuilder,
       ...newFilters,
     };
-    fetchProperties(combinedFilters);
-
+    fetchProperties(combined, 1);
     const queryParams = new URLSearchParams();
-    if (combinedFilters.location) queryParams.append('location', combinedFilters.location);
-    if (combinedFilters.minPrice > 0 || combinedFilters.maxPrice < maxPrice) {
-      queryParams.append('priceRange', `${combinedFilters.minPrice}-${combinedFilters.maxPrice}`);
-    }
-    if (combinedFilters.propertyType && combinedFilters.propertyType !== 'All') queryParams.append('propertyType', combinedFilters.propertyType);
-    if (combinedFilters.builder && combinedFilters.builder !== 'All') queryParams.append('builder', combinedFilters.builder);
+    if (combined.location) queryParams.append('location', combined.location);
+    if (combined.minPrice > 0 || combined.maxPrice < maxPrice) queryParams.append('priceRange', `${combined.minPrice}-${combined.maxPrice}`);
+    if (combined.propertyType !== 'All') queryParams.append('propertyType', combined.propertyType);
+    if (combined.builder !== 'All') queryParams.append('builder', combined.builder);
+    queryParams.append('page', '1');
     navigate(`/buy?${queryParams.toString()}`);
   }, [searchLocation, selectedMinPrice, selectedMaxPrice, selectedPropertyType, selectedBuilder, maxPrice, fetchProperties, navigate]);
 
-  const clearLocation = () => {
-    setSearchLocation('');
-    updateFiltersAndNavigate({ location: '' });
-  };
+  const clearLocation = () => { setSearchLocation(''); updateFiltersAndNavigate({ location: '' }); };
 
   const resetFilters = useCallback(() => {
     setSearchLocation('');
@@ -292,52 +254,50 @@ const Buy = () => {
     setSelectedBuilder('All');
     setSelectedMinPrice(0);
     setSelectedMaxPrice(maxPrice);
-
+    setCurrentPage(1);
     navigate('/buy', { replace: true });
-    fetchProperties({
-      location: '',
-      minPrice: 0,
-      maxPrice,
-      propertyType: 'All',
-      builder: 'All',
-    });
+    fetchProperties({ location: '', minPrice: 0, maxPrice, propertyType: 'All', builder: 'All' }, 1);
     setIsSidebarOpen(false);
   }, [maxPrice, fetchProperties, navigate]);
 
-  // Slider handlers
-  const handleMinPriceChange = (e) => {
-    const newMin = Number(e.target.value);
-    setSelectedMinPrice(Math.min(newMin, selectedMaxPrice));
-  };
-
-  const handleMaxPriceChange = (e) => {
-    const newMax = Number(e.target.value);
-    setSelectedMaxPrice(Math.max(newMax, selectedMinPrice));
-  };
+  const handleMinPriceChange = (e) => setSelectedMinPrice(Math.min(Number(e.target.value), selectedMaxPrice));
+  const handleMaxPriceChange = (e) => setSelectedMaxPrice(Math.max(Number(e.target.value), selectedMinPrice));
 
   const handleMinPriceInputChange = (e) => {
-    const rawValue = e.target.value;
-    const numericValue = parseCurrency(rawValue);
-    const clampedValue = Math.max(0, Math.min(numericValue, selectedMaxPrice, maxPrice));
-    setSelectedMinPrice(clampedValue);
+    const val = parseCurrency(e.target.value);
+    setSelectedMinPrice(Math.max(0, Math.min(val, selectedMaxPrice, maxPrice)));
   };
 
   const handleMaxPriceInputChange = (e) => {
-    const rawValue = e.target.value;
-    const numericValue = parseCurrency(rawValue);
-    const clampedValue = Math.min(maxPrice, Math.max(numericValue, selectedMinPrice, 0));
-    setSelectedMaxPrice(clampedValue);
+    const val = parseCurrency(e.target.value);
+    setSelectedMaxPrice(Math.min(maxPrice, Math.max(val, selectedMinPrice, 0)));
   };
 
-  const handleMinPriceBlur = () => {
-    if (selectedMinPrice > selectedMaxPrice) {
-      setSelectedMinPrice(selectedMaxPrice);
-    }
-  };
+  const handleMinPriceBlur = () => { if (selectedMinPrice > selectedMaxPrice) setSelectedMinPrice(selectedMaxPrice); };
+  const handleMaxPriceBlur = () => { if (selectedMaxPrice < selectedMinPrice) setSelectedMaxPrice(selectedMinPrice); };
 
-  const handleMaxPriceBlur = () => {
-    if (selectedMaxPrice < selectedMinPrice) {
-      setSelectedMaxPrice(selectedMinPrice);
+  const handlePageChange = (page) => {
+    if (page < 1 || page > pagination.totalPages) return;
+    setCurrentPage(page);
+    const filters = { 
+      location: searchLocation, 
+      minPrice: selectedMinPrice, 
+      maxPrice: selectedMaxPrice, 
+      propertyType: selectedPropertyType, 
+      builder: selectedBuilder 
+    };
+    fetchProperties(filters, page);
+    const queryParams = new URLSearchParams();
+    if (searchLocation) queryParams.append('location', searchLocation);
+    if (selectedMinPrice > 0 || selectedMaxPrice < maxPrice) queryParams.append('priceRange', `${selectedMinPrice}-${selectedMaxPrice}`);
+    if (selectedPropertyType !== 'All') queryParams.append('propertyType', selectedPropertyType);
+    if (selectedBuilder !== 'All') queryParams.append('builder', selectedBuilder);
+    queryParams.append('page', page);
+    navigate(`/buy?${queryParams.toString()}`);
+    const listingsElement = document.getElementById('search-results');
+    if (listingsElement) {
+      const offset = listingsElement.getBoundingClientRect().top + window.pageYOffset - HEADER_HEIGHT - 20;
+      window.scrollTo({ top: offset, behavior: 'smooth' });
     }
   };
 
@@ -347,7 +307,7 @@ const Buy = () => {
       <main style={{ paddingTop: HEADER_HEIGHT }}>
         <OngoingEventsMarquee />
         <section className="pt-8 sm:pt-10 pb-16 px-4 sm:px-6 md:px-12 lg:px-20 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between md:justify-center mb-10">
+          <div id="search-results" className="flex items-center justify-between md:justify-center mb-10">
             <div className="md:hidden">
               <button
                 type="button"
@@ -704,7 +664,7 @@ const Buy = () => {
 
                     {/* Bookmark Icon — top right */}
                     <button
-                      onClick={(e) => toggleBookmark(e, listing.id)}
+                      onClick={(e) => toggleBookmark(e, listing.id, listing.title)}
                       className="absolute top-3 right-3 p-2.5 rounded-full transition-all duration-300 z-10 hover:scale-110"
                       style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
                       title={bookmarks.has(listing.id) ? "Remove from bookmarks" : "Add to bookmarks"}
@@ -786,6 +746,81 @@ const Buy = () => {
               )
             )}
           </motion.div>
+
+          {/* Modern Pagination UI */}
+          {pagination.totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-16 flex flex-col items-center gap-6"
+            >
+              <div className="flex items-center gap-2 sm:gap-3 bg-white/50 backdrop-blur-md p-2 rounded-2xl border border-gray-100 shadow-xl">
+                {/* Previous Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl transition-all duration-300 ${
+                    currentPage === 1 
+                      ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
+                      : 'text-[#2e6171] hover:bg-[#2e6171] hover:text-white bg-white shadow-sm hover:shadow-lg active:scale-95'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <i className="fa-solid fa-chevron-left"></i>
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => {
+                    // Show first, last, current, and pages around current
+                    if (
+                      page === 1 || 
+                      page === pagination.totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-sm sm:text-base font-bold transition-all duration-300 ${
+                            currentPage === page
+                              ? 'bg-[#2e6171] text-white shadow-lg scale-110 z-10'
+                              : 'text-[#011936] hover:bg-[#2e6171]/10 bg-transparent'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    } else if (
+                      (page === 2 && currentPage > 3) || 
+                      (page === pagination.totalPages - 1 && currentPage < pagination.totalPages - 2)
+                    ) {
+                      return (
+                        <span key={page} className="w-6 h-10 sm:w-8 flex items-center justify-center text-gray-400 font-bold">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === pagination.totalPages}
+                  className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl transition-all duration-300 ${
+                    currentPage === pagination.totalPages 
+                      ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
+                      : 'text-[#2e6171] hover:bg-[#2e6171] hover:text-white bg-white shadow-sm hover:shadow-lg active:scale-95'
+                  }`}
+                  aria-label="Next page"
+                >
+                  <i className="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </motion.div>
+          )}
         </section>
       </main>
       <Footer />

@@ -1,4 +1,3 @@
-// src/components/ViewEnquiries.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
@@ -12,9 +11,8 @@ import {
 } from "react-icons/fa";
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
+import Pagination from '../common/Pagination.jsx';
 
-
-const ITEMS_PER_PAGE = 10;
 
 const ViewEnquiries = () => {
   const [enquiries, setEnquiries] = useState([]);
@@ -22,6 +20,7 @@ const ViewEnquiries = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [deletingId, setDeletingId] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [enquiryToDelete, setEnquiryToDelete] = useState(null);
@@ -52,9 +51,15 @@ const ViewEnquiries = () => {
     );
   }, [searchTerm, enquiries]);
 
-  const totalPages = Math.ceil(filteredEnquiries.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedEnquiries = filteredEnquiries.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const paginatedEnquiries = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredEnquiries.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredEnquiries, currentPage]);
 
   const handleDelete = (id) => {
     setEnquiryToDelete(id);
@@ -128,9 +133,9 @@ const ViewEnquiries = () => {
         )}
 
         {!loading && !error && filteredEnquiries.length > 0 && (
-          <>
+          <div className="flex flex-col h-full uppercase">
             {/* Desktop Table View */}
-            <div className="hidden xl:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto flex-1">
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
@@ -141,107 +146,96 @@ const ViewEnquiries = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {paginatedEnquiries.map((enquiry, index) => (
-                    <tr key={enquiry.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
-                        {String(startIndex + index + 1).padStart(2, '0')}
-                      </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
-                        <div className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-                          <FaUser className="text-teal-600 text-[10px]" /> {enquiry.name}
-                        </div>
-                        <div className="text-xs text-gray-500 flex items-center gap-2">
-                          <FaEnvelope className="text-[10px]" /> {enquiry.email}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 border-b border-gray-100">
-                        <div className="text-sm text-gray-700 line-clamp-2 italic mb-2">"{enquiry.message}"</div>
-                        <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold">
-                          <FaClock /> {new Date(enquiry.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right border-b border-gray-100">
-                        <button
-                          onClick={() => handleDelete(enquiry.id)}
-                          disabled={deletingId === enquiry.id}
-                          className={`p-2 rounded-lg transition-all ${deletingId === enquiry.id
-                            ? "opacity-50 cursor-not-allowed"
-                            : "text-red-500 hover:bg-red-50"
-                            }`}
-                          title="Delete Enquiry"
-                        >
-                          <FaTrash size={16} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {paginatedEnquiries.map((enquiry, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                    return (
+                      <tr key={enquiry.id} className="hover:bg-gray-50/80 transition-colors group">
+                        <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                          {String(globalIndex).padStart(2, '0')}
+                        </td>
+                        <td className="px-6 py-5 border-b border-gray-100">
+                          <div className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                            <FaUser className="text-teal-600 text-[10px]" /> {enquiry.name}
+                          </div>
+                          <div className="text-xs text-gray-500 flex items-center gap-2">
+                            <FaEnvelope className="text-[10px]" /> {enquiry.email}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 border-b border-gray-100">
+                          <div className="text-sm text-gray-700 line-clamp-2 italic mb-2">"{enquiry.message}"</div>
+                          <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold">
+                            <FaClock /> {new Date(enquiry.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-right border-b border-gray-100">
+                          <button
+                            onClick={() => handleDelete(enquiry.id)}
+                            disabled={deletingId === enquiry.id}
+                            className={`p-2 rounded-lg transition-all ${deletingId === enquiry.id
+                              ? "opacity-50 cursor-not-allowed"
+                              : "text-red-500 hover:bg-red-50"
+                              }`}
+                            title="Delete Enquiry"
+                          >
+                            <FaTrash size={16} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4">
-              {paginatedEnquiries.map((enquiry, index) => (
-                <div key={enquiry.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
-                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" title="Enquiry Number">
-                        {startIndex + index + 1}
+            <div className="xl:hidden p-4 space-y-4 flex-1">
+              {paginatedEnquiries.map((enquiry, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
+                  <div key={enquiry.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" title="Enquiry Number">
+                          {globalIndex}
+                        </div>
+                        <div className="font-bold text-gray-900 truncate max-w-[150px]">{enquiry.name}</div>
                       </div>
-                      <div className="font-bold text-gray-900 truncate max-w-[150px]">{enquiry.name}</div>
+                      <button
+                        onClick={() => handleDelete(enquiry.id)}
+                        disabled={deletingId === enquiry.id}
+                        className="text-red-500 hover:bg-red-50 p-1 rounded-md transition"
+                      >
+                        <FaTrash size={14} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleDelete(enquiry.id)}
-                      disabled={deletingId === enquiry.id}
-                      className="text-red-500 hover:bg-red-50 p-1 rounded-md transition"
-                    >
-                      <FaTrash size={14} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
-                    </button>
-                  </div>
 
-                  <div className="text-sm text-gray-600 space-y-2">
-                    <div className="flex items-center gap-2 text-xs">
-                      <FaEnvelope className="text-gray-400" />
-                      <span className="truncate">{enquiry.email}</span>
-                    </div>
-                    <div className="bg-white p-3 rounded-lg border border-gray-200 text-sm italic py-2">
-                      "{enquiry.message}"
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold justify-end">
-                      <FaClock /> {new Date(enquiry.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                    <div className="text-sm text-gray-600 space-y-2">
+                      <div className="flex items-center gap-2 text-xs">
+                        <FaEnvelope className="text-gray-400" />
+                        <span className="truncate">{enquiry.email}</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg border border-gray-200 text-sm italic py-2">
+                        "{enquiry.message}"
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold justify-end">
+                        <FaClock /> {new Date(enquiry.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </>
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredEnquiries.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
 
-      {/* Pagination - Simplified Aligned with ViewEvents Layout */}
-      {!loading && totalPages > 1 && (
-        <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200 bg-gray-50/50">
-          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredEnquiries.length)} of {filteredEnquiries.length}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-100 disabled:opacity-50 transition-all"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-100 disabled:opacity-50 transition-all"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
       <DeleteDialog
         isOpen={showDeleteDialog}
         onConfirm={confirmDelete}

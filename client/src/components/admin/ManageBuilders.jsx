@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config.js";
+import Pagination from "../common/Pagination.jsx";
 import {
   FaSearch,
   FaSpinner,
@@ -24,6 +25,8 @@ const ManageBuilders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "created_at", direction: "desc" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,6 +68,16 @@ const ManageBuilders = () => {
     }
     return result;
   }, [builders, searchQuery, sortConfig]);
+
+  // Reset page when search or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortConfig]);
+
+  const paginatedBuilders = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedBuilders.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedBuilders, currentPage]);
 
   const requestSort = (key) => {
     let direction = "asc";
@@ -114,9 +127,9 @@ const ManageBuilders = () => {
         )}
 
         {!loading && !error && filteredAndSortedBuilders.length > 0 && (
-          <>
+          <div className="flex flex-col h-full">
             {/* Desktop Table View */}
-            <div className="hidden xl:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto flex-1">
               <table className="w-full border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
@@ -135,86 +148,99 @@ const ManageBuilders = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredAndSortedBuilders.map((builder, index) => (
-                    <tr key={builder.id || index} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-2 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
-                        {String(index + 1).padStart(2, '0')}
-                      </td>
-                      <td className="px-3 py-3 border-b border-gray-100">
-                        <button
-                          onClick={() => navigate('/admin-dashboard/manage-properties', { state: { builderFilter: builder.name } })}
-                          className="font-bold text-gray-900 flex items-center gap-2 hover:text-teal-600 transition-colors group/name whitespace-nowrap text-left"
-                        >
-                          <FaBuilding className="text-teal-600 text-xs shrink-0 group-hover/name:scale-110 transition-transform" />
-                          <span className="hover:underline decoration-teal-500/30 decoration-2 underline-offset-4">{builder.name}</span>
-                        </button>
-                      </td>
-                      <td className="px-3 py-3 border-b border-gray-100 text-sm text-gray-700">
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <FaPhoneAlt className="text-[10px] text-gray-400 shrink-0" /> {builder.mobile_number || "—"}
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 border-b border-gray-100 text-sm text-gray-500">
-                        <div className="flex items-center gap-2" title={builder.email}>
-                          <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> <span className="break-all">{builder.email || "—"}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 border-b border-gray-100 text-center">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-bold">
-                          <FaCubes className="text-[10px]" />
-                          {builder.total_quantity ?? 0}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-center border-b border-gray-100">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                          {new Date(builder.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {paginatedBuilders.map((builder, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                    return (
+                      <tr key={builder.id || index} className="hover:bg-gray-50/80 transition-colors group">
+                        <td className="px-2 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
+                          {String(globalIndex).padStart(2, '0')}
+                        </td>
+                        <td className="px-3 py-3 border-b border-gray-100">
+                          <button
+                            onClick={() => navigate('/admin-dashboard/manage-properties', { state: { builderFilter: builder.name } })}
+                            className="font-bold text-gray-900 flex items-center gap-2 hover:text-teal-600 transition-colors group/name whitespace-nowrap text-left"
+                          >
+                            <FaBuilding className="text-teal-600 text-xs shrink-0 group-hover/name:scale-110 transition-transform" />
+                            <span className="hover:underline decoration-teal-500/30 decoration-2 underline-offset-4">{builder.name}</span>
+                          </button>
+                        </td>
+                        <td className="px-3 py-3 border-b border-gray-100 text-sm text-gray-700">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <FaPhoneAlt className="text-[10px] text-gray-400 shrink-0" /> {builder.mobile_number || "—"}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 border-b border-gray-100 text-sm text-gray-500">
+                          <div className="flex items-center gap-2" title={builder.email}>
+                            <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> <span className="break-all">{builder.email || "—"}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 border-b border-gray-100 text-center">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-bold">
+                            <FaCubes className="text-[10px]" />
+                            {builder.total_quantity ?? 0}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-center border-b border-gray-100">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                            {new Date(builder.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4">
-              {filteredAndSortedBuilders.map((builder, index) => (
-                <div key={builder.id || index} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
-                  <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
-                        {index + 1}
+            <div className="xl:hidden p-4 space-y-4 flex-1">
+              {paginatedBuilders.map((builder, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
+                  <div key={builder.id || index} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                          {globalIndex}
+                        </div>
+                        <button
+                          onClick={() => navigate('/admin-dashboard/manage-properties', { state: { builderFilter: builder.name } })}
+                          className="font-bold text-gray-900 truncate max-w-[200px] hover:text-teal-600 transition-colors text-left"
+                        >
+                          {builder.name}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => navigate('/admin-dashboard/manage-properties', { state: { builderFilter: builder.name } })}
-                        className="font-bold text-gray-900 truncate max-w-[200px] hover:text-teal-600 transition-colors text-left"
-                      >
-                        {builder.name}
-                      </button>
+                      <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-bold uppercase">
+                        {new Date(builder.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}
+                      </span>
                     </div>
-                    <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-bold uppercase">
-                      {new Date(builder.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}
-                    </span>
-                  </div>
 
-                  <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <FaPhoneAlt className="text-gray-400 text-xs" />
-                      <span>{builder.mobile_number || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FaEnvelope className="text-gray-400 text-xs shrink-0" />
-                      <span className="break-all">{builder.email || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FaCubes className="text-teal-500 text-xs" />
-                      <span className="font-semibold text-teal-700">{builder.total_quantity ?? 0} units</span>
+                    <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <FaPhoneAlt className="text-gray-400 text-xs" />
+                        <span>{builder.mobile_number || "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FaEnvelope className="text-gray-400 text-xs shrink-0" />
+                        <span className="break-all">{builder.email || "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FaCubes className="text-teal-500 text-xs" />
+                        <span className="font-semibold text-teal-700">{builder.total_quantity ?? 0} units</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </>
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredAndSortedBuilders.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
     </div>

@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { FaSearch, FaInfoCircle, FaHome, FaHistory, FaHashtag, FaLayerGroup, FaTags, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
+import React, { useState, useEffect, useMemo } from 'react';
+import { FaSearch, FaInfoCircle, FaHistory, FaArrowLeft } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 import { useNavigate } from 'react-router-dom';
+import Pagination from '../common/Pagination.jsx';
 
 const SoldProperties = () => {
     const [soldProperties, setSoldProperties] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -36,12 +39,24 @@ const SoldProperties = () => {
         fetchSoldProperties();
     }, [navigate]);
 
-    const filteredSold = soldProperties.filter(p =>
-        (p.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.property_type || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.apartment_type || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.block_name || "").toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredSold = useMemo(() => {
+        return soldProperties.filter(p =>
+            (p.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.property_type || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.apartment_type || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.block_name || "").toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [soldProperties, searchQuery]);
+
+    // Reset page when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
+    const paginatedSold = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredSold.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredSold, currentPage]);
 
     return (
         <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
@@ -99,9 +114,9 @@ const SoldProperties = () => {
                 )}
 
                 {!loading && filteredSold.length > 0 && (
-                    <>
+                    <div className="flex flex-col h-full uppercase">
                         {/* Desktop View - Shows from 1280px (xl) up */}
-                        <div className="hidden xl:block overflow-x-auto bg-white">
+                        <div className="hidden xl:block overflow-x-auto bg-white flex-1">
                             <table className="w-full border-separate border-spacing-0">
                                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                                     <tr>
@@ -115,95 +130,105 @@ const SoldProperties = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white">
-                                    {filteredSold.map((property, index) => (
-                                        <tr key={`${property.id}-${index}`} className="hover:bg-gray-50/80 transition-colors group">
-                                            <td className="px-6 py-4 text-sm font-mono text-gray-400 border-b border-gray-100">
-                                                {String(index + 1).padStart(2, '0')}
-                                            </td>
-                                            <td className="px-6 py-4 border-b border-gray-100">
-                                                <div className="font-bold text-gray-800 text-sm group-hover:text-teal-700 transition-colors">
-                                                    {property.title}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center border-b border-gray-100">
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase tracking-tight">
-                                                    {property.property_type}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center border-b border-gray-100">
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-600 rounded text-[10px] font-bold uppercase tracking-tight border border-purple-100/50 whitespace-nowrap">
-                                                    {property.block_name ? `${property.block_name} - ` : ''}{property.apartment_type || 'N/A'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center border-b border-gray-100">
-                                                <div className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-600 rounded text-[10px] font-bold">
-                                                    <span>{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right border-b border-gray-100">
-                                                <div className="inline-flex items-center gap-0.5 px-2.5 py-1 bg-green-50 text-green-700 rounded text-[12px] font-bold whitespace-nowrap border border-green-100">
-                                                    <span className="text-[10px] opacity-70">₹</span>
-                                                    <span>{property.price ? Math.floor(property.price).toLocaleString('en-IN') : 'N/A'}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center border-b border-gray-100">
-                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 rounded-full font-bold text-sm">
-                                                    {property.sold}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {paginatedSold.map((property, index) => {
+                                        const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                                        return (
+                                            <tr key={`${property.id}-${index}`} className="hover:bg-gray-50/80 transition-colors group">
+                                                <td className="px-6 py-4 text-sm font-mono text-gray-400 border-b border-gray-100">
+                                                    {String(globalIndex).padStart(2, '0')}
+                                                </td>
+                                                <td className="px-6 py-4 border-b border-gray-100">
+                                                    <div className="font-bold text-gray-800 text-sm group-hover:text-teal-700 transition-colors">
+                                                        {property.title}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-center border-b border-gray-100">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase tracking-tight">
+                                                        {property.property_type}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-center border-b border-gray-100">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-600 rounded text-[10px] font-bold uppercase tracking-tight border border-purple-100/50 whitespace-nowrap">
+                                                        {property.block_name ? `${property.block_name} - ` : ''}{property.apartment_type || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-center border-b border-gray-100">
+                                                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-600 rounded text-[10px] font-bold">
+                                                        <span>{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-right border-b border-gray-100">
+                                                    <div className="inline-flex items-center gap-0.5 px-2.5 py-1 bg-green-50 text-green-700 rounded text-[12px] font-bold whitespace-nowrap border border-green-100">
+                                                        <span className="text-[10px] opacity-70">₹</span>
+                                                        <span>{property.price ? Math.floor(property.price).toLocaleString('en-IN') : 'N/A'}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-center border-b border-gray-100">
+                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 rounded-full font-bold text-sm">
+                                                        {property.sold}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
 
                         {/* Mobile/Tablet View - Compact Card Layout (Below 1280px) */}
-                        <div className="xl:hidden p-4 space-y-4">
-                            {filteredSold.map((property, index) => (
-                                <div key={`${property.id}-${index}`} className="bg-white rounded-2xl p-4 border border-teal-100/50 shadow-sm hover:shadow-md hover:border-teal-300 transition-all group">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex gap-4">
-                                            <div className="bg-teal-50 text-teal-500 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ring-4 ring-teal-50/30">
-                                                {index + 1}
+                        <div className="xl:hidden p-4 space-y-4 flex-1">
+                            {paginatedSold.map((property, index) => {
+                                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                                return (
+                                    <div key={`${property.id}-${index}`} className="bg-white rounded-2xl p-4 border border-teal-100/50 shadow-sm hover:shadow-md hover:border-teal-300 transition-all group">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex gap-4">
+                                                <div className="bg-teal-50 text-teal-500 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ring-4 ring-teal-50/30">
+                                                    {globalIndex}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-2 group-hover:text-teal-600 transition-colors uppercase tracking-tight">
+                                                        {property.title}
+                                                    </h3>
+                                                    <div className="flex flex-wrap gap-2 items-center">
+                                                        <span className="text-[9px] font-bold bg-gray-50 px-2 py-0.5 rounded border border-gray-200 text-gray-500 uppercase">
+                                                            {property.property_type}
+                                                        </span>
+                                                        <span className="text-[9px] font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-100 text-purple-600 uppercase">
+                                                            {property.block_name ? `Block ${property.block_name} - ` : ''}{property.apartment_type}
+                                                        </span>
+                                                        <span className="text-[9px] font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-100 text-amber-600 uppercase">
+                                                            {property.sqft?.toLocaleString('en-IN')} sq.ft
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-2 group-hover:text-teal-600 transition-colors uppercase tracking-tight">
-                                                    {property.title}
-                                                </h3>
-                                                <div className="flex flex-wrap gap-2 items-center">
-                                                    <span className="text-[9px] font-bold bg-gray-50 px-2 py-0.5 rounded border border-gray-200 text-gray-500 uppercase">
-                                                        {property.property_type}
+                                            <div className="text-right shrink-0">
+                                                <div className="flex items-center justify-end gap-1 mb-2">
+                                                    <span className="text-xs text-green-600 font-bold">₹</span>
+                                                    <span className="text-xl font-black text-green-600 tracking-tight">
+                                                        {property.price ? Math.floor(property.price).toLocaleString('en-IN') : 'N/A'}
                                                     </span>
-                                                    <span className="text-[9px] font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-100 text-purple-600 uppercase">
-                                                        {property.block_name ? `Block ${property.block_name} - ` : ''}{property.apartment_type}
-                                                    </span>
-                                                    <span className="text-[9px] font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-100 text-amber-600 uppercase">
-                                                        {property.sqft?.toLocaleString('en-IN')} sq.ft
-                                                    </span>
+                                                </div>
+                                                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-teal-600 text-white rounded-md font-bold text-[10px] shadow-sm uppercase">
+                                                    {property.sold} SOLD
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="text-right shrink-0">
-                                            <div className="flex items-center justify-end gap-1 mb-2">
-                                                <span className="text-xs text-green-600 font-bold">₹</span>
-                                                <span className="text-xl font-black text-green-600 tracking-tight">
-                                                    {property.price ? Math.floor(property.price).toLocaleString('en-IN') : 'N/A'}
-                                                </span>
-                                            </div>
-                                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-teal-600 text-white rounded-md font-bold text-[10px] shadow-sm uppercase">
-                                                {property.sold} SOLD
-                                            </div>
-                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
-                    </>
+
+                        <Pagination
+                            currentPage={currentPage}
+                            totalItems={filteredSold.length}
+                            itemsPerPage={itemsPerPage}
+                            onPageChange={setCurrentPage}
+                        />
+                    </div>
                 )}
             </div>
-
-            {/* Footer shadow/overlay to indicate more content */}
-            <div className="h-4 bg-gradient-to-t from-gray-50/50 to-transparent pointer-events-none sticky bottom-0"></div>
         </div>
     );
 };
