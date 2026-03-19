@@ -280,6 +280,7 @@ const getDashboardStats = async (req, res) => {
     const [builderCount] = await pool.query("SELECT COUNT(*) as total FROM builders");
     const [propertyCount] = await pool.query("SELECT COUNT(*) as total FROM properties");
     const [eventCount] = await pool.query("SELECT COUNT(*) as total FROM property_events");
+    const [blogCount] = await pool.query("SELECT COUNT(*) as total FROM blogs");
 
     // 2. Get Month-wise Registrations (Last 6 Months)
     // This query generates a list of counts grouped by month
@@ -303,7 +304,8 @@ const getDashboardStats = async (req, res) => {
         users: userCount[0].total,
         builders: builderCount[0].total,
         properties: propertyCount[0].total,
-        events: eventCount[0].total
+        events: eventCount[0].total,
+        blogs: blogCount[0].total
       },
       monthlyStats
     });

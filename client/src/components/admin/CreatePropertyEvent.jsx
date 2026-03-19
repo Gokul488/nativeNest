@@ -2,19 +2,67 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import API_BASE_URL from "../../config.js";
 import {
-  FaArrowLeft,
-  FaCalendarAlt,
-  FaExclamationTriangle,
-  FaCheckCircle,
-  FaCloudUploadAlt,
-  FaImage,
-  FaMapMarkerAlt,
-  FaPhoneAlt,
-  FaUser
-} from 'react-icons/fa';
-import API_BASE_URL from '../../config.js';
+  ArrowLeft, CalendarDays, AlertTriangle, CheckCircle2,
+  CloudUpload, Image, MapPin, Phone, User, Bell, Search, Loader2,
+} from "lucide-react";
 
+// ─── Shared style constants ───────────────────────────────────────────────────
+const inputCls = "w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm text-slate-700 placeholder:text-slate-400";
+const labelCls = "block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1";
+
+// ─── Section component ────────────────────────────────────────────────────────
+const Section = ({ icon, title, children }) => (
+  <div>
+    <div className="flex items-center gap-2 mb-3">
+      {icon}
+      <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">{title}</span>
+    </div>
+    <div className="space-y-3">{children}</div>
+  </div>
+);
+
+// ─── Notification user list ───────────────────────────────────────────────────
+const NotifyList = ({ list, selectedIds, searchTerm, onSearch, onToggle, onToggleAll }) => (
+  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+    <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 space-y-2">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => onSearch(e.target.value)}
+          className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:border-indigo-400 bg-white"
+        />
+      </div>
+      <div className="flex justify-between items-center text-[10px] font-bold uppercase text-slate-400">
+        <span>{selectedIds.length} selected</span>
+        <button type="button" onClick={onToggleAll} className="text-indigo-500 hover:text-indigo-700 transition-colors">
+          {selectedIds.length === list.length ? "Deselect All" : "Select All"}
+        </button>
+      </div>
+    </div>
+    <div className="max-h-44 overflow-y-auto p-1.5 space-y-0.5">
+      {list.map((item) => (
+        <div
+          key={item.id}
+          onClick={() => onToggle(item.id)}
+          className={`flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition-colors ${selectedIds.includes(item.id) ? "bg-indigo-50" : "hover:bg-slate-50"}`}
+        >
+          <div>
+            <p className="text-xs font-bold text-slate-800 leading-none">{item.name}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">{item.email}</p>
+          </div>
+          {selectedIds.includes(item.id) && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ─── Component ────────────────────────────────────────────────────────────────
 const CreatePropertyEvent = () => {
   const navigate = useNavigate();
 
@@ -48,25 +96,20 @@ const CreatePropertyEvent = () => {
   const [searchTermBuilders, setSearchTermBuilders] = useState("");
   const [searchTermBuyers, setSearchTermBuyers] = useState("");
 
-  const fetchUsersAndBuilders = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const [buildersRes, buyersRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/builders`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API_BASE_URL}/api/admin/users`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-      ]);
-      setAllBuilders(buildersRes.data);
-      setAllBuyers(buyersRes.data);
-    } catch (err) {
-      console.error("Failed to fetch users/builders", err);
-    }
-  };
-
   React.useEffect(() => {
+    const fetchUsersAndBuilders = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const [buildersRes, buyersRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/admin/builders`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${API_BASE_URL}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        setAllBuilders(buildersRes.data);
+        setAllBuyers(buyersRes.data);
+      } catch (err) {
+        console.error("Failed to fetch users/builders", err);
+      }
+    };
     fetchUsersAndBuilders();
   }, []);
 
@@ -74,83 +117,38 @@ const CreatePropertyEvent = () => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : name === "stall_count"
-            ? parseInt(value) || 0
-            : value,
+      [name]: type === "checkbox" ? checked : name === "stall_count" ? parseInt(value) || 0 : value,
     }));
   };
 
-  const toggleBuilderSelection = (id) => {
-    setSelectedBuilderIds(prev =>
-      prev.includes(id) ? prev.filter(bId => bId !== id) : [...prev, id]
-    );
-  };
-
-  const toggleBuyerSelection = (id) => {
-    setSelectedBuyerIds(prev =>
-      prev.includes(id) ? prev.filter(bId => bId !== id) : [...prev, id]
-    );
-  };
+  const toggleBuilderSelection = (id) => setSelectedBuilderIds((prev) => prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]);
+  const toggleBuyerSelection = (id) => setSelectedBuyerIds((prev) => prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]);
 
   const handleBannerImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image size exceeds 5MB limit');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBannerImage(file);
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError("Image size exceeds 5MB limit"); return; }
+    const reader = new FileReader();
+    reader.onloadend = () => { setBannerImage(file); setPreviewUrl(reader.result); };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-    setIsSubmitting(true);
-
+    setError(""); setSuccess(""); setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
+      if (!token) { navigate("/login"); return; }
       const data = new FormData();
-      for (const key in formData) {
-        data.append(key, formData[key]);
-      }
-
-      data.append('selected_builders', JSON.stringify(selectedBuilderIds));
-      data.append('selected_buyers', JSON.stringify(selectedBuyerIds));
-
-      if (bannerImage) {
-        data.append('banner_image', bannerImage);
-      }
-
-      await axios.post(
-        `${API_BASE_URL}/api/admin/events`,
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          },
-        }
-      );
-
+      for (const key in formData) data.append(key, formData[key]);
+      data.append("selected_builders", JSON.stringify(selectedBuilderIds));
+      data.append("selected_buyers", JSON.stringify(selectedBuyerIds));
+      if (bannerImage) data.append("banner_image", bannerImage);
+      await axios.post(`${API_BASE_URL}/api/admin/events`, data, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+      });
       setSuccess("Event created successfully!");
-      setTimeout(() => {
-        navigate("/admin-dashboard");
-      }, 1500);
+      setTimeout(() => navigate("/admin-dashboard"), 1500);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to create event. Please try again.");
     } finally {
@@ -158,316 +156,222 @@ const CreatePropertyEvent = () => {
     }
   };
 
+  const filteredBuilders = allBuilders.filter((b) =>
+    b.name.toLowerCase().includes(searchTermBuilders.toLowerCase()) || b.email?.toLowerCase().includes(searchTermBuilders.toLowerCase())
+  );
+  const filteredBuyers = allBuyers.filter((b) =>
+    b.name.toLowerCase().includes(searchTermBuyers.toLowerCase()) || b.email?.toLowerCase().includes(searchTermBuyers.toLowerCase())
+  );
+
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
-      {/* Top Header - Consistent with Add Blog */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            to="/admin-dashboard"
-            className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600"
-          >
-            <FaArrowLeft />
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col" style={{ fontFamily: '"Inter", sans-serif' }}>
+
+      {/* ── Header ── */}
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Link to="/admin-dashboard" className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all">
+            <ArrowLeft className="w-3.5 h-3.5" />
           </Link>
+          <div className="w-8 h-8 bg-sky-50 rounded-lg flex items-center justify-center">
+            <CalendarDays className="w-4 h-4 text-sky-500" />
+          </div>
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight leading-tight">Create Property Event</h2>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Event Management System</p>
+            <h2 className="text-base font-extrabold text-slate-900 tracking-tight leading-none">Create Property Event</h2>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Event Management System</p>
           </div>
         </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-          <span className="bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
-            <FaCalendarAlt /> Event Builder
-          </span>
-        </div>
+        <span className="bg-sky-50 text-sky-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-sky-100 flex items-center gap-1">
+          <CalendarDays className="w-3 h-3" /> Event Builder
+        </span>
       </div>
 
-      <div className="p-6 lg:p-8 max-w-5xl mx-auto w-full">
+      {/* ── Body ── */}
+      <div className="p-5 max-w-5xl mx-auto w-full">
+
         {error && (
-          <div className="mb-6 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 flex items-center gap-3">
-            <FaExclamationTriangle /> {error}
+          <div className="mb-4 bg-red-50 text-red-600 px-3 py-2.5 rounded-lg border border-red-100 flex items-center gap-2 text-sm">
+            <AlertTriangle className="w-4 h-4 shrink-0" />{error}
           </div>
         )}
         {success && (
-          <div className="mb-6 bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 flex items-center gap-3">
-            <FaCheckCircle /> {success}
+          <div className="mb-4 bg-emerald-50 text-emerald-600 px-3 py-2.5 rounded-lg border border-emerald-100 flex items-center gap-2 text-sm">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />{success}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Section 1: Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                Event Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="event_name"
-                value={formData.event_name}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Grand Property Expo 2026"
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all font-semibold text-gray-800"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">
-                Event Type
-              </label>
-              <select
-                name="event_type"
-                value={formData.event_type}
-                onChange={handleChange}
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all font-semibold text-gray-800 bg-white"
-              >
-                <option value="Property Expo">Property Expo</option>
-                <option value="Property Sale Mela">Property Sale Mela</option>
-                <option value="Builder Meet">Builder Meet</option>
-                <option value="Open House">Open House</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Section 2: Location Details */}
-          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-6">
-            <h3 className="text-gray-800 font-bold flex items-center gap-2"><FaMapMarkerAlt className="text-teal-600" /> Location Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Venue Location</label>
-                <input type="text" name="event_location" value={formData.event_location} onChange={handleChange} required placeholder="Convention Center" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
+          {/* ── Basic Info ── */}
+          <Section icon={<CalendarDays className="w-3.5 h-3.5 text-sky-500" />} title="Basic Information">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Event Name <span className="text-red-400">*</span></label>
+                <input type="text" name="event_name" value={formData.event_name} onChange={handleChange} required placeholder="e.g. Grand Property Expo 2026" className={inputCls} />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">City</label>
-                <input type="text" name="city" value={formData.city} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">State</label>
-                <input type="text" name="state" value={formData.state} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-teal-500 outline-none" />
+              <div>
+                <label className={labelCls}>Event Type</label>
+                <select name="event_type" value={formData.event_type} onChange={handleChange} className={inputCls}>
+                  <option value="Property Expo">Property Expo</option>
+                  <option value="Property Sale Mela">Property Sale Mela</option>
+                  <option value="Builder Meet">Builder Meet</option>
+                  <option value="Open House">Open House</option>
+                </select>
               </div>
             </div>
-          </div>
+          </Section>
 
-          {/* Section 3: Date & Time */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Schedule Dates</label>
-              <div className="grid grid-cols-2 gap-4">
-                <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
-                <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
+          {/* ── Location ── */}
+          <div className="border-t border-slate-100" />
+          <Section icon={<MapPin className="w-3.5 h-3.5 text-sky-500" />} title="Location Details">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className={labelCls}>Venue <span className="text-red-400">*</span></label>
+                <input type="text" name="event_location" value={formData.event_location} onChange={handleChange} required placeholder="e.g. Convention Center" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>City <span className="text-red-400">*</span></label>
+                <input type="text" name="city" value={formData.city} onChange={handleChange} required placeholder="e.g. Chennai" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>State <span className="text-red-400">*</span></label>
+                <input type="text" name="state" value={formData.state} onChange={handleChange} required placeholder="e.g. Tamil Nadu" className={inputCls} />
               </div>
             </div>
-            <div className="space-y-4">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Timings</label>
-              <div className="grid grid-cols-2 gap-4">
-                <input type="time" name="start_time" value={formData.start_time} onChange={handleChange} className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
-                <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} className="px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
+          </Section>
+
+          {/* ── Schedule ── */}
+          <div className="border-t border-slate-100" />
+          <Section icon={<CalendarDays className="w-3.5 h-3.5 text-indigo-500" />} title="Schedule">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className={labelCls}>Start Date <span className="text-red-400">*</span></label>
+                <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>End Date <span className="text-red-400">*</span></label>
+                <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Start Time</label>
+                <input type="time" name="start_time" value={formData.start_time} onChange={handleChange} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>End Time</label>
+                <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} className={inputCls} />
               </div>
             </div>
-          </div>
+          </Section>
 
-          {/* Section 4: Contact & Capacity */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><FaUser /> Contact Person</label>
-              <input type="text" name="contact_name" value={formData.contact_name} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
+          {/* ── Contact & Capacity ── */}
+          <div className="border-t border-slate-100" />
+          <Section icon={<User className="w-3.5 h-3.5 text-sky-500" />} title="Contact & Capacity">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className={labelCls}><span className="flex items-center gap-1"><User className="w-3 h-3" /> Contact Person</span></label>
+                <input type="text" name="contact_name" value={formData.contact_name} onChange={handleChange} placeholder="e.g. Ravi Kumar" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}><span className="flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</span></label>
+                <input type="text" name="contact_phone" value={formData.contact_phone} onChange={handleChange} placeholder="e.g. 9876543210" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Stall Count</label>
+                <input type="number" name="stall_count" value={formData.stall_count} onChange={handleChange} className={inputCls} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1"><FaPhoneAlt /> Phone</label>
-              <input type="text" name="contact_phone" value={formData.contact_phone} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Stall Count</label>
-              <input type="number" name="stall_count" value={formData.stall_count} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-teal-500 outline-none" />
-            </div>
-          </div>
+          </Section>
 
-          {/* Section 5: Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Event Description</label>
+          {/* ── Description ── */}
+          <div className="border-t border-slate-100" />
+          <Section icon={<CalendarDays className="w-3.5 h-3.5 text-indigo-500" />} title="Event Description">
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows="4"
-              className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-gray-700 resize-none"
+              rows="3"
+              className={`${inputCls} resize-none`}
               placeholder="Provide details about highlights, participating builders, etc."
             />
-          </div>
+          </Section>
 
-          {/* Section 6: Image Upload (Mirrors Add Blog) */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Event Banner Image</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              <div className="relative group">
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-teal-50 hover:border-teal-400 transition-all">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <FaCloudUploadAlt className="text-4xl text-gray-400 group-hover:text-teal-500 mb-3 transition-colors" />
-                    <p className="mb-1 text-sm text-gray-600 font-semibold">Click to upload banner</p>
-                    <p className="text-xs text-gray-400">Recommended: 1200 x 600 (Max 5MB)</p>
-                  </div>
-                  <input type="file" className="hidden" accept="image/*" onChange={handleBannerImageChange} />
-                </label>
-              </div>
-
+          {/* ── Banner Image ── */}
+          <div className="border-t border-slate-100" />
+          <Section icon={<Image className="w-3.5 h-3.5 text-sky-500" />} title="Event Banner Image">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group">
+                <CloudUpload className="w-8 h-8 text-slate-300 group-hover:text-sky-400 mb-2 transition-colors" />
+                <p className="text-xs font-semibold text-slate-600 group-hover:text-sky-600">Click to upload banner</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Recommended: 1200×600 · Max 5MB</p>
+                <input type="file" className="hidden" accept="image/*" onChange={handleBannerImageChange} />
+              </label>
               {previewUrl ? (
-                <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-48 group">
-                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-xs font-bold uppercase tracking-widest"><FaImage className="inline mr-2" /> Banner Preview</span>
+                <div className="relative rounded-xl overflow-hidden shadow-sm border border-slate-200 h-36 group">
+                  <img src={previewUrl} alt="Banner Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><Image className="w-3.5 h-3.5" /> Banner Preview</span>
                   </div>
                 </div>
               ) : (
-                <div className="h-48 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-sm italic bg-gray-50/50">
-                  No banner selected for preview
-                </div>
+                <div className="h-36 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-xs italic bg-white/50">No banner selected</div>
               )}
             </div>
-          </div>
+          </Section>
 
-          {/* Section 7: Notifications */}
-          <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50 space-y-6">
-            <h3 className="text-gray-800 font-bold flex items-center gap-2">
-              <FaCheckCircle className="text-blue-600" /> Notifications Settings
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">Select who should receive an automatic email notification about this event:</p>
+          {/* ── Notifications ── */}
+          <div className="border-t border-slate-100" />
+          <Section icon={<Bell className="w-3.5 h-3.5 text-indigo-500" />} title="Notification Settings">
+            <p className="text-[11px] text-slate-400">Select who should receive an automatic email notification about this event.</p>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Builders Section */}
-              <div className="space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    name="notify_builders"
-                    checked={formData.notify_builders}
-                    onChange={handleChange}
-                    className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500 transition-all cursor-pointer"
-                  />
-                  <span className="text-sm font-bold text-gray-800 group-hover:text-teal-700 transition-colors uppercase tracking-wide">Notify Builders</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Builders */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" name="notify_builders" checked={formData.notify_builders} onChange={handleChange}
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-500" />
+                  <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-600 uppercase tracking-wide transition-colors">Notify Builders</span>
                 </label>
-
                 {formData.notify_builders && (
-                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="p-3 bg-gray-50 border-b border-gray-200">
-                      <input
-                        type="text"
-                        placeholder="Search builders..."
-                        value={searchTermBuilders}
-                        onChange={(e) => setSearchTermBuilders(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-teal-500"
-                      />
-                      <div className="mt-2 flex justify-between items-center text-[10px] font-bold uppercase text-gray-400">
-                        <span>{selectedBuilderIds.length} Selected</span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedBuilderIds(selectedBuilderIds.length === allBuilders.length ? [] : allBuilders.map(b => b.id))}
-                          className="text-teal-600 hover:text-teal-700"
-                        >
-                          {selectedBuilderIds.length === allBuilders.length ? 'Deselect All' : 'Select All'}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto p-2 space-y-1">
-                      {allBuilders
-                        .filter(b => b.name.toLowerCase().includes(searchTermBuilders.toLowerCase()) || b.email?.toLowerCase().includes(searchTermBuilders.toLowerCase()))
-                        .map(builder => (
-                          <div
-                            key={builder.id}
-                            onClick={() => toggleBuilderSelection(builder.id)}
-                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${selectedBuilderIds.includes(builder.id) ? 'bg-teal-50 border-teal-100' : 'hover:bg-gray-50'}`}
-                          >
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-gray-800">{builder.name}</span>
-                              <span className="text-[10px] text-gray-500">{builder.email}</span>
-                            </div>
-                            {selectedBuilderIds.includes(builder.id) && <FaCheckCircle className="text-teal-500 text-sm" />}
-                          </div>
-                        ))}
-                    </div>
-                  </div>
+                  <NotifyList
+                    list={filteredBuilders}
+                    selectedIds={selectedBuilderIds}
+                    searchTerm={searchTermBuilders}
+                    onSearch={setSearchTermBuilders}
+                    onToggle={toggleBuilderSelection}
+                    onToggleAll={() => setSelectedBuilderIds(selectedBuilderIds.length === allBuilders.length ? [] : allBuilders.map((b) => b.id))}
+                  />
                 )}
               </div>
 
-              {/* Buyers Section */}
-              <div className="space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    name="notify_buyers"
-                    checked={formData.notify_buyers}
-                    onChange={handleChange}
-                    className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500 transition-all cursor-pointer"
-                  />
-                  <span className="text-sm font-bold text-gray-800 group-hover:text-teal-700 transition-colors uppercase tracking-wide">Notify Buyers</span>
+              {/* Buyers */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" name="notify_buyers" checked={formData.notify_buyers} onChange={handleChange}
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-500" />
+                  <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-600 uppercase tracking-wide transition-colors">Notify Buyers</span>
                 </label>
-
                 {formData.notify_buyers && (
-                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="p-3 bg-gray-50 border-b border-gray-200">
-                      <input
-                        type="text"
-                        placeholder="Search buyers..."
-                        value={searchTermBuyers}
-                        onChange={(e) => setSearchTermBuyers(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-teal-500"
-                      />
-                      <div className="mt-2 flex justify-between items-center text-[10px] font-bold uppercase text-gray-400">
-                        <span>{selectedBuyerIds.length} Selected</span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedBuyerIds(selectedBuyerIds.length === allBuyers.length ? [] : allBuyers.map(b => b.id))}
-                          className="text-teal-600 hover:text-teal-700"
-                        >
-                          {selectedBuyerIds.length === allBuyers.length ? 'Deselect All' : 'Select All'}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto p-2 space-y-1">
-                      {allBuyers
-                        .filter(b => b.name.toLowerCase().includes(searchTermBuyers.toLowerCase()) || b.email?.toLowerCase().includes(searchTermBuyers.toLowerCase()))
-                        .map(buyer => (
-                          <div
-                            key={buyer.id}
-                            onClick={() => toggleBuyerSelection(buyer.id)}
-                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${selectedBuyerIds.includes(buyer.id) ? 'bg-teal-50 border-teal-100' : 'hover:bg-gray-50'}`}
-                          >
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-gray-800">{buyer.name}</span>
-                              <span className="text-[10px] text-gray-500">{buyer.email}</span>
-                            </div>
-                            {selectedBuyerIds.includes(buyer.id) && <FaCheckCircle className="text-teal-500 text-sm" />}
-                          </div>
-                        ))}
-                    </div>
-                  </div>
+                  <NotifyList
+                    list={filteredBuyers}
+                    selectedIds={selectedBuyerIds}
+                    searchTerm={searchTermBuyers}
+                    onSearch={setSearchTermBuyers}
+                    onToggle={toggleBuyerSelection}
+                    onToggleAll={() => setSelectedBuyerIds(selectedBuyerIds.length === allBuyers.length ? [] : allBuyers.map((b) => b.id))}
+                  />
                 )}
               </div>
             </div>
+            <p className="text-[10px] text-slate-400 italic">* If no specific users are selected but a category is checked, all users in that category will be notified by default.</p>
+          </Section>
 
-            <p className="text-[10px] text-gray-500 italic"> * If no specific users are selected but a category is checked, all users in that category will be notified by default.</p>
-          </div>
-
-          {/* Action Button */}
-          <div className="pt-6 border-t border-gray-100 flex justify-end">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="group flex items-center gap-3 bg-linear-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold px-10 py-4 rounded-xl transition-all shadow-lg hover:shadow-teal-200 transform hover:-translate-y-1 active:translate-y-0 disabled:transform-none"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                  <span>Creating Event...</span>
-                </>
-              ) : (
-                <>
-                  <span>Create Property Event</span>
-                  <FaCheckCircle className="group-hover:scale-110 transition-transform" />
-                </>
-              )}
+          {/* ── Submit ── */}
+          <div className="flex justify-end pt-2 border-t border-slate-100">
+            <button type="submit" disabled={isSubmitting}
+              className="flex items-center gap-2 px-6 py-2.5 bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 text-white rounded-lg text-sm font-bold transition-all duration-200 shadow-[0_4px_12px_rgba(14,165,233,0.25)] active:scale-[0.98] disabled:cursor-not-allowed">
+              {isSubmitting ? (<><Loader2 className="w-4 h-4 animate-spin" /><span>Creating…</span></>) : (<><CheckCircle2 className="w-4 h-4" /><span>Create Property Event</span></>)}
             </button>
           </div>
+
         </form>
       </div>
     </div>

@@ -135,12 +135,12 @@ const BuyerDashboard = () => {
           })}
         </nav>
 
-        <div className="p-6 border-t border-slate-700/50">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-200 group"
+        <div className="px-4 py-8 mt-auto">
+          <button 
+            onClick={handleLogout} 
+            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group border border-transparent hover:border-red-500/20"
           >
-            <LogOut className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
             <span>Logout</span>
           </button>
         </div>
@@ -267,23 +267,23 @@ const BuyerDashboard = () => {
                       <div className="bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200">
                         <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Links</h3>
                         <div className="grid gap-3">
-                          <Link to="/buy" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                            <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                          <Link to="/buy" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-emerald-50 border border-transparent hover:border-emerald-100 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-emerald-50 p-2.5 rounded-xl shadow-sm border border-emerald-100/50 text-emerald-600 group-hover:scale-110 transition-all duration-300">
                               <Compass className="w-5 h-5" />
                             </div>
-                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Browse Properties</span>
+                            <span className="text-sm font-bold text-slate-700 group-hover:text-emerald-700">Browse Properties</span>
                           </Link>
-                          <Link to="/buyer-dashboard/events" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                            <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                          <Link to="/buyer-dashboard/events" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-indigo-50 p-2.5 rounded-xl shadow-sm border border-indigo-100/50 text-indigo-600 group-hover:scale-110 transition-all duration-300">
                               <CalendarDays className="w-5 h-5" />
                             </div>
-                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Explore Events</span>
+                            <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Explore Events</span>
                           </Link>
-                          <Link to="/buyer-dashboard/profile-settings" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                            <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                          <Link to="/buyer-dashboard/profile-settings" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-slate-100 p-2.5 rounded-xl shadow-sm border border-slate-200/50 text-slate-600 group-hover:scale-110 transition-all duration-300">
                               <Settings className="w-5 h-5" />
                             </div>
-                            <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Edit Profile</span>
+                            <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900">Edit Profile</span>
                           </Link>
                         </div>
                       </div>

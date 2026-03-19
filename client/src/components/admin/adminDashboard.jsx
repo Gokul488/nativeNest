@@ -34,7 +34,7 @@ import LogoutDialog from "../LogoutDialog";
 import {
   LayoutDashboard, Users, HardHat, Building2, Newspaper, CalendarDays,
   BarChart3, MessageSquare, Settings, LogOut, Menu, User, Loader2,
-  PlusCircle, PenTool, Lightbulb, TrendingUp
+  PlusCircle, PenTool, Lightbulb, TrendingUp, Home, FileText, Briefcase
 } from "lucide-react";
 
 const StatCounter = ({ targetValue, duration = 1500 }) => {
@@ -112,10 +112,11 @@ const AdminDashboard = () => {
 
   const chartData = stats?.monthlyStats?.length > 0 ? stats.monthlyStats : mockMonthlyData;
 
-  const totalProperties = stats?.totals?.properties || 1248;
-  const totalUsers = stats?.totals?.users || 834;
-  const activeBuilders = stats?.totals?.builders || 156;
-  const plannedEvents = stats?.totals?.events || 24;
+  const totalProperties = stats?.totals?.properties || 0;
+  const totalUsers = stats?.totals?.users || 0;
+  const activeBuilders = stats?.totals?.builders || 0;
+  const publishedBlogs = stats?.totals?.blogs || 0;
+  const totalEvents = stats?.totals?.events || 0;
 
   return (
     <div className="min-h-screen bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
@@ -164,12 +165,12 @@ const AdminDashboard = () => {
           </div>
         </nav>
 
-        <div className="p-6 border-t border-slate-700/50">
+        <div className="px-4 py-8 mt-auto">
           <button 
             onClick={handleLogout} 
-            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-200 group"
+            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group border border-transparent hover:border-red-500/20"
           >
-            <LogOut className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
             <span>Logout</span>
           </button>
         </div>
@@ -216,36 +217,44 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Statistics Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
                   {[
                     {
                       label: "Total Properties",
                       val: totalProperties,
-                      icon: <Building2 className="w-6 h-6" />,
+                      icon: <Home className="w-5 h-5" />,
                       color: "text-sky-500",
                       bg: "bg-sky-50",
                       path: "/admin-dashboard/manage-properties"
                     },
                     {
-                      label: "Registered Users",
+                      label: "Active Users",
                       val: totalUsers,
-                      icon: <Users className="w-6 h-6" />,
+                      icon: <Users className="w-5 h-5" />,
                       color: "text-indigo-500",
                       bg: "bg-indigo-50",
                       path: "/admin-dashboard/manage-users"
                     },
                     {
-                      label: "Active Builders",
+                      label: "Registered Builders",
                       val: activeBuilders,
-                      icon: <HardHat className="w-6 h-6" />,
+                      icon: <Building2 className="w-5 h-5" />,
                       color: "text-teal-500",
                       bg: "bg-teal-50",
                       path: "/admin-dashboard/manage-builders"
                     },
                     {
-                      label: "Planned Events",
-                      val: plannedEvents,
-                      icon: <CalendarDays className="w-6 h-6" />,
+                      label: "Published Blogs",
+                      val: publishedBlogs,
+                      icon: <FileText className="w-5 h-5" />,
+                      color: "text-amber-500",
+                      bg: "bg-amber-50",
+                      path: "/admin-dashboard/manage-blogs"
+                    },
+                    {
+                      label: "Total Events",
+                      val: totalEvents,
+                      icon: <CalendarDays className="w-5 h-5" />,
                       color: "text-purple-500",
                       bg: "bg-purple-50",
                       path: "/admin-dashboard/manage-events"
@@ -254,20 +263,26 @@ const AdminDashboard = () => {
                     <Link
                       key={idx}
                       to={card.path}
-                      className="bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex items-center justify-between transition-all duration-300 hover:border-sky-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:scale-[1.02] group"
+                      className="bg-white p-5 rounded-[22px] shadow-sm border border-slate-100 flex flex-col justify-between transition-all duration-300 hover:border-emerald-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:scale-[1.02] group"
                     >
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none">{card.label}</p>
-                        <h4 className="text-[32px] font-bold text-slate-900 mt-3 leading-none group-hover:text-emerald-500 transition-colors duration-300">
-                          {loadingStats ? (
-                            <Loader2 className="animate-spin w-6 h-6 text-slate-400 mt-2" />
-                          ) : (
-                            <StatCounter targetValue={card.val} />
-                          )}
-                        </h4>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-3">{card.label}</p>
+                          <h4 className="text-[28px] font-bold text-slate-900 leading-none h-7">
+                            {loadingStats ? (
+                              <Loader2 className="animate-spin w-5 h-5 text-slate-400" />
+                            ) : (
+                              <StatCounter targetValue={card.val} />
+                            )}
+                          </h4>
+                        </div>
+                        <div className={`${card.bg} ${card.color} w-12 h-12 rounded-[14px] flex items-center justify-center transition-transform duration-300 group-hover:bg-opacity-80`}>
+                          {card.icon}
+                        </div>
                       </div>
-                      <div className={`${card.bg} ${card.color} w-[56px] h-[56px] rounded-[16px] flex items-center justify-center group-hover:scale-[1.1] transition-transform duration-300`}>
-                        {card.icon}
+                      <div className="mt-6 flex items-center gap-1.5 text-emerald-500 text-[12px] font-bold tracking-tight opacity-90 group-hover:opacity-100 transition-opacity">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span>View details</span>
                       </div>
                     </Link>
                   ))}
@@ -339,22 +354,22 @@ const AdminDashboard = () => {
                       <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Actions</h3>
                       <div className="grid gap-3">
                         <Link to="/admin-dashboard/manage-properties/add" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                          <div className="bg-sky-50 p-2.5 rounded-xl shadow-sm text-sky-500 group-hover:scale-110 transition-all duration-300">
                             <PlusCircle className="w-5 h-5" />
                           </div>
-                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Add New Property</span>
+                          <span className="text-sm font-bold text-slate-700 group-hover:text-sky-700">Add New Property</span>
                         </Link>
-                        <Link to="/admin-dashboard/create-property-event" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                        <Link to="/admin-dashboard/create-property-event" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-indigo-50 p-2.5 rounded-xl shadow-sm text-indigo-500 group-hover:scale-110 transition-all duration-300">
                             <CalendarDays className="w-5 h-5" />
                           </div>
-                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Create Property Event</span>
+                          <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Create Property Event</span>
                         </Link>
-                        <Link to="/admin-dashboard/manage-blogs/add" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all">
+                        <Link to="/admin-dashboard/manage-blogs/add" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-amber-50 border border-transparent hover:border-amber-100 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-amber-50 p-2.5 rounded-xl shadow-sm text-amber-600 group-hover:scale-110 transition-all duration-300">
                             <PenTool className="w-5 h-5" />
                           </div>
-                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Write New Blog</span>
+                          <span className="text-sm font-bold text-slate-700 group-hover:text-amber-700">Write New Blog</span>
                         </Link>
                       </div>
                     </div>

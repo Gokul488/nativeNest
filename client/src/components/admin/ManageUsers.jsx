@@ -5,19 +5,17 @@ import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config.js";
 import Pagination from "../common/Pagination.jsx";
 import {
-  FaSearch,
-  FaSpinner,
-  FaExclamationTriangle,
-  FaInfoCircle,
-  FaSort,
-  FaSortUp,
-  FaSortDown,
-  FaUser,
-  FaPhoneAlt,
-  FaEnvelope,
-  FaCalendarAlt,
-  FaIdBadge
-} from "react-icons/fa";
+  Search,
+  Loader2,
+  AlertCircle,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  Phone,
+  Mail,
+  Contact,
+  Users,
+} from "lucide-react";
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -69,7 +67,6 @@ const ManageUsers = () => {
     return result;
   }, [users, searchQuery, sortConfig]);
 
-  // Reset page when search or sort changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortConfig]);
@@ -86,98 +83,153 @@ const ManageUsers = () => {
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) return <FaSort className="ml-2 opacity-20" />;
-    return sortConfig.direction === "asc" ? <FaSortUp className="ml-2 text-teal-600" /> : <FaSortDown className="ml-2 text-teal-600" />;
+    if (sortConfig.key !== key) return <ChevronsUpDown className="ml-1.5 w-3.5 h-3.5 opacity-40" />;
+    return sortConfig.direction === "asc" ? (
+      <ChevronUp className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />
+    ) : (
+      <ChevronDown className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />
+    );
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
-      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Manage Users</h2>
-          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
+
+      {/* ── Header ── */}
+      <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-center gap-4">
+        {/* Left: icon + title + badge */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+            <Users className="w-5 h-5 text-indigo-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+              Manage Users
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              View and manage all registered platform users
+            </p>
+          </div>
+          <span className="ml-1 bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
             {users.length} Total
           </span>
         </div>
 
-        <div className="relative w-full lg:w-80">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        {/* Right: search */}
+        <div className="relative w-full lg:w-80 group">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
           <input
             type="text"
             placeholder="Search by name, phone, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
           />
         </div>
       </div>
 
+      {/* ── Body ── */}
       <div className="relative flex-1">
+
+        {/* Loading overlay */}
         {loading && (
-          <div className="absolute inset-0 bg-white/80 z-20 flex justify-center items-center gap-3 text-gray-500">
-            <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
-            Loading users...
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-20 flex flex-col justify-center items-center gap-3 text-slate-400">
+            <Loader2 className="animate-spin h-7 w-7 text-indigo-500" />
+            <span className="text-sm font-semibold">Loading users…</span>
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
-            <FaExclamationTriangle /> {error}
+          <div className="m-8 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="font-medium text-sm">{error}</span>
           </div>
         )}
 
+        {/* Empty state */}
         {!loading && !error && filteredAndSortedUsers.length === 0 && (
-          <div className="py-20 text-center text-gray-500 flex flex-col items-center gap-3">
-            <FaInfoCircle className="text-4xl opacity-50" />
-            <p className="text-lg">No users found matching your search.</p>
+          <div className="py-32 flex flex-col items-center gap-3 text-slate-400">
+            <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-1">
+              <Search className="w-7 h-7 text-slate-300" />
+            </div>
+            <p className="text-lg font-bold text-slate-800">No users found</p>
+            <p className="text-sm text-slate-400 max-w-xs text-center">
+              No results matching "{searchQuery}"
+            </p>
           </div>
         )}
 
+        {/* Table + cards */}
         {!loading && !error && filteredAndSortedUsers.length > 0 && (
-          <div className="flex flex-col h-full">
-            {/* Desktop Table View */}
-            <div className="hidden xl:block overflow-x-auto flex-1">
-              <table className="w-full border-separate border-spacing-0">
-                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                  <tr>
-                    <th className="w-14 px-4 py-4 text-left border-b border-gray-200">#</th>
-                    <th onClick={() => requestSort("name")} className="min-w-[180px] px-4 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center">Full Name {getSortIcon("name")}</div>
+          <div className="flex flex-col">
+
+            {/* ── Desktop Table ── */}
+            <div className="hidden xl:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="px-6 py-2.5 text-left w-16">#</th>
+                    <th
+                      className="px-6 py-2.5 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("name")}
+                    >
+                      <span className="inline-flex items-center">Full Name {getSortIcon("name")}</span>
                     </th>
-                    <th className="min-w-[140px] px-4 py-4 text-left border-b border-gray-200">Mobile</th>
-                    <th className="min-w-[220px] px-4 py-4 text-left border-b border-gray-200">Email Address</th>
-                    <th onClick={() => requestSort("created_at")} className="min-w-[140px] px-4 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center justify-center">Joined Date {getSortIcon("created_at")}</div>
+                    <th className="px-6 py-2.5 text-left">Mobile</th>
+                    <th className="px-6 py-2.5 text-left">Email Address</th>
+                    <th
+                      className="px-6 py-2.5 text-center cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("created_at")}
+                    >
+                      <span className="inline-flex items-center justify-center">Registration {getSortIcon("created_at")}</span>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="divide-y divide-slate-50">
                   {paginatedUsers.map((user, index) => {
                     const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                     return (
-                      <tr key={user.id || index} className="hover:bg-gray-50/80 transition-colors group">
-                        <td className="px-4 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
-                          {String(globalIndex).padStart(2, '0')}
+                      <tr
+                        key={user.id || index}
+                        className="hover:bg-slate-50/60 transition-colors duration-150 group"
+                      >
+                        {/* # */}
+                        <td className="px-6 py-2.5 text-sm font-bold text-slate-300">
+                          {String(globalIndex).padStart(2, "0")}
                         </td>
-                        <td className="px-4 py-3 border-b border-gray-100">
-                          <div className="font-bold text-gray-900 flex items-center gap-2">
-                            <FaIdBadge className="text-teal-600 text-xs shrink-0" /> <span>{user.name}</span>
+
+                        {/* Full Name */}
+                        <td className="px-6 py-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <Contact className="w-4 h-4 text-indigo-400 shrink-0" />
+                            <span className="font-bold text-slate-800 text-sm">{user.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 border-b border-gray-100 text-sm text-gray-700">
-                          <div className="flex items-center gap-2">
-                            <FaPhoneAlt className="text-[10px] text-gray-400 shrink-0" /> {user.mobile_number}
-                          </div>
+
+                        {/* Mobile */}
+                        <td className="px-6 py-2.5 text-sm text-slate-500 font-medium">
+                          <span className="inline-flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-slate-300" />
+                            {user.mobile_number}
+                          </span>
                         </td>
-                        <td className="px-4 py-3 border-b border-gray-100 text-sm text-gray-500">
-                          <div className="flex items-center gap-2">
-                            <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> <span>{user.email || "—"}</span>
-                          </div>
+
+                        {/* Email */}
+                        <td className="px-6 py-2.5 text-sm text-slate-500 font-medium max-w-[240px]">
+                          <span className="inline-flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                            <span className="truncate">{user.email || "—"}</span>
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-center border-b border-gray-100">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                            <FaCalendarAlt className="text-[10px]" />
-                            {new Date(user.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+
+                        {/* Registration */}
+                        <td className="px-6 py-2.5 text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100">
+                            {new Date(user.created_at).toLocaleDateString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            }).toUpperCase()}
                           </span>
                         </td>
                       </tr>
@@ -187,32 +239,43 @@ const ManageUsers = () => {
               </table>
             </div>
 
-            {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4 flex-1">
+            {/* ── Mobile Cards ── */}
+            <div className="xl:hidden p-4 space-y-3">
               {paginatedUsers.map((user, index) => {
                 const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
-                  <div key={user.id || index} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
-                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                  <div
+                    key={user.id || index}
+                    className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-4 hover:border-indigo-200 transition-colors"
+                  >
+                    <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
                           {globalIndex}
+                        </span>
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm">{user.name}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            ID #{user.id ? String(user.id).slice(-4) : "N/A"}
+                          </p>
                         </div>
-                        <div className="font-bold text-gray-900">{user.name}</div>
                       </div>
-                      <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-bold uppercase">
-                        {new Date(user.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}
+                      <span className="px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold">
+                        {new Date(user.created_at).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                        }).toUpperCase()}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <FaPhoneAlt className="text-gray-400 text-xs" />
-                        <span>{user.mobile_number}</span>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-slate-100">
+                        <Phone className="w-4 h-4 text-slate-300 shrink-0" />
+                        <span className="font-medium text-slate-600">{user.mobile_number}</span>
                       </div>
-                      <div className="flex items-center gap-2 truncate">
-                        <FaEnvelope className="text-gray-400 text-xs" />
-                        <span className="truncate">{user.email || "—"}</span>
+                      <div className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-slate-100 overflow-hidden">
+                        <Mail className="w-4 h-4 text-slate-300 shrink-0" />
+                        <span className="font-medium text-slate-600 truncate">{user.email || "—"}</span>
                       </div>
                     </div>
                   </div>
@@ -225,6 +288,7 @@ const ManageUsers = () => {
               totalItems={filteredAndSortedUsers.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              activeColor="indigo"
             />
           </div>
         )}

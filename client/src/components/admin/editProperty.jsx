@@ -10,18 +10,25 @@ import makeAnimated from "react-select/animated";
 import API_BASE_URL from "../../config.js";
 import { QuillTableBetter } from "../../utils/registerQuillModules";
 import {
-  FaArrowLeft,
-  FaHome,
-  FaImage,
-  FaVideo,
-  FaExclamationTriangle,
-  FaCheckCircle,
-  FaCloudUploadAlt,
-  FaBuilding,
-  FaImages,
-  FaPlus,
-  FaTrash,
-} from "react-icons/fa";
+  ArrowLeft,
+  Home,
+  Image,
+  Video,
+  AlertTriangle,
+  CheckCircle2,
+  CloudUpload,
+  Building2,
+  Images,
+  Plus,
+  Trash2,
+  PlusCircle,
+  Loader2,
+  MapPin,
+  Tag,
+  Layers,
+  Sparkles,
+  PencilLine,
+} from "lucide-react";
 
 const animatedComponents = makeAnimated();
 
@@ -44,6 +51,24 @@ const DEFAULT_BLOCK = () => ({
   isCustomBlock: false,
   configs: [DEFAULT_CONFIG()],
 });
+
+// ─── SectionCard sub-component ────────────────────────────────────────────────
+const SectionCard = ({ icon, title, action, children }) => (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_2px_8px_rgba(15,23,42,0.04)] overflow-hidden">
+    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
+          {icon}
+        </div>
+        <h3 className="text-sm font-extrabold text-slate-800 tracking-tight">{title}</h3>
+      </div>
+      {action && <div>{action}</div>}
+    </div>
+    <div className="p-6 space-y-5">
+      {children}
+    </div>
+  </div>
+);
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -78,7 +103,6 @@ const EditProperty = () => {
   const [amenityOptions, setAmenityOptions] = useState([]);
   const [propertyTypes, setPropertyTypes] = useState([]);
 
-  // Each block has a block_name and an array of configs — each config = one property_variants row
   const [blocks, setBlocks] = useState([DEFAULT_BLOCK()]);
 
   const [showOtherInput, setShowOtherInput] = useState(false);
@@ -170,10 +194,8 @@ const EditProperty = () => {
 
         setBuilderName(prop.builder_name || "");
 
-        // ── Load existing blocks from saved variants ──────────────
-        // Group DB variant rows by block_name, each block gets a configs array
+        // Load existing blocks from saved variants
         if (prop.variants && prop.variants.length > 0) {
-          // Preserve insertion order of blocks
           const blockMap = new Map();
           prop.variants.forEach((v) => {
             const key = v.block_name || "Block A";
@@ -350,7 +372,6 @@ const EditProperty = () => {
       }
     }
 
-    // Build variants payload — each block config → one property_variants row
     const variants = formData.property_type === "Apartment"
       ? blocks.flatMap((block) =>
         block.configs.map((config) => ({
@@ -388,416 +409,599 @@ const EditProperty = () => {
     }
   };
 
+  // ── Helpers ───────────────────────────────────────────────────
   const bufferToBase64 = (buffer) => {
     if (!buffer || !buffer.data) return "";
     const binary = buffer.data.reduce((str, byte) => str + String.fromCharCode(byte), "");
     return btoa(binary);
   };
 
-  // ── Select styles ─────────────────────────────────────────────
+  // ── Select styles — indigo/slate theme ───────────────────────
   const customStyles = {
-    control: (p) => ({ ...p, minHeight: 40, borderColor: "#d1d5db", borderRadius: "0.5rem", "&:hover": { borderColor: "#9ca3af" } }),
-    multiValue: (p) => ({ ...p, backgroundColor: "#ecfdf5", borderRadius: "9999px", padding: "2px 8px" }),
-    multiValueLabel: (p) => ({ ...p, color: "#065f46", fontSize: "12px" }),
-    multiValueRemove: (p) => ({ ...p, color: "#065f46", ":hover": { backgroundColor: "#d1fae5", color: "#064e3b" } }),
+    control: (p) => ({
+      ...p,
+      minHeight: 40,
+      borderColor: "#e2e8f0",
+      borderRadius: "0.75rem",
+      backgroundColor: "#f8fafc",
+      boxShadow: "none",
+      "&:hover": { borderColor: "#6366f1" },
+    }),
+    multiValue: (p) => ({
+      ...p,
+      backgroundColor: "#eef2ff",
+      borderRadius: "9999px",
+      padding: "2px 8px",
+      border: "1px solid #c7d2fe",
+    }),
+    multiValueLabel: (p) => ({ ...p, color: "#4338ca", fontSize: "12px", fontWeight: 600 }),
+    multiValueRemove: (p) => ({ ...p, color: "#4338ca", ":hover": { backgroundColor: "#c7d2fe", color: "#312e81" } }),
+    placeholder: (p) => ({ ...p, color: "#94a3b8", fontSize: "14px" }),
+    option: (p, state) => ({
+      ...p,
+      backgroundColor: state.isSelected ? "#6366f1" : state.isFocused ? "#eef2ff" : "white",
+      color: state.isSelected ? "white" : "#334155",
+      fontSize: "14px",
+    }),
+    menuPortal: (p) => ({ ...p, zIndex: 9999 }),
+    menu: (p) => ({
+      ...p,
+      borderRadius: "0.75rem",
+      border: "1px solid #e2e8f0",
+      boxShadow: "0 10px 24px rgba(15,23,42,0.10)",
+      overflow: "hidden",
+    }),
   };
+
   const formatOptionLabel = ({ label, icon }) => (
     <div className="flex items-center space-x-2">
-      {icon && <i className={`${icon} text-gray-600`} />}
+      {icon && <i className={`${icon} text-slate-500`} />}
       <span>{label}</span>
     </div>
   );
 
+  // ── Shared class constants ────────────────────────────────────
+  const inputCls =
+    "w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400";
+
+  const labelCls = "block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5";
+
+  // ── Loading state ─────────────────────────────────────────────
   if (!property) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-gray-600 text-lg">
-        Loading...
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm min-h-[600px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-slate-400">
+          <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+          <span className="text-sm font-semibold">Loading property data…</span>
+        </div>
       </div>
     );
   }
 
   // ── Render ────────────────────────────────────────────────────
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px] font-sans">
-
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <Link to={backPath} className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600">
-            <FaArrowLeft />
+    <div
+      className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]"
+      style={{ fontFamily: '"Inter", sans-serif' }}
+    >
+      {/* ── Header ── */}
+      <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            to={backPath}
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all duration-200"
+          >
+            <ArrowLeft className="w-4 h-4" />
           </Link>
+          <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+            <PencilLine className="w-5 h-5 text-amber-500" />
+          </div>
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight leading-tight">Edit Property</h2>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-0.5">Inventory Management System</p>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+              Edit Property
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Inventory Management System
+            </p>
           </div>
         </div>
-        <span className="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
-          <FaHome /> Property Editor
+        <span className="bg-amber-50 text-amber-600 text-xs font-bold px-3 py-1.5 rounded-full border border-amber-100 flex items-center gap-1.5">
+          <Home className="w-3.5 h-3.5" /> Property Editor
         </span>
       </div>
 
-      <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full">
+      {/* ── Body ── */}
+      <div className="p-6 lg:p-8 max-w-5xl mx-auto w-full">
+
+        {/* Alerts */}
         {error && (
-          <div className="mb-6 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 flex items-center gap-3">
-            <FaExclamationTriangle /> {error}
+          <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <span className="font-medium text-sm">{error}</span>
           </div>
         )}
         {success && (
-          <div className="mb-6 bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 flex items-center gap-3">
-            <FaCheckCircle /> {success}
+          <div className="mb-6 bg-emerald-50 text-emerald-600 p-4 rounded-xl border border-emerald-100 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <span className="font-medium text-sm">{success}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* Builder — read only */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              Builder <span className="text-red-500">*</span>
-            </label>
-            <input type="text" value={builderName} readOnly
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed text-base font-semibold text-gray-700" />
-          </div>
+          {/* ── Section: Basic Info ──────────────────────────── */}
+          <SectionCard icon={<Tag className="w-4 h-4 text-sky-500" />} title="Basic Information">
 
-          {/* Title */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              Property Title <span className="text-red-500">*</span>
-            </label>
-            <input type="text" name="title" value={formData.title} onChange={handleInputChange} required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400 placeholder:font-normal"
-              placeholder="e.g. 3BHK Luxury Apartment in Anna Nagar" />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              Description <span className="text-red-500">*</span>
-            </label>
-            <div className="rounded-xl border border-gray-300 overflow-hidden shadow-sm focus-within:ring-4 focus-within:ring-teal-500/10 focus-within:border-teal-500 transition-all">
-              <div ref={quillRef} className="min-h-[300px] text-gray-700" />
+            {/* Builder — read only */}
+            <div>
+              <label className={labelCls}>Builder <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                value={builderName}
+                readOnly
+                className={`${inputCls} bg-slate-100 cursor-not-allowed`}
+              />
             </div>
-          </div>
 
-          {/* Property Type */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              Property Type <span className="text-red-500">*</span>
-            </label>
-            <select name="property_type" value={formData.property_type} onChange={handleInputChange} required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800 bg-white">
-              {propertyTypes.length
-                ? propertyTypes.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)
-                : <option>Loading…</option>}
-            </select>
-          </div>
+            {/* Title */}
+            <div>
+              <label className={labelCls}>Property Title <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                required
+                placeholder="e.g. 3BHK Luxury Apartment in Anna Nagar"
+                className={inputCls}
+              />
+            </div>
 
-          {/* Price / Sqft / Qty — non-apartment */}
-          {formData.property_type !== "Apartment" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                  Price (₹) <span className="text-red-500">*</span>
-                </label>
-                <input type="number" name="price" value={formData.price} onChange={handleInputChange} step="0.01" required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400"
-                  placeholder="e.g. 7500000" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Area (sqft)</label>
-                <input type="number" name="sqft" value={formData.sqft} onChange={handleInputChange} min="1" placeholder="e.g. 1850"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800 placeholder:text-gray-400" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Total Quantity</label>
-                <input type="number" name="quantity" value={formData.quantity} onChange={handleInputChange} min="1"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-base font-semibold text-gray-800" />
+            {/* Description */}
+            <div>
+              <label className={labelCls}>Description <span className="text-red-400">*</span></label>
+              <div className="rounded-xl border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all bg-slate-50">
+                <div ref={quillRef} className="min-h-[260px] text-slate-700" />
               </div>
             </div>
-          )}
 
-          {/* ══════════════════════════════════════════════════
-              APARTMENT BLOCK CONFIGURATIONS
-              Each block can have multiple apartment type configs.
-              Each config = one row in property_variants.
-          ══════════════════════════════════════════════════ */}
+            {/* Property Type */}
+            <div>
+              <label className={labelCls}>Property Type <span className="text-red-400">*</span></label>
+              <select
+                name="property_type"
+                value={formData.property_type}
+                onChange={handleInputChange}
+                required
+                className={inputCls}
+              >
+                {propertyTypes.length
+                  ? propertyTypes.map((t) => (
+                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                  ))
+                  : <option>Loading…</option>}
+              </select>
+            </div>
+
+            {/* Price / Sqft / Qty — non-apartment */}
+            {formData.property_type !== "Apartment" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div>
+                  <label className={labelCls}>Price (₹) <span className="text-red-400">*</span></label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    required
+                    placeholder="e.g. 7500000"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Area (sqft)</label>
+                  <input
+                    type="number"
+                    name="sqft"
+                    value={formData.sqft}
+                    onChange={handleInputChange}
+                    min="1"
+                    placeholder="e.g. 1850"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Total Quantity</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    value={formData.quantity}
+                    onChange={handleInputChange}
+                    min="1"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+            )}
+          </SectionCard>
+
+          {/* ── Section: Apartment Block Configurations ──────── */}
           {formData.property_type === "Apartment" && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-teal-800 uppercase tracking-wide flex items-center gap-2">
-                  <FaBuilding /> Apartment Block Configurations
-                </h3>
-                <button type="button" onClick={addBlock}
-                  className="flex items-center gap-2 text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition font-medium">
-                  <FaPlus /> Add Block
+            <SectionCard
+              icon={<Layers className="w-4 h-4 text-indigo-500" />}
+              title="Apartment Block Configurations"
+              action={
+                <button
+                  type="button"
+                  onClick={addBlock}
+                  className="flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 px-3.5 py-2 rounded-xl transition-all duration-200 shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Block
                 </button>
-              </div>
-
-              {blocks.map((block, idx) => (
-                <div key={idx} className="border border-teal-200 rounded-xl bg-white shadow-sm overflow-hidden">
-
-                  {/* Block name header */}
-                  <div className="flex items-center justify-between bg-teal-50 px-4 py-2.5 gap-3">
-                    <div className="flex items-center gap-3">
-                      {!block.isCustomBlock ? (
-                        <select
-                          value={block.block_name}
-                          onChange={(e) => {
-                            if (e.target.value === "Others") {
-                              updateBlock(idx, "isCustomBlock", true);
-                              updateBlock(idx, "block_name", "");
-                            } else {
-                              updateBlock(idx, "block_name", e.target.value);
-                            }
-                          }}
-                          className="px-3 py-1.5 border border-teal-300 rounded-lg text-sm font-bold bg-white text-teal-800 focus:ring-2 focus:ring-teal-400 outline-none"
-                        >
-                          {BLOCK_LABELS.map((b) => <option key={b} value={b}>{b}</option>)}
-                        </select>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <input type="text" autoFocus placeholder="e.g. Tower 1"
+              }
+            >
+              <div className="space-y-4">
+                {blocks.map((block, idx) => (
+                  <div
+                    key={idx}
+                    className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)] hover:border-indigo-200 transition-colors"
+                  >
+                    {/* Block name header */}
+                    <div className="flex items-center justify-between bg-indigo-50 px-5 py-3 gap-3 border-b border-indigo-100">
+                      <div className="flex items-center gap-3">
+                        {!block.isCustomBlock ? (
+                          <select
                             value={block.block_name}
-                            onChange={(e) => updateBlock(idx, "block_name", e.target.value)}
-                            className="px-3 py-1.5 border border-teal-400 rounded-lg text-sm font-bold text-teal-800 focus:ring-2 focus:ring-teal-400 outline-none w-32"
-                          />
-                          <button type="button"
-                            onClick={() => { updateBlock(idx, "isCustomBlock", false); updateBlock(idx, "block_name", "Block A"); }}
-                            className="text-xs text-teal-600 underline whitespace-nowrap">
-                            Reset
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      {/* Add config inside this block */}
-                      <button type="button" onClick={() => addConfig(idx)}
-                        className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-semibold border border-teal-300 hover:border-teal-500 px-3 py-1.5 rounded-lg bg-white transition">
-                        <FaPlus className="text-xs" /> Add Type
-                      </button>
-
-                      {blocks.length > 1 && (
-                        <button type="button" onClick={() => removeBlock(idx)}
-                          className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-semibold transition">
-                          <FaTrash className="text-xs" /> Remove Block
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Config rows inside this block */}
-                  <div className="divide-y divide-gray-100">
-                    {block.configs.map((config, cIdx) => (
-                      <div key={config.id} className="p-4">
-                        {/* Row label + remove */}
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            Configuration {cIdx + 1}
-                          </span>
-                          {block.configs.length > 1 && (
-                            <button type="button" onClick={() => removeConfig(idx, config.id)}
-                              className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition">
-                              <FaTrash className="text-xs" /> Remove
+                            onChange={(e) => {
+                              if (e.target.value === "Others") {
+                                updateBlock(idx, "isCustomBlock", true);
+                                updateBlock(idx, "block_name", "");
+                              } else {
+                                updateBlock(idx, "block_name", e.target.value);
+                              }
+                            }}
+                            className="px-3 py-1.5 border border-indigo-200 rounded-lg text-sm font-bold bg-white text-indigo-800 focus:ring-2 focus:ring-indigo-400 outline-none"
+                          >
+                            {BLOCK_LABELS.map((b) => <option key={b} value={b}>{b}</option>)}
+                          </select>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              autoFocus
+                              placeholder="e.g. Tower 1"
+                              value={block.block_name}
+                              onChange={(e) => updateBlock(idx, "block_name", e.target.value)}
+                              className="px-3 py-1.5 border border-indigo-300 rounded-lg text-sm font-bold text-indigo-800 focus:ring-2 focus:ring-indigo-400 outline-none w-32 bg-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => { updateBlock(idx, "isCustomBlock", false); updateBlock(idx, "block_name", "Block A"); }}
+                              className="text-xs text-indigo-500 hover:text-indigo-700 font-bold underline whitespace-nowrap"
+                            >
+                              Reset
                             </button>
-                          )}
-                        </div>
+                          </div>
+                        )}
+                      </div>
 
-                        {/* Fields: Apartment Type | Price | Sqft | Qty */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => addConfig(idx)}
+                          className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold border border-indigo-200 hover:border-indigo-400 px-3 py-1.5 rounded-lg bg-white transition-all"
+                        >
+                          <Plus className="w-3 h-3" /> Add Type
+                        </button>
+                        {blocks.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeBlock(idx)}
+                            className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-bold transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" /> Block
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
-                          {/* Apartment Type (BHK) */}
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-600 uppercase">Apartment Type</label>
-                            {!config.isCustomType ? (
-                              <select
-                                value={config.apartment_type}
-                                onChange={(e) => {
-                                  if (e.target.value === "Others") {
-                                    updateConfig(idx, config.id, "isCustomType", true);
-                                    updateConfig(idx, config.id, "apartment_type", "");
-                                  } else {
-                                    updateConfig(idx, config.id, "apartment_type", e.target.value);
-                                  }
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-400 outline-none"
+                    {/* Config rows */}
+                    <div className="divide-y divide-slate-50">
+                      {block.configs.map((config, cIdx) => (
+                        <div key={config.id} className="p-5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                              Configuration {cIdx + 1}
+                            </span>
+                            {block.configs.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeConfig(idx, config.id)}
+                                className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold transition-colors"
                               >
-                                {APT_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                              </select>
-                            ) : (
-                              <div className="flex gap-1">
-                                <input type="text" autoFocus placeholder="e.g. 5BHK"
-                                  value={config.apartment_type}
-                                  onChange={(e) => updateConfig(idx, config.id, "apartment_type", e.target.value)}
-                                  className="w-full px-3 py-2 border border-teal-400 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                                />
-                                <button type="button"
-                                  onClick={() => { updateConfig(idx, config.id, "isCustomType", false); updateConfig(idx, config.id, "apartment_type", "1BHK"); }}
-                                  className="text-xs text-teal-600 underline whitespace-nowrap px-1">
-                                  ↩
-                                </button>
-                              </div>
+                                <Trash2 className="w-3 h-3" /> Remove
+                              </button>
                             )}
                           </div>
 
-                          {/* Price */}
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-600 uppercase">Price (₹)</label>
-                            <input type="number" min="1" placeholder="e.g. 5000000"
-                              value={config.price}
-                              onChange={(e) => updateConfig(idx, config.id, "price", e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                            />
-                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {/* Apartment Type */}
+                            <div>
+                              <label className={labelCls}>Apt. Type</label>
+                              {!config.isCustomType ? (
+                                <select
+                                  value={config.apartment_type}
+                                  onChange={(e) => {
+                                    if (e.target.value === "Others") {
+                                      updateConfig(idx, config.id, "isCustomType", true);
+                                      updateConfig(idx, config.id, "apartment_type", "");
+                                    } else {
+                                      updateConfig(idx, config.id, "apartment_type", e.target.value);
+                                    }
+                                  }}
+                                  className={inputCls}
+                                >
+                                  {APT_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                              ) : (
+                                <div className="flex gap-1">
+                                  <input
+                                    type="text"
+                                    autoFocus
+                                    placeholder="e.g. 5BHK"
+                                    value={config.apartment_type}
+                                    onChange={(e) => updateConfig(idx, config.id, "apartment_type", e.target.value)}
+                                    className={inputCls}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      updateConfig(idx, config.id, "isCustomType", false);
+                                      updateConfig(idx, config.id, "apartment_type", "1BHK");
+                                    }}
+                                    className="text-xs text-indigo-500 hover:text-indigo-700 px-1 font-bold"
+                                  >
+                                    ↩
+                                  </button>
+                                </div>
+                              )}
+                            </div>
 
-                          {/* Sqft */}
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-600 uppercase">Sqft</label>
-                            <input type="number" min="1" placeholder="e.g. 1200"
-                              value={config.sqft}
-                              onChange={(e) => updateConfig(idx, config.id, "sqft", e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                            />
-                          </div>
+                            {/* Price */}
+                            <div>
+                              <label className={labelCls}>Price (₹)</label>
+                              <input
+                                type="number"
+                                min="1"
+                                placeholder="e.g. 5000000"
+                                value={config.price}
+                                onChange={(e) => updateConfig(idx, config.id, "price", e.target.value)}
+                                className={inputCls}
+                              />
+                            </div>
 
-                          {/* Quantity */}
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-600 uppercase">Qty</label>
-                            <input type="number" min="1"
-                              value={config.quantity}
-                              onChange={(e) => updateConfig(idx, config.id, "quantity", e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-400 outline-none"
-                            />
+                            {/* Sqft */}
+                            <div>
+                              <label className={labelCls}>Sqft</label>
+                              <input
+                                type="number"
+                                min="1"
+                                placeholder="e.g. 1200"
+                                value={config.sqft}
+                                onChange={(e) => updateConfig(idx, config.id, "sqft", e.target.value)}
+                                className={inputCls}
+                              />
+                            </div>
+
+                            {/* Qty */}
+                            <div>
+                              <label className={labelCls}>Qty</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={config.quantity}
+                                onChange={(e) => updateConfig(idx, config.id, "quantity", e.target.value)}
+                                className={inputCls}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </SectionCard>
           )}
 
-          {/* Location */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Address <span className="text-red-500">*</span></label>
-              <input type="text" name="address" value={formData.address} onChange={handleInputChange} required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
-                placeholder="e.g. 42, North Street" />
+          {/* ── Section: Location ────────────────────────────── */}
+          <SectionCard icon={<MapPin className="w-4 h-4 text-sky-500" />} title="Location Details">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className={labelCls}>Address <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g. 42, North Street"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>City <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g. Chennai"
+                  className={inputCls}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">City <span className="text-red-500">*</span></label>
-              <input type="text" name="city" value={formData.city} onChange={handleInputChange} required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
-                placeholder="e.g. Chennai" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div>
+                <label className={labelCls}>State <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g. Tamil Nadu"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Country <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g. India"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Pincode <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  name="pincode"
+                  value={formData.pincode}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g. 625001"
+                  className={inputCls}
+                />
+              </div>
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">State <span className="text-red-500">*</span></label>
-              <input type="text" name="state" value={formData.state} onChange={handleInputChange} required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
-                placeholder="e.g. Tamil Nadu" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Country <span className="text-red-500">*</span></label>
-              <input type="text" name="country" value={formData.country} onChange={handleInputChange} required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
-                placeholder="e.g. India" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Pincode <span className="text-red-500">*</span></label>
-              <input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
-                placeholder="e.g. 625001" />
-            </div>
-          </div>
-
-          {/* Amenities */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">Amenities</label>
-            <Select closeMenuOnSelect={false} components={animatedComponents} isMulti
-              options={amenityOptions} value={selectedAmenities} onChange={handleAmenityChange}
-              formatOptionLabel={formatOptionLabel} placeholder="Search and select amenities..."
-              noOptionsMessage={() => "No amenities found"} styles={customStyles}
-              className="basic-multi-select" classNamePrefix="select" />
+          {/* ── Section: Amenities ───────────────────────────── */}
+          <SectionCard icon={<Sparkles className="w-4 h-4 text-indigo-500" />} title="Amenities">
+            <Select
+              closeMenuOnSelect={false}
+              components={animatedComponents}
+              isMulti
+              options={amenityOptions}
+              value={selectedAmenities}
+              onChange={handleAmenityChange}
+              formatOptionLabel={formatOptionLabel}
+              placeholder="Search and select amenities..."
+              noOptionsMessage={() => "No amenities found"}
+              styles={customStyles}
+              className="basic-multi-select"
+              classNamePrefix="select"
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+            />
             {showOtherInput && (
-              <div className="mt-4">
-                <input type="text" placeholder="Enter custom amenity (e.g. Private Theatre)"
-                  value={otherAmenityName} onChange={(e) => setOtherAmenityName(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm text-gray-800"
-                  required />
+              <div className="mt-3">
+                <input
+                  type="text"
+                  placeholder="Enter custom amenity (e.g. Private Theatre)"
+                  value={otherAmenityName}
+                  onChange={(e) => setOtherAmenityName(e.target.value)}
+                  className={inputCls}
+                  required
+                />
               </div>
             )}
             {selectedAmenities.length > 0 && (
-              <p className="text-sm text-gray-600 mt-2">Selected: {selectedAmenities.length} amenities</p>
+              <p className="text-xs text-slate-400 font-semibold mt-2">
+                {selectedAmenities.length} amenities selected
+              </p>
             )}
-          </div>
+          </SectionCard>
 
-          {/* Media Tabs */}
-          <div className="space-y-4">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8">
-                {[
-                  { key: "cover", icon: <FaImage className="mr-2 h-5 w-5" />, label: "Cover Image" },
-                  { key: "gallery", icon: <FaImages className="mr-2 h-5 w-5" />, label: `Gallery (${images.length + extraImageInputs.length}/10)` },
-                  { key: "video", icon: <FaVideo className="mr-2 h-5 w-5" />, label: "Video Tour" },
-                ].map(({ key, icon, label }) => (
-                  <button key={key} type="button" onClick={() => setActiveMediaTab(key)}
-                    className={`group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeMediaTab === key
-                        ? "border-teal-500 text-teal-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}>
-                    {icon}{label}
-                  </button>
-                ))}
-              </nav>
+          {/* ── Section: Media ───────────────────────────────── */}
+          <SectionCard icon={<Images className="w-4 h-4 text-sky-500" />} title="Media">
+            {/* Tab bar */}
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-xl w-fit mb-5">
+              {[
+                { key: "cover", icon: <Image className="w-4 h-4" />, label: "Cover Image" },
+                { key: "gallery", icon: <Images className="w-4 h-4" />, label: `Gallery (${images.length + extraImageInputs.length}/10)` },
+                { key: "video", icon: <Video className="w-4 h-4" />, label: "Video Tour" },
+              ].map(({ key, icon, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveMediaTab(key)}
+                  className={`inline-flex items-center gap-1.5 py-2 px-4 rounded-[10px] text-sm font-semibold transition-all duration-200 ${
+                    activeMediaTab === key
+                      ? "bg-white text-sky-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {icon}
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
             </div>
 
-            <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
+            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
 
               {/* Cover Image */}
               {activeMediaTab === "cover" && (
                 <div className="space-y-4">
-                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Cover Image <span className="text-xs font-normal normal-case text-gray-500">(recommended: 1200×800)</span>
-                  </label>
+                  <p className={labelCls}>
+                    Cover Image <span className="text-[10px] font-normal normal-case text-slate-400">(recommended: 1200×800)</span>
+                  </p>
 
+                  {/* Current cover */}
                   {property.cover_image && (
                     <div>
-                      <p className="text-sm text-gray-600 mb-3">Current Cover:</p>
-                      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-48 group">
-                        <img src={`data:image/jpeg;base64,${bufferToBase64(property.cover_image)}`} alt="Current cover"
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-white text-base font-bold uppercase tracking-wider"><FaImage className="inline mr-2" /> Current</span>
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Current Cover</p>
+                      <div className="relative rounded-xl overflow-hidden shadow-sm border border-slate-200 h-48 group w-full md:w-1/2">
+                        <img
+                          src={`data:image/jpeg;base64,${bufferToBase64(property.cover_image)}`}
+                          alt="Current cover"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-white text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                            <Image className="w-4 h-4" /> Current
+                          </span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <FaCloudUploadAlt className="text-6xl text-gray-400 group-hover:text-teal-500 mb-4 transition-colors" />
-                        <p className="mb-2 text-lg font-semibold text-gray-700">Click to update cover image</p>
-                        <p className="text-sm text-gray-500">PNG, JPG, WebP • Max 5MB</p>
-                      </div>
+                  {/* Upload new cover */}
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                    {property.cover_image ? "Replace Cover" : "Upload Cover"}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group">
+                      <CloudUpload className="w-12 h-12 text-slate-300 group-hover:text-sky-400 mb-3 transition-colors" />
+                      <p className="text-sm font-semibold text-slate-600 group-hover:text-sky-600">
+                        Click to {property.cover_image ? "update" : "upload"} cover image
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">PNG, JPG, WebP · Max 5MB</p>
                       <input type="file" accept="image/*" className="hidden" onChange={handleCoverImageChange} />
                     </label>
 
                     {coverPreview ? (
-                      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 h-48 group">
-                        <img src={coverPreview} alt="New cover preview"
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-white text-base font-bold uppercase tracking-wider"><FaImage className="inline mr-2" /> New Preview</span>
+                      <div className="relative rounded-xl overflow-hidden shadow-sm border border-slate-200 h-48 group">
+                        <img
+                          src={coverPreview}
+                          alt="New cover preview"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-white text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                            <Image className="w-4 h-4" /> New Preview
+                          </span>
                         </div>
                       </div>
                     ) : (
-                      <div className="h-48 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-base italic bg-white/50">
+                      <div className="h-48 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-sm italic bg-white/50">
                         No new cover selected
                       </div>
                     )}
@@ -807,27 +1011,35 @@ const EditProperty = () => {
 
               {/* Gallery */}
               {activeMediaTab === "gallery" && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div className="flex justify-between items-center">
-                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-                      Additional Images <span className="text-xs font-normal normal-case text-gray-500">(max 10 – replaces existing)</span>
-                    </label>
+                    <p className={labelCls}>
+                      Additional Images <span className="text-[10px] font-normal normal-case text-slate-400">(max 10 – replaces existing)</span>
+                    </p>
                     {images.length + extraImageInputs.length < 10 && (
-                      <button type="button" onClick={addExtraImageInput}
-                        className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm font-medium flex items-center gap-2">
-                        + Add Image
+                      <button
+                        type="button"
+                        onClick={addExtraImageInput}
+                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-sky-500 hover:bg-sky-600 px-3.5 py-2 rounded-xl transition-all shadow-sm"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5" /> Add Image
                       </button>
                     )}
                   </div>
 
+                  {/* Current images */}
                   {property.images && property.images.length > 0 && (
                     <div>
-                      <p className="text-sm text-gray-600 mb-3">Current Images:</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Current Images</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {property.images.map((img, idx) => (
-                          <div key={idx} className="h-28 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group aspect-square">
-                            <img src={`data:image/jpeg;base64,${bufferToBase64(img.image)}`} alt={`Current ${idx}`} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium px-2 text-center">
+                          <div key={idx} className="h-28 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative group aspect-square">
+                            <img
+                              src={`data:image/jpeg;base64,${bufferToBase64(img.image)}`}
+                              alt={`Current ${idx}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium px-2 text-center">
                               Current Image
                             </div>
                           </div>
@@ -836,30 +1048,31 @@ const EditProperty = () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group aspect-square">
-                      <FaCloudUploadAlt className="text-4xl text-gray-400 group-hover:text-teal-500 mb-2 transition-colors" />
-                      <p className="text-xs font-semibold text-gray-700 text-center">Upload new images</p>
+                  {/* New images upload area */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-300 transition-all group aspect-square">
+                      <CloudUpload className="w-8 h-8 text-slate-300 group-hover:text-sky-400 mb-1.5 transition-colors" />
+                      <p className="text-xs font-semibold text-slate-500 text-center">Upload new images</p>
                       <input type="file" accept="image/*" multiple className="hidden" onChange={handleMultipleImagesChange} />
                     </label>
 
                     {images.map((file, idx) => (
-                      <div key={idx} className="h-28 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group aspect-square">
+                      <div key={idx} className="h-28 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative group aspect-square">
                         <img src={URL.createObjectURL(file)} alt={`New ${idx}`} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium px-2 text-center">
+                        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium px-2 text-center">
                           {file.name}
                         </div>
                       </div>
                     ))}
 
                     {extraImageInputs.map((inp) => (
-                      <div key={inp.id} className="h-28 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative aspect-square">
+                      <div key={inp.id} className="h-28 rounded-xl overflow-hidden border-2 border-dashed border-slate-200 relative aspect-square bg-white">
                         {inp.file ? (
                           <img src={URL.createObjectURL(inp.file)} alt="Extra preview" className="w-full h-full object-cover" />
                         ) : (
-                          <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-teal-50/50 transition">
-                            <FaImage className="text-4xl text-gray-400 mb-2" />
-                            <span className="text-sm text-gray-600 text-center px-2">Choose image</span>
+                          <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-sky-50/50 transition">
+                            <Image className="w-6 h-6 text-slate-300 mb-1.5" />
+                            <span className="text-xs text-slate-500 text-center px-1 font-medium">Choose image</span>
                             <input type="file" accept="image/*" className="hidden" onChange={(e) => handleExtraImageChange(inp.id, e.target.files[0])} />
                           </label>
                         )}
@@ -872,55 +1085,69 @@ const EditProperty = () => {
               {/* Video */}
               {activeMediaTab === "video" && (
                 <div className="space-y-4">
-                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Video Tour <span className="text-xs font-normal normal-case text-gray-500">(optional)</span>
-                  </label>
+                  <p className={labelCls}>
+                    Video Tour <span className="text-[10px] font-normal normal-case text-slate-400">(optional)</span>
+                  </p>
 
+                  {/* Current video */}
                   {property.video && (
                     <div>
-                      <p className="text-sm text-gray-600 mb-3">Current Video:</p>
-                      <video src={`data:video/mp4;base64,${bufferToBase64(property.video)}`} controls
-                        className="w-full h-40 object-cover rounded-xl border border-gray-200 shadow-lg" />
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Current Video</p>
+                      <video
+                        src={`data:video/mp4;base64,${bufferToBase64(property.video)}`}
+                        controls
+                        className="w-full h-40 object-cover rounded-xl border border-slate-200 shadow-sm"
+                      />
                     </div>
                   )}
 
-                  <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-teal-50 hover:border-teal-400 transition-all group">
+                  {/* Upload new video */}
+                  <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-300 transition-all group">
                     <div className="flex flex-col items-center justify-center">
-                      <FaVideo className="text-4xl text-gray-400 group-hover:text-teal-500 mb-2 transition-colors" />
-                      <p className="text-base font-semibold text-gray-700">Upload new video (MP4 recommended)</p>
-                      <p className="text-xs text-gray-500 mt-1">Max size ~50MB suggested</p>
+                      <Video className="w-10 h-10 text-slate-300 group-hover:text-sky-400 mb-2 transition-colors" />
+                      <p className="text-sm font-semibold text-slate-600">
+                        Upload {property.video ? "new" : ""} video (MP4 recommended)
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">Max size ~50MB suggested</p>
                     </div>
                     <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} />
                   </label>
 
                   {video && (
-                    <div className="bg-teal-50 p-4 rounded-lg text-teal-800">
-                      <p className="font-medium">Selected video:</p>
-                      <p className="text-sm mt-1">{video.name}</p>
+                    <div className="bg-sky-50 p-4 rounded-xl border border-sky-100 flex items-center gap-3">
+                      <Video className="w-4 h-4 text-sky-500 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-sky-700">Selected video</p>
+                        <p className="text-sm text-slate-600 mt-0.5">{video.name}</p>
+                      </div>
                     </div>
                   )}
                 </div>
               )}
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Submit */}
-          <div className="pt-6 border-t border-gray-100 flex justify-end">
-            <button type="submit" disabled={isSubmitting}
-              className="group flex items-center gap-3 bg-linear-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold px-8 py-3 rounded-lg transition-all shadow-lg hover:shadow-teal-200 transform hover:-translate-y-1 active:translate-y-0 disabled:transform-none min-w-60 justify-center">
+          {/* ── Submit ───────────────────────────────────────── */}
+          <div className="pt-2 flex justify-end">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex items-center gap-2.5 px-8 py-3 bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-[0_4px_12px_rgba(14,165,233,0.3)] hover:shadow-[0_6px_18px_rgba(14,165,233,0.4)] active:scale-[0.98] disabled:cursor-not-allowed"
+            >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
-                  <span>Updating...</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Updating…</span>
                 </>
               ) : (
                 <>
+                  <CheckCircle2 className="w-4 h-4" />
                   <span>Update Property</span>
-                  <FaCheckCircle className="group-hover:scale-110 transition-transform" />
                 </>
               )}
             </button>
           </div>
+
         </form>
       </div>
     </div>

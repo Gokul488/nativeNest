@@ -13,15 +13,22 @@ import {
   FaEdit,
   FaTicketAlt,
   FaUserCheck,
-  FaSort,
-  FaSortUp,
-  FaSortDown,
-  FaSearch,
-  FaExclamationTriangle,
-  FaInfoCircle,
-  FaCheckCircle,
-  FaClock,
 } from "react-icons/fa";
+import {
+  Search,
+  Loader2,
+  AlertCircle,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  CalendarDays,
+  Clock,
+  CheckCircle2,
+  Pencil,
+  QrCode,
+  Download,
+  X,
+} from "lucide-react";
 import API_BASE_URL from "../../config.js";
 import FRONTEND_URL from "../../frontendConfig.js";
 import Pagination from "../common/Pagination.jsx";
@@ -72,8 +79,6 @@ const ViewEvents = () => {
     fetchEvents();
   }, [navigate]);
 
-
-
   const activeEvents = useMemo(() => events.filter(e => !isEventCompleted(e.end_date)), [events]);
   const completedEvents = useMemo(() => events.filter(e => isEventCompleted(e.end_date)), [events]);
 
@@ -98,7 +103,6 @@ const ViewEvents = () => {
     return result;
   }, [activeEvents, completedEvents, activeTab, searchQuery, sortConfig]);
 
-  // Reset page when search, tab or sort changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortConfig, activeTab]);
@@ -121,10 +125,10 @@ const ViewEvents = () => {
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) return <FaSort className="ml-2 opacity-20" />;
+    if (sortConfig.key !== key) return <ChevronsUpDown className="ml-1.5 w-3.5 h-3.5 opacity-40" />;
     return sortConfig.direction === "asc"
-      ? <FaSortUp className="ml-2 text-teal-600" />
-      : <FaSortDown className="ml-2 text-teal-600" />;
+      ? <ChevronUp className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />
+      : <ChevronDown className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />;
   };
 
   const handleDownload = async (eventId, eventName) => {
@@ -150,82 +154,107 @@ const ViewEvents = () => {
   const isCompleted = activeTab === "completed";
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
 
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Property Events</h2>
-          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
+      {/* ── Header ── */}
+      <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-center gap-4">
+        {/* Left: icon + title + badge */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+            <CalendarDays className="w-5 h-5 text-indigo-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+              Property Events
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Manage and track all property events
+            </p>
+          </div>
+          <span className="ml-1 bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
             {events.length} Total
           </span>
         </div>
+
+        {/* Right: search + create */}
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative flex-1 sm:w-72 group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
             <input
               type="text"
               placeholder="Search by name or city..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
+              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
             />
           </div>
           <Link
             to="/admin-dashboard/create-property-event"
-            className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm whitespace-nowrap"
           >
-            <FaCalendarAlt /> Create Event
+            <CalendarDays className="w-4 h-4" /> Create Event
           </Link>
         </div>
       </div>
 
-      {/* Tab Toggle */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8 px-6">
+      {/* ── Tab Toggle ── */}
+      <div className="border-b border-slate-100 px-8">
+        <nav className="-mb-px flex gap-6">
           {[
-            { key: "active", icon: <FaClock className="mr-2 h-5 w-5" />, label: `Active Events (${activeEvents.length})` },
-            { key: "completed", icon: <FaCheckCircle className="mr-2 h-5 w-5" />, label: `Completed Events (${completedEvents.length})` },
-          ].map(({ key, icon, label }) => (
+            { key: "active", icon: <Clock className="w-4 h-4" />, label: `Active Events`, count: activeEvents.length },
+            { key: "completed", icon: <CheckCircle2 className="w-4 h-4" />, label: `Completed`, count: completedEvents.length },
+          ].map(({ key, icon, label, count }) => (
             <button
               key={key}
               type="button"
               onClick={() => handleTabSwitch(key)}
-              className={`group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === key
-                ? "border-teal-500 text-teal-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+              className={`inline-flex items-center gap-2 py-3.5 px-1 border-b-2 font-semibold text-sm transition-colors ${
+                activeTab === key
+                  ? "border-indigo-500 text-indigo-600"
+                  : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"
+              }`}
             >
-              {icon}{label}
+              {icon}
+              {label}
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                activeTab === key ? "bg-indigo-50 text-indigo-600" : "bg-slate-100 text-slate-500"
+              }`}>
+                {count}
+              </span>
             </button>
           ))}
         </nav>
       </div>
 
-      {/* All content — fades as one unit, never unmounts */}
+      {/* ── Body ── */}
       <div className="flex-1 flex flex-col">
+
         {/* Loading */}
         {loading && (
-          <div className="flex-1 flex justify-center items-center gap-3 text-gray-500 py-24">
-            <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
-            Loading events...
+          <div className="flex-1 flex flex-col justify-center items-center gap-3 text-slate-400 py-24">
+            <Loader2 className="animate-spin h-7 w-7 text-indigo-500" />
+            <span className="text-sm font-semibold">Loading events…</span>
           </div>
         )}
 
         {/* Error */}
         {!loading && error && (
-          <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
-            <FaExclamationTriangle /> {error}
+          <div className="m-8 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="font-medium text-sm">{error}</span>
           </div>
         )}
 
         {/* Empty */}
         {!loading && !error && filteredAndSortedEvents.length === 0 && (
-          <div className="flex-1 py-20 text-center text-gray-500 flex flex-col items-center gap-3">
-            <FaInfoCircle className="text-4xl opacity-50" />
-            <p className="text-lg">
+          <div className="flex-1 py-32 flex flex-col items-center gap-3 text-slate-400">
+            <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-1">
+              <Search className="w-7 h-7 text-slate-300" />
+            </div>
+            <p className="text-lg font-bold text-slate-800">No events found</p>
+            <p className="text-sm text-slate-400 max-w-xs text-center">
               {searchQuery
-                ? "No events found matching your search."
+                ? `No events matching "${searchQuery}"`
                 : isCompleted
                   ? "No completed events yet."
                   : "No active events. Create one to get started!"}
@@ -233,85 +262,135 @@ const ViewEvents = () => {
           </div>
         )}
 
-        {/* Table — stable DOM, no conditional unmounting between tabs */}
+        {/* Table + Cards */}
         {!loading && !error && filteredAndSortedEvents.length > 0 && (
-          <div className="flex flex-col h-full uppercase">
-            {/* Desktop Table */}
-            <div className="hidden xl:block overflow-x-auto flex-1">
-              <table className="w-full table-fixed border-separate border-spacing-0">
-                <thead className={`text-xs font-semibold uppercase ${isCompleted ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-500"}`}>
-                  <tr>
-                    <th className="w-12 px-4 py-3 text-left border-b border-gray-200">#</th>
-                    <th onClick={() => requestSort("event_name")} className="w-1/4 px-6 py-3 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center">Event Name {getSortIcon("event_name")}</div>
+          <div className="flex flex-col">
+
+            {/* ── Desktop Table ── */}
+            <div className="hidden xl:block overflow-x-auto">
+              <table className="w-full table-fixed">
+                <thead>
+                  <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="w-12 px-4 py-4 text-left">#</th>
+                    <th
+                      className="w-1/4 px-6 py-4 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("event_name")}
+                    >
+                      <span className="inline-flex items-center">Event Name {getSortIcon("event_name")}</span>
                     </th>
-                    <th onClick={() => requestSort("start_date")} className="w-1/4 px-6 py-3 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center">Event Date {getSortIcon("start_date")}</div>
+                    <th
+                      className="w-1/4 px-6 py-4 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("start_date")}
+                    >
+                      <span className="inline-flex items-center">Event Date {getSortIcon("start_date")}</span>
                     </th>
-                    <th className="w-24 px-4 py-3 text-center border-b border-gray-200">Stalls</th>
-                    <th className="w-24 px-4 py-3 text-center border-b border-gray-200">Bookings</th>
-                    <th className="w-24 px-4 py-3 text-center border-b border-gray-200">People</th>
-                    <th className="w-32 px-6 py-3 text-center border-b border-gray-200">Actions</th>
+                    <th className="w-24 px-4 py-4 text-center">Stalls</th>
+                    <th className="w-24 px-4 py-4 text-center">Bookings</th>
+                    <th className="w-24 px-4 py-4 text-center">People</th>
+                    <th className="w-32 px-6 py-4 text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="divide-y divide-slate-50">
                   {paginatedEvents.map((event, index) => {
                     const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                     return (
                       <tr
                         key={event.id}
-                        className={`transition-colors group ${isCompleted ? "hover:bg-green-50/40" : "hover:bg-gray-50/80"}`}
+                        className={`transition-colors duration-150 group ${
+                          isCompleted ? "hover:bg-green-50/30" : "hover:bg-slate-50/60"
+                        }`}
                       >
-                        <td className="px-4 py-2.5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                        {/* # */}
+                        <td className="px-4 py-3 text-sm font-bold text-slate-300">
                           {String(globalIndex).padStart(2, "0")}
                         </td>
-                        <td className="px-6 py-2.5 border-b border-gray-100">
+
+                        {/* Event Name */}
+                        <td className="px-6 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-900" title={event.event_name}>{event.event_name}</span>
+                            <CalendarDays className="w-4 h-4 text-indigo-400 shrink-0" />
+                            <div>
+                              <span className="font-bold text-slate-800 text-sm" title={event.event_name}>
+                                {event.event_name}
+                              </span>
+                              {event.city && (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
+                                  <span className="text-xs text-slate-400 font-medium">{event.city}</span>
+                                </div>
+                              )}
+                            </div>
                             {isCompleted && (
-                              <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">
+                              <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full shrink-0">
                                 Done
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-2.5 border-b border-gray-100">
-                          <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
-                            <FaCalendarAlt className={isCompleted ? "text-green-400" : "text-teal-500"} />
+
+                        {/* Event Date */}
+                        <td className="px-6 py-3">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-bold text-indigo-600">
+                            <FaCalendarAlt className="text-indigo-400 text-[10px]" />
                             {formatDateRange(event.start_date, event.end_date)}
                           </div>
                         </td>
-                        <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                          <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-bold hover:bg-teal-600 hover:text-white transition-all">
+
+                        {/* Stalls */}
+                        <td className="px-4 py-3 text-center">
+                          <Link
+                            to={`/admin-dashboard/manage-stall-types/${event.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all"
+                          >
                             {event.stall_count || 0}
                           </Link>
                         </td>
-                        <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                          <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded text-sm font-bold hover:bg-indigo-600 hover:text-white transition-all">
+
+                        {/* Bookings */}
+                        <td className="px-4 py-3 text-center">
+                          <Link
+                            to={`/admin-dashboard/event-bookings/${event.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all"
+                          >
                             {event.booked_stall_count || 0}
                           </Link>
                         </td>
-                        <td className="px-4 py-2.5 text-center border-b border-gray-100">
-                          <Link to={`/admin-dashboard/events/${event.id}/participants`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded text-sm font-bold hover:bg-purple-600 hover:text-white transition-all whitespace-nowrap">
+
+                        {/* People */}
+                        <td className="px-4 py-3 text-center">
+                          <Link
+                            to={`/admin-dashboard/events/${event.id}/participants`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full text-xs font-bold hover:bg-purple-600 hover:text-white transition-all"
+                          >
                             View
                           </Link>
                         </td>
-                        <td className="px-6 py-2.5 text-right border-b border-gray-100">
-                          <div className="flex justify-end gap-1.5">
-                            <div style={{ display: isCompleted ? "none" : "" }}>
+
+                        {/* Actions */}
+                        <td className="px-6 py-3">
+                          <div className="flex justify-center gap-1.5">
+                            {!isCompleted && (
                               <button
                                 onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
-                                className="p-2 text-blue-500 hover:bg-blue-50 rounded transition"
+                                className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition"
                                 title="Edit"
                               >
-                                <FaEdit size={18} />
+                                <Pencil size={15} />
                               </button>
-                            </div>
-                            <button onClick={() => openQR(event)} className="p-2 text-purple-500 hover:bg-purple-50 rounded transition" title="Attendance QR">
-                              <FaQrcode size={18} />
+                            )}
+                            <button
+                              onClick={() => openQR(event)}
+                              className="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition"
+                              title="Attendance QR"
+                            >
+                              <QrCode size={15} />
                             </button>
-                            <button onClick={() => handleDownload(event.id, event.event_name)} className="p-2 text-teal-500 hover:bg-teal-50 rounded transition" title="Download Invitation">
-                              <FaDownload size={18} />
+                            <button
+                              onClick={() => handleDownload(event.id, event.event_name)}
+                              className="p-2 text-indigo-400 hover:bg-indigo-50 rounded-lg transition"
+                              title="Download Invitation"
+                            >
+                              <Download size={15} />
                             </button>
                           </div>
                         </td>
@@ -322,78 +401,97 @@ const ViewEvents = () => {
               </table>
             </div>
 
-            {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4 bg-gray-50/50 flex-1">
+            {/* ── Mobile Cards ── */}
+            <div className="xl:hidden p-4 space-y-3">
               {paginatedEvents.map((event, index) => {
                 const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
                   <div
                     key={event.id}
-                    className={`rounded-xl p-4 border shadow-sm space-y-4 bg-white ${isCompleted ? "border-green-100" : "border-gray-100"}`}
+                    className={`rounded-2xl p-5 border space-y-4 bg-white hover:border-indigo-200 transition-colors ${
+                      isCompleted ? "border-green-100" : "border-slate-100"
+                    }`}
                   >
-                    <div className="flex justify-between items-start border-b border-gray-100 pb-3">
+                    {/* Card Header */}
+                    <div className="flex justify-between items-start pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${isCompleted ? "bg-green-100 text-green-700" : "bg-teal-100 text-teal-600"}`}>
+                        <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 border ${
+                          isCompleted
+                            ? "bg-green-50 text-green-600 border-green-100"
+                            : "bg-indigo-50 text-indigo-600 border-indigo-100"
+                        }`}>
                           {globalIndex}
-                        </div>
-                        <div className="flex flex-col">
-                          <div className="font-bold text-gray-900 text-base leading-tight">{event.event_name}</div>
-                          <div className="flex items-center gap-1 mt-1">
-                            <FaMapMarkerAlt className="text-gray-400 text-[10px]" />
-                            <span className="text-teal-600 font-semibold text-xs">{event.city}</span>
+                        </span>
+                        <div>
+                          <div className="font-bold text-slate-900 text-sm leading-tight">{event.event_name}</div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
+                            <span className="text-xs text-indigo-500 font-semibold">{event.city}</span>
                           </div>
                         </div>
                       </div>
                       {isCompleted && (
-                        <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                        <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">
                           Done
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-gray-600 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100">
-                      <FaCalendarAlt className="text-teal-500 text-xs shrink-0" />
-                      <span className="text-xs font-medium">{formatDateRange(event.start_date, event.end_date)}</span>
+                    {/* Date row */}
+                    <div className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-600 w-full">
+                      <FaCalendarAlt className="text-indigo-400 shrink-0" />
+                      <span>{formatDateRange(event.start_date, event.end_date)}</span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
-                      <Link to={`/admin-dashboard/manage-stall-types/${event.id}`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-teal-500 hover:shadow-md transition-all group">
-                        <FaStore className="text-teal-600 group-hover:scale-110 transition-transform" />
-                        <div className="text-center">
-                          <span className="block text-xs font-bold text-gray-900">{event.stall_count || 0}</span>
-                          <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">Stalls</span>
-                        </div>
+                    {/* Stats grid */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <Link
+                        to={`/admin-dashboard/manage-stall-types/${event.id}`}
+                        className="flex flex-col items-center justify-center gap-1 p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-sm transition-all group"
+                      >
+                        <FaStore className="text-indigo-500 group-hover:scale-110 transition-transform text-sm" />
+                        <span className="text-xs font-bold text-slate-800">{event.stall_count || 0}</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-tight">Stalls</span>
                       </Link>
-                      <Link to={`/admin-dashboard/event-bookings/${event.id}`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-md transition-all group">
-                        <FaTicketAlt className="text-indigo-600 group-hover:scale-110 transition-transform" />
-                        <div className="text-center">
-                          <span className="block text-xs font-bold text-gray-900">{event.booked_stall_count || 0}</span>
-                          <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">Booked</span>
-                        </div>
+                      <Link
+                        to={`/admin-dashboard/event-bookings/${event.id}`}
+                        className="flex flex-col items-center justify-center gap-1 p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-sm transition-all group"
+                      >
+                        <FaTicketAlt className="text-indigo-600 group-hover:scale-110 transition-transform text-sm" />
+                        <span className="text-xs font-bold text-slate-800">{event.booked_stall_count || 0}</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-tight">Booked</span>
                       </Link>
-                      <Link to={`/admin-dashboard/events/${event.id}/participants`} className="flex flex-col items-center justify-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 hover:border-purple-500 hover:shadow-md transition-all group">
-                        <FaUserCheck className="text-purple-600 group-hover:scale-110 transition-transform" />
-                        <div className="text-center">
-                          <span className="block text-xs font-bold text-gray-900">View</span>
-                          <span className="block text-[9px] text-gray-500 uppercase tracking-tighter">People</span>
-                        </div>
+                      <Link
+                        to={`/admin-dashboard/events/${event.id}/participants`}
+                        className="flex flex-col items-center justify-center gap-1 p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-sm transition-all group"
+                      >
+                        <FaUserCheck className="text-purple-500 group-hover:scale-110 transition-transform text-sm" />
+                        <span className="text-xs font-bold text-slate-800">View</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-tight">People</span>
                       </Link>
                     </div>
 
-                    <div className="flex gap-2 pt-2">
+                    {/* Action buttons */}
+                    <div className="flex gap-2 pt-1">
                       {!isCompleted && (
                         <button
                           onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors"
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors"
                         >
-                          <FaEdit /> Edit
+                          <Pencil size={12} /> Edit
                         </button>
                       )}
-                      <button onClick={() => openQR(event)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-100 transition-colors">
-                        <FaQrcode /> QR Code
+                      <button
+                        onClick={() => openQR(event)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-purple-50 text-purple-600 border border-purple-100 rounded-xl text-xs font-bold hover:bg-purple-100 transition-colors"
+                      >
+                        <QrCode size={12} /> QR Code
                       </button>
-                      <button onClick={() => handleDownload(event.id, event.event_name)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-teal-50 text-teal-600 rounded-xl text-xs font-bold hover:bg-teal-100 transition-colors">
-                        <FaDownload /> PDF
+                      <button
+                        onClick={() => handleDownload(event.id, event.event_name)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-50 text-indigo-500 border border-indigo-100 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors"
+                      >
+                        <Download size={12} /> PDF
                       </button>
                     </div>
                   </div>
@@ -406,22 +504,26 @@ const ViewEvents = () => {
               totalItems={filteredAndSortedEvents.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              activeColor="indigo"
             />
           </div>
         )}
       </div>
 
-      {/* QR Modal */}
+      {/* ── QR Modal ── */}
       {showQRModal && activeQR && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full relative shadow-2xl animate-in zoom-in duration-200">
-            <button onClick={() => setShowQRModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-              <FaTimes size={24} />
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full relative shadow-2xl">
+            <button
+              onClick={() => setShowQRModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={22} />
             </button>
             <div className="text-center">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">Check-in QR Code</h3>
-              <p className="text-sm text-gray-500 mb-6">{activeQR.name}</p>
-              <div className="bg-white p-4 border rounded-xl inline-block mb-6">
+              <h3 className="text-xl font-extrabold text-slate-900 mb-1">Check-in QR Code</h3>
+              <p className="text-sm text-slate-500 mb-6">{activeQR.name}</p>
+              <div className="bg-white p-4 border border-slate-200 rounded-xl inline-block mb-6">
                 <QRCodeCanvas id="event-qr-code" value={activeQR.url} size={200} level="H" includeMargin={true} />
               </div>
               <button
@@ -432,9 +534,9 @@ const ViewEvents = () => {
                   link.download = `QR-${activeQR.name}.png`;
                   link.click();
                 }}
-                className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-teal-700"
+                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
               >
-                <FaDownload /> Download PNG
+                <Download size={16} /> Download PNG
               </button>
             </div>
           </div>

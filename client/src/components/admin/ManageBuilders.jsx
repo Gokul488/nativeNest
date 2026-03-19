@@ -5,19 +5,17 @@ import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config.js";
 import Pagination from "../common/Pagination.jsx";
 import {
-  FaSearch,
-  FaSpinner,
-  FaExclamationTriangle,
-  FaInfoCircle,
-  FaSort,
-  FaSortUp,
-  FaSortDown,
-  FaBuilding,
-  FaPhoneAlt,
-  FaEnvelope,
-  FaCalendarAlt,
-  FaCubes
-} from "react-icons/fa";
+  Search,
+  Loader2,
+  AlertCircle,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  LayoutGrid,
+  Phone,
+  Mail,
+  HardHat,
+} from "lucide-react";
 
 const ManageBuilders = () => {
   const [builders, setBuilders] = useState([]);
@@ -69,7 +67,6 @@ const ManageBuilders = () => {
     return result;
   }, [builders, searchQuery, sortConfig]);
 
-  // Reset page when search or sort changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortConfig]);
@@ -86,103 +83,176 @@ const ManageBuilders = () => {
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) return <FaSort className="ml-2 opacity-20" />;
-    return sortConfig.direction === "asc" ? <FaSortUp className="ml-2 text-teal-600" /> : <FaSortDown className="ml-2 text-teal-600" />;
+    if (sortConfig.key !== key) return <ChevronsUpDown className="ml-1.5 w-3.5 h-3.5 opacity-40" />;
+    return sortConfig.direction === "asc" ? (
+      <ChevronUp className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />
+    ) : (
+      <ChevronDown className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />
+    );
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
-      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Manage Builders</h2>
-          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
+
+      {/* ── Header ── */}
+      <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-center gap-4">
+        {/* Left: icon + title + badge */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+            <HardHat className="w-5 h-5 text-indigo-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+              Manage Builders
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Oversee and manage registered property builders
+            </p>
+          </div>
+          <span className="ml-1 bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
             {builders.length} Total
           </span>
         </div>
 
-        <div className="relative w-full lg:w-80">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        {/* Right: search */}
+        <div className="relative w-full lg:w-80 group">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
           <input
             type="text"
             placeholder="Search company, person, or phone..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
           />
         </div>
       </div>
 
+      {/* ── Body ── */}
       <div className="relative flex-1">
+
+        {/* Loading overlay */}
         {loading && (
-          <div className="absolute inset-0 bg-white/80 z-20 flex justify-center items-center gap-3 text-gray-500">
-            <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
-            Loading builders...
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-20 flex flex-col justify-center items-center gap-3 text-slate-400">
+            <Loader2 className="animate-spin h-7 w-7 text-indigo-500" />
+            <span className="text-sm font-semibold">Loading builders…</span>
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
-            <FaExclamationTriangle /> {error}
+          <div className="m-8 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="font-medium text-sm">{error}</span>
           </div>
         )}
 
+        {/* Empty state */}
+        {!loading && !error && filteredAndSortedBuilders.length === 0 && (
+          <div className="py-32 flex flex-col items-center gap-3 text-slate-400">
+            <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-1">
+              <Search className="w-7 h-7 text-slate-300" />
+            </div>
+            <p className="text-lg font-bold text-slate-800">No builders found</p>
+            <p className="text-sm text-slate-400 max-w-xs text-center">
+              No results matching "{searchQuery}"
+            </p>
+          </div>
+        )}
+
+        {/* Table + cards */}
         {!loading && !error && filteredAndSortedBuilders.length > 0 && (
-          <div className="flex flex-col h-full">
-            {/* Desktop Table View */}
-            <div className="hidden xl:block overflow-x-auto flex-1">
-              <table className="w-full border-separate border-spacing-0">
-                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                  <tr>
-                    <th className="w-10 px-2 py-4 text-left border-b border-gray-200">#</th>
-                    <th onClick={() => requestSort("name")} className="min-w-[160px] px-3 py-4 text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center">Company {getSortIcon("name")}</div>
+          <div className="flex flex-col">
+
+            {/* ── Desktop Table ── */}
+            <div className="hidden xl:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="px-6 py-2.5 text-left w-16">#</th>
+                    <th
+                      className="px-6 py-2.5 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("name")}
+                    >
+                      <span className="inline-flex items-center">Company {getSortIcon("name")}</span>
                     </th>
-                    <th className="min-w-[120px] px-3 py-4 text-left border-b border-gray-200">Mobile</th>
-                    <th className="min-w-[200px] px-3 py-4 text-left border-b border-gray-200">Email Address</th>
-                    <th onClick={() => requestSort("total_quantity")} className="min-w-[120px] px-3 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center justify-center">Quantities {getSortIcon("total_quantity")}</div>
+                    <th className="px-6 py-2.5 text-left">Mobile</th>
+                    <th className="px-6 py-2.5 text-left">Email Address</th>
+                    <th
+                      className="px-6 py-2.5 text-center cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("total_quantity")}
+                    >
+                      <span className="inline-flex items-center justify-center">Quantities {getSortIcon("total_quantity")}</span>
                     </th>
-                    <th onClick={() => requestSort("created_at")} className="px-3 py-4 text-center border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center justify-center">Registered {getSortIcon("created_at")}</div>
+                    <th
+                      className="px-6 py-2.5 text-center cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("created_at")}
+                    >
+                      <span className="inline-flex items-center justify-center">Registered {getSortIcon("created_at")}</span>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="divide-y divide-slate-50">
                   {paginatedBuilders.map((builder, index) => {
                     const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                     return (
-                      <tr key={builder.id || index} className="hover:bg-gray-50/80 transition-colors group">
-                        <td className="px-2 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
-                          {String(globalIndex).padStart(2, '0')}
+                      <tr
+                        key={builder.id || index}
+                        className="hover:bg-slate-50/60 transition-colors duration-150 group"
+                      >
+                        {/* # */}
+                        <td className="px-6 py-2.5 text-sm font-bold text-slate-300">
+                          {String(globalIndex).padStart(2, "0")}
                         </td>
-                        <td className="px-3 py-3 border-b border-gray-100">
+
+                        {/* Company */}
+                        <td className="px-6 py-2.5">
                           <button
-                            onClick={() => navigate('/admin-dashboard/manage-properties', { state: { builderFilter: builder.name } })}
-                            className="font-bold text-gray-900 flex items-center gap-2 hover:text-teal-600 transition-colors group/name whitespace-nowrap text-left"
+                            onClick={() =>
+                              navigate("/admin-dashboard/manage-properties", {
+                                state: { builderFilter: builder.name },
+                              })
+                            }
+                            className="flex items-center gap-2.5 text-left group/btn"
                           >
-                            <FaBuilding className="text-teal-600 text-xs shrink-0 group-hover/name:scale-110 transition-transform" />
-                            <span className="hover:underline decoration-teal-500/30 decoration-2 underline-offset-4">{builder.name}</span>
+                            <LayoutGrid className="w-4 h-4 text-indigo-400 shrink-0" />
+                            <span className="font-bold text-slate-800 text-sm group-hover/btn:text-indigo-600 transition-colors">
+                              {builder.name}
+                            </span>
                           </button>
                         </td>
-                        <td className="px-3 py-3 border-b border-gray-100 text-sm text-gray-700">
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <FaPhoneAlt className="text-[10px] text-gray-400 shrink-0" /> {builder.mobile_number || "—"}
-                          </div>
+
+                        {/* Mobile */}
+                        <td className="px-6 py-2.5 text-sm text-slate-500 font-medium">
+                          <span className="inline-flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-slate-300" />
+                            {builder.mobile_number || "—"}
+                          </span>
                         </td>
-                        <td className="px-3 py-3 border-b border-gray-100 text-sm text-gray-500">
-                          <div className="flex items-center gap-2" title={builder.email}>
-                            <FaEnvelope className="text-[10px] text-gray-400 shrink-0" /> <span className="break-all">{builder.email || "—"}</span>
-                          </div>
+
+                        {/* Email */}
+                        <td className="px-6 py-2.5 text-sm text-slate-500 font-medium max-w-[240px]">
+                          <span className="inline-flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                            <span className="truncate">{builder.email || "—"}</span>
+                          </span>
                         </td>
-                        <td className="px-3 py-3 border-b border-gray-100 text-center">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-bold">
-                            <FaCubes className="text-[10px]" />
+
+                        {/* Quantities */}
+                        <td className="px-6 py-2.5 text-center">
+                          <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100">
+                            <LayoutGrid className="w-3 h-3 text-indigo-400" />
                             {builder.total_quantity ?? 0}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-center border-b border-gray-100">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                            {new Date(builder.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+
+                        {/* Registered */}
+                        <td className="px-6 py-2.5 text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100">
+                            {new Date(builder.created_at).toLocaleDateString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            }).toUpperCase()}
                           </span>
                         </td>
                       </tr>
@@ -192,41 +262,58 @@ const ManageBuilders = () => {
               </table>
             </div>
 
-            {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4 flex-1">
+            {/* ── Mobile Cards ── */}
+            <div className="xl:hidden p-4 space-y-3">
               {paginatedBuilders.map((builder, index) => {
                 const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
-                  <div key={builder.id || index} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
-                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                  <div
+                    key={builder.id || index}
+                    className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-4 hover:border-indigo-200 transition-colors"
+                  >
+                    <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
                           {globalIndex}
+                        </span>
+                        <div>
+                          <button
+                            onClick={() =>
+                              navigate("/admin-dashboard/manage-properties", {
+                                state: { builderFilter: builder.name },
+                              })
+                            }
+                            className="font-bold text-slate-900 text-sm hover:text-indigo-600 transition-colors text-left block max-w-[180px] truncate"
+                          >
+                            {builder.name}
+                          </button>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            ID #{builder.id ? String(builder.id).slice(-4) : "N/A"}
+                          </p>
                         </div>
-                        <button
-                          onClick={() => navigate('/admin-dashboard/manage-properties', { state: { builderFilter: builder.name } })}
-                          className="font-bold text-gray-900 truncate max-w-[200px] hover:text-teal-600 transition-colors text-left"
-                        >
-                          {builder.name}
-                        </button>
                       </div>
-                      <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-bold uppercase">
-                        {new Date(builder.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short' })}
+                      <span className="px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold">
+                        {new Date(builder.created_at).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                        }).toUpperCase()}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <FaPhoneAlt className="text-gray-400 text-xs" />
-                        <span>{builder.mobile_number || "—"}</span>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-slate-100">
+                        <Phone className="w-4 h-4 text-slate-300 shrink-0" />
+                        <span className="font-medium text-slate-600">{builder.mobile_number || "—"}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <FaEnvelope className="text-gray-400 text-xs shrink-0" />
-                        <span className="break-all">{builder.email || "—"}</span>
+                      <div className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-slate-100 overflow-hidden">
+                        <Mail className="w-4 h-4 text-slate-300 shrink-0" />
+                        <span className="font-medium text-slate-600 truncate">{builder.email || "—"}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <FaCubes className="text-teal-500 text-xs" />
-                        <span className="font-semibold text-teal-700">{builder.total_quantity ?? 0} units</span>
+                      <div className="flex items-center gap-2.5 bg-indigo-50 rounded-xl px-3 py-2.5 border border-indigo-100">
+                        <LayoutGrid className="w-4 h-4 text-indigo-400 shrink-0" />
+                        <span className="font-bold text-indigo-700 text-sm">
+                          {builder.total_quantity ?? 0} Units
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -239,6 +326,7 @@ const ManageBuilders = () => {
               totalItems={filteredAndSortedBuilders.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              activeColor="indigo"
             />
           </div>
         )}

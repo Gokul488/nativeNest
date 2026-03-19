@@ -1,7 +1,8 @@
 // src/components/ViewProperties.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle, FaCubes, FaBuilding, FaHistory } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle, FaCubes, FaBuilding, FaHistory } from 'react-icons/fa';
+import { Pencil, Trash2, BadgeCheck } from 'lucide-react';
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
 import Pagination from '../common/Pagination.jsx';
@@ -211,37 +212,37 @@ const ViewProperties = () => {
 
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
-      {/* Header (unchanged) */}
-      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Manage Properties</h2>
-          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
+      {/* Header */}
+      <div className="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">Manage Properties</h2>
+          <span className="bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
             {properties.length} Total
           </span>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative flex-1 sm:w-64 group">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors text-sm" />
             <input
               type="text"
               placeholder="Search properties or builders..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-50 outline-none transition-all text-sm"
+              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
             />
           </div>
           <div className="flex gap-2">
             <Link
               to="/admin-dashboard/sold-properties"
-              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm"
+              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm"
             >
               <FaHistory /> Sold Properties
             </Link>
             <Link
               to="/admin-dashboard/manage-properties/add"
-              className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm"
+              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm"
             >
               <FaPlus /> Add Property
             </Link>
@@ -251,16 +252,16 @@ const ViewProperties = () => {
 
       <div className="relative flex-1">
         {loading && (
-          <div className="absolute inset-0 bg-white/80 z-20 flex justify-center items-center gap-3 text-gray-500">
-            <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
-            Loading properties...
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-20 flex flex-col justify-center items-center gap-3 text-slate-400">
+            <div className="animate-spin h-7 w-7 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+            <span className="text-sm font-semibold">Loading properties…</span>
           </div>
         )}
 
         {error && <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">{error}</div>}
 
         {!loading && filteredProperties.length === 0 && (
-          <div className="py-20 text-center text-gray-500 flex flex-col items-center gap-3">
+          <div className="py-20 text-center text-slate-500 flex flex-col items-center gap-3">
             <FaInfoCircle className="text-4xl opacity-50" />
             <p className="text-lg">No properties found.</p>
           </div>
@@ -270,40 +271,40 @@ const ViewProperties = () => {
           <div className="flex flex-col h-full">
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto flex-1">
-              <table className="w-full border-separate border-spacing-0">
-                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                  <tr>
-                    <th className="w-[2%] px-2 py-3 text-left border-b border-gray-200">#</th>
-                    <th className="w-[24%] px-2 py-3 text-left border-b border-gray-200">Property Details</th>
-                    <th className="w-[10%] px-2 py-3 text-left border-b border-gray-200 whitespace-nowrap">Builder</th>
-                    <th className="w-[18%] px-2 py-3 text-center border-b border-gray-200">Sqft / Configuration</th>
-                    <th className="w-[10%] px-2 py-3 text-center border-b border-gray-200">Block</th>
-                    <th className="w-[5%] px-2 py-3 text-center border-b border-gray-200">Qty</th>
-                    <th className="w-[5%] px-2 py-3 text-center border-b border-gray-200">Sold</th>
-                    <th className="w-[11%] px-2 py-3 text-center border-b border-gray-200">Price</th>
-                    <th className="w-[15%] px-2 py-3 text-center border-b border-gray-200">Actions</th>
+              <table className="w-full">
+                <thead>
+                  <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="w-[2%] px-2 py-4 text-left">#</th>
+                    <th className="w-[24%] px-2 py-4 text-left">Property Details</th>
+                    <th className="w-[10%] px-2 py-4 text-left whitespace-nowrap">Builder</th>
+                    <th className="w-[18%] px-2 py-4 text-center">Sqft / Configuration</th>
+                    <th className="w-[10%] px-2 py-4 text-center">Block</th>
+                    <th className="w-[5%] px-2 py-4 text-center">Qty</th>
+                    <th className="w-[5%] px-2 py-4 text-center">Sold</th>
+                    <th className="w-[11%] px-2 py-4 text-center">Price</th>
+                    <th className="w-[15%] px-2 py-4 text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="divide-y divide-slate-50">
                   {paginatedProperties.map((property, index) => {
                     const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                     return (
-                      <tr key={property.id} className="hover:bg-gray-50/80 transition-colors group">
-                        <td className="px-2 py-2 text-sm text-gray-500 font-mono border-b border-gray-100">
+                      <tr key={property.id} className="hover:bg-slate-50/60 transition-colors duration-150 group">
+                        <td className="px-2 py-2 text-sm text-slate-300 font-bold">
                           {String(globalIndex).padStart(2, '0')}
                         </td>
-                        <td className="px-2 py-2 border-b border-gray-100">
-                          <div className="font-bold text-gray-900 text-sm leading-tight break-words">{property.title}</div>
+                        <td className="px-2 py-2">
+                          <div className="font-bold text-slate-800 text-sm leading-tight break-words">{property.title}</div>
                         </td>
-                        <td className="px-2 py-2 text-left border-b border-gray-100">
-                          <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[11px] font-bold whitespace-nowrap">
-                            <FaUserTie className="text-teal-600 shrink-0" />
+                        <td className="px-2 py-2 text-left">
+                          <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-bold whitespace-nowrap">
+                            <FaUserTie className="text-indigo-500 shrink-0" />
                             <span className="truncate max-w-[80px]">{property.builder_name || 'N/A'}</span>
                           </div>
                         </td>
 
                         {/* SQFT COLUMN */}
-                        <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <td className="px-2 py-2 text-center ">
                           <div className="flex justify-center items-center">
                             {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
                               <div className="relative group/select inline-flex items-center w-full max-w-[140px]">
@@ -315,9 +316,9 @@ const ViewProperties = () => {
                                       [property.id]: parseInt(e.target.value, 10)
                                     }));
                                   }}
-                                  className="w-full px-2 py-1 bg-white border border-slate-200 text-[11px] font-bold text-slate-700 rounded-md shadow-sm hover:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-50 cursor-pointer appearance-none transition-all text-center pr-6"
+                                  className="w-full px-2 py-1 bg-white border border-slate-200 text-[11px] font-bold text-slate-700 rounded-md shadow-sm hover:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-50 cursor-pointer appearance-none transition-all text-center pr-6"
                                   style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230d9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%234f46e5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                                     backgroundRepeat: 'no-repeat',
                                     backgroundPosition: 'right 0.2rem center',
                                     backgroundSize: '0.7em',
@@ -340,42 +341,42 @@ const ViewProperties = () => {
                         </td>
 
                         {/* BLOCK TYPE COLUMN */}
-                        <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <td className="px-2 py-2 text-center ">
                           <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-purple-50/50 border border-purple-100 rounded text-[11px] font-bold text-purple-700">
                             <span className="truncate max-w-[60px]">{getDisplayBlockName(property)}</span>
                           </div>
                         </td>
 
                         {/* QUANTITY COLUMN */}
-                        <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <td className="px-2 py-2 text-center ">
                           <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-amber-50/50 border border-amber-100 rounded text-[11px] font-bold text-amber-700">
                             <span>{getDisplayQuantity(property)}</span>
                           </div>
                         </td>
 
                         {/* SOLD COLUMN */}
-                        <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <td className="px-2 py-2 text-center ">
                           <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-blue-50/50 border border-blue-100 rounded text-[11px] font-bold text-blue-700">
                             <span>{getDisplaySold(property)}</span>
                           </div>
                         </td>
 
                         {/* PRICE COLUMN */}
-                        <td className="px-2 py-2 text-center border-b border-gray-100">
+                        <td className="px-2 py-2 text-center ">
                           <div className="inline-flex items-center gap-0.5 px-1.5 py-1 bg-green-50/50 border border-green-100 rounded text-[11px] font-bold text-green-700 whitespace-nowrap">
                             <span className="text-[9px] opacity-70">₹</span>
                             <span>{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}</span>
                           </div>
                         </td>
 
-                        <td className="px-2 py-2 text-right border-b border-gray-100">
+                        <td className="px-2 py-2 text-right ">
                           <div className="flex justify-center items-center gap-1">
                             {getDisplayQuantity(property) > 0 ? (
                               <button
                                 onClick={() => handleSell(property)}
-                                className="px-2.5 py-1 bg-teal-600 text-white text-[10px] font-bold rounded-md hover:bg-teal-700 transition active:scale-95 shadow-sm"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded-md hover:bg-indigo-700 transition active:scale-95 shadow-sm"
                               >
-                                Sold
+                                <BadgeCheck size={11} /> Sold
                               </button>
                             ) : (
                               <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
@@ -383,12 +384,12 @@ const ViewProperties = () => {
                               </span>
                             )}
                             <button onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
-                              className="p-1 text-blue-500 hover:bg-blue-50 rounded transition" title="Edit">
-                              <FaEdit size={12} />
+                              className="p-1.5 text-indigo-500 hover:bg-indigo-50 rounded-lg transition" title="Edit">
+                              <Pencil size={12} />
                             </button>
                             <button onClick={() => handleDelete(property.id)}
-                              className="p-1 text-red-500 hover:bg-red-50 rounded transition" title="Delete">
-                              <FaTrash size={12} />
+                              className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition" title="Delete">
+                              <Trash2 size={12} />
                             </button>
                           </div>
                         </td>
@@ -404,28 +405,28 @@ const ViewProperties = () => {
               {paginatedProperties.map((property, index) => {
                 const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
-                  <div key={property.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100 shadow-sm space-y-2">
-                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
+                  <div key={property.id} className="bg-slate-50 rounded-2xl p-3 border border-slate-100 shadow-sm space-y-2">
+                    <div className="flex justify-between items-start border-b border-slate-100 pb-2">
                       <div className="flex items-center gap-2">
-                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
+                        <div className="bg-indigo-50 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
                           {globalIndex}
                         </div>
-                        <div className="font-bold text-gray-900 truncate max-w-[180px]">{property.title}</div>
+                        <div className="font-bold text-slate-900 truncate max-w-[180px]">{property.title}</div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2 text-sm text-gray-600">
+                    <div className="grid grid-cols-1 gap-2 text-sm text-slate-600">
                       <div className="flex items-center gap-2">
-                        <FaUserTie className="text-gray-400 text-xs" />
+                        <FaUserTie className="text-slate-400 text-xs" />
                         <span className="truncate">{property.builder_name || 'N/A'}</span>
                       </div>
 
                       {/* Sqft - dropdown for apartments */}
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-500 text-xs font-medium">Area</span>
+                        <span className="text-slate-500 text-xs font-medium">Area</span>
                         {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
                           <div className="relative inline-flex items-center">
-                            <FaRulerCombined className="absolute left-2 text-teal-400 text-[9px] pointer-events-none" />
+                            <FaRulerCombined className="absolute left-2 text-indigo-400 text-[9px] pointer-events-none" />
                             <select
                               value={getSqftSelectValue(property)}
                               onChange={(e) => setSelectedConfigs(prev => ({
@@ -434,7 +435,7 @@ const ViewProperties = () => {
                               }))}
                               className="pl-5 pr-6 py-1 rounded-lg text-[10px] font-bold bg-white text-slate-700 border border-slate-200 outline-none appearance-none"
                               style={{
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230d9488'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%234f46e5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                                 backgroundRepeat: 'no-repeat',
                                 backgroundPosition: 'right 0.3rem center',
                                 backgroundSize: '0.8em',
@@ -447,7 +448,7 @@ const ViewProperties = () => {
                           </div>
                         ) : (
                           <div className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700">
-                            <FaRulerCombined className="text-teal-500 text-[9px]" />
+                            <FaRulerCombined className="text-indigo-500 text-[9px]" />
                             <span>{property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A'} <span className="text-[8px] text-slate-400 uppercase">sq.ft</span></span>
                           </div>
                         )}
@@ -455,7 +456,7 @@ const ViewProperties = () => {
 
                       {/* Block Type */}
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-500 text-xs font-medium">Block Type</span>
+                        <span className="text-slate-500 text-xs font-medium">Block Type</span>
                         <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-50/50 text-purple-700 border border-purple-100 shadow-sm">
                           <FaBuilding className="text-purple-400 text-[9px]" />
                           {getDisplayBlockName(property)}
@@ -464,7 +465,7 @@ const ViewProperties = () => {
 
                       {/* Quantity */}
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-500 text-xs font-medium">Quantity</span>
+                        <span className="text-slate-500 text-xs font-medium">Quantity</span>
                         <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-50/50 text-amber-700 border border-amber-100 shadow-sm">
                           <FaCubes className="text-amber-400 text-[9px]" />
                           {getDisplayQuantity(property)}
@@ -473,7 +474,7 @@ const ViewProperties = () => {
 
                       {/* Sold Count */}
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-500 text-xs font-medium">Sold Count</span>
+                        <span className="text-slate-500 text-xs font-medium">Sold Count</span>
                         <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-blue-50/50 text-blue-700 border border-blue-100 shadow-sm">
                           {getDisplaySold(property)}
                         </div>
@@ -481,33 +482,33 @@ const ViewProperties = () => {
 
                       {/* Price (updates when sqft dropdown changes) */}
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-500 text-xs font-medium">Price</span>
+                        <span className="text-slate-500 text-xs font-medium">Price</span>
                         <div className="px-2 py-1 rounded-lg text-[11px] font-bold bg-green-50/50 text-green-700 border border-green-100 shadow-sm">
                           ₹{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-2 pt-2 border-t border-gray-200">
+                    <div className="flex gap-2 pt-2 border-t border-slate-200">
                       {getDisplayQuantity(property) > 0 ? (
                         <button
                           onClick={() => handleSell(property)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-teal-600 text-white rounded-lg text-sm font-bold hover:bg-teal-700 transition active:scale-95"
+                          className="flex-1 flex items-center justify-center gap-2 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition active:scale-95 border border-indigo-700"
                         >
-                          Sold
+                          <BadgeCheck size={14} /> Sold
                         </button>
                       ) : (
-                        <div className="flex-1 flex items-center justify-center py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold border border-red-100">
+                        <div className="flex-1 flex items-center justify-center py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100">
                           Out of Stock
                         </div>
                       )}
                       <button onClick={() => navigate(`/admin-dashboard/manage-properties/edit/${property.id}`)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold">
-                        <FaEdit /> Edit
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-sm font-bold hover:bg-indigo-100 transition">
+                        <Pencil size={14} /> Edit
                       </button>
                       <button onClick={() => handleDelete(property.id)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold">
-                        <FaTrash size={14} /> Delete
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-500 border border-red-100 rounded-xl text-sm font-bold hover:bg-red-100 transition">
+                        <Trash2 size={14} /> Delete
                       </button>
                     </div>
                   </div>
@@ -520,6 +521,7 @@ const ViewProperties = () => {
               totalItems={filteredProperties.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              activeColor="indigo"
             />
           </div>
         )}

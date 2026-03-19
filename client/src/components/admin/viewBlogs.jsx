@@ -1,11 +1,11 @@
 // src/components/ViewBlogs.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaNewspaper } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaNewspaper } from 'react-icons/fa';
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
 import Pagination from '../common/Pagination.jsx';
-
+import { Search, Loader2, AlertCircle, Pencil, Trash2, Newspaper } from 'lucide-react';
 
 const ViewBlogs = () => {
   const [blogs, setBlogs] = useState([]);
@@ -23,10 +23,7 @@ const ViewBlogs = () => {
     const fetchBlogs = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
+        if (!token) { navigate('/login'); return; }
 
         const response = await fetch(`${API_BASE_URL}/api/blogs`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -45,7 +42,6 @@ const ViewBlogs = () => {
         setLoading(false);
       }
     };
-
     fetchBlogs();
   }, [navigate]);
 
@@ -55,7 +51,6 @@ const ViewBlogs = () => {
     );
   }, [blogs, searchQuery]);
 
-  // Reset page when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
@@ -93,100 +88,136 @@ const ViewBlogs = () => {
     }
   };
 
-
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
-      {/* Header - Aligned with ViewEvents */}
-      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Manage Blogs</h2>
-          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
+
+      {/* ── Header ── */}
+      <div className="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        {/* Left: icon + title + badge */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+            <Newspaper className="w-5 h-5 text-indigo-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+              Manage Blogs
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Create and manage all published blog posts
+            </p>
+          </div>
+          <span className="ml-1 bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
             {blogs.length} Total
           </span>
         </div>
 
+        {/* Right: search + add */}
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative flex-1 sm:w-72 group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
             <input
               type="text"
               placeholder="Search by title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
+              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
             />
           </div>
           <Link
             to="/admin-dashboard/manage-blogs/add"
-            className="inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold transition-all shadow-sm active:scale-95 text-sm"
+            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm"
           >
-            <FaPlus /> Add Blog
+            <FaPlus className="w-3 h-3" /> Add Blog
           </Link>
         </div>
       </div>
 
+      {/* ── Body ── */}
       <div className="relative flex-1">
+
+        {/* Loading overlay */}
         {loading && (
-          <div className="absolute inset-0 bg-white/80 z-20 flex justify-center items-center gap-3 text-gray-500">
-            <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
-            Loading blogs...
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-20 flex flex-col justify-center items-center gap-3 text-slate-400">
+            <Loader2 className="animate-spin h-7 w-7 text-indigo-500" />
+            <span className="text-sm font-semibold">Loading blogs…</span>
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
-            <FaInfoCircle /> {error}
+          <div className="m-8 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="font-medium text-sm">{error}</span>
           </div>
         )}
 
+        {/* Empty state */}
         {!loading && filteredBlogs.length === 0 && (
-          <div className="py-20 text-center text-gray-500 flex flex-col items-center gap-3">
-            <FaNewspaper className="text-4xl opacity-50" />
-            <p className="text-lg">No blogs found matching your search.</p>
+          <div className="py-32 flex flex-col items-center gap-3 text-slate-400">
+            <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-1">
+              <Search className="w-7 h-7 text-slate-300" />
+            </div>
+            <p className="text-lg font-bold text-slate-800">No blogs found</p>
+            <p className="text-sm text-slate-400 max-w-xs text-center">
+              {searchQuery ? `No results matching "${searchQuery}"` : "No blog posts have been added yet."}
+            </p>
           </div>
         )}
 
+        {/* Table + cards */}
         {!loading && filteredBlogs.length > 0 && (
-          <div className="flex flex-col h-full">
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto flex-1 uppercase">
-              <table className="w-full table-fixed border-separate border-spacing-0">
-                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                  <tr>
-                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                    <th className="px-6 py-4 text-left border-b border-gray-200">Blog Title</th>
-                    <th className="w-36 px-6 py-4 text-center border-b border-gray-200">Actions</th>
+          <div className="flex flex-col">
+
+            {/* ── Desktop Table ── */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-fixed">
+                <thead>
+                  <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="w-14 px-6 py-4 text-left">#</th>
+                    <th className="px-6 py-4 text-left">Blog Title</th>
+                    <th className="w-36 px-6 py-4 text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="divide-y divide-slate-50">
                   {paginatedBlogs.map((blog, index) => {
                     const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                     return (
-                      <tr key={blog.id} className="hover:bg-gray-50/80 transition-colors group">
-                        <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <tr key={blog.id} className="hover:bg-slate-50/60 transition-colors duration-150 group">
+
+                        {/* # */}
+                        <td className="px-6 py-4 text-sm font-bold text-slate-300">
                           {String(globalIndex).padStart(2, '0')}
                         </td>
-                        <td className="px-6 py-5 border-b border-gray-100">
-                          <div className="font-bold text-gray-900 mb-1">{blog.title}</div>
-                          <div className="text-xs text-gray-500 italic">
-                            Created on: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN')}
+
+                        {/* Blog Title */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <Newspaper className="w-4 h-4 text-indigo-400 shrink-0" />
+                            <div>
+                              <div className="font-bold text-slate-800 text-sm">{blog.title}</div>
+                              <div className="text-xs text-slate-400 mt-0.5">
+                                {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </div>
+                            </div>
                           </div>
                         </td>
-                        <td className="px-6 py-5 text-right border-b border-gray-100">
+
+                        {/* Actions */}
+                        <td className="px-6 py-4">
                           <div className="flex justify-center gap-2">
                             <button
                               onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
-                              className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                              className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition"
                               title="Edit"
                             >
-                              <FaEdit size={18} />
+                              <Pencil size={15} />
                             </button>
                             <button
                               onClick={() => handleDelete(blog.id)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                              className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition"
                               title="Delete"
                             >
-                              <FaTrash size={16} />
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </td>
@@ -197,37 +228,38 @@ const ViewBlogs = () => {
               </table>
             </div>
 
-            {/* Mobile Card View */}
-            <div className="md:hidden p-4 space-y-4 flex-1">
+            {/* ── Mobile Cards ── */}
+            <div className="md:hidden p-4 space-y-3">
               {paginatedBlogs.map((blog, index) => {
                 const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
-                  <div key={blog.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
-                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs uppercase">
+                  <div key={blog.id} className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3 hover:border-indigo-200 transition-colors">
+                    <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
                           {globalIndex}
+                        </span>
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm max-w-[200px] truncate">{blog.title}</p>
+                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                            {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
                         </div>
-                        <div className="font-bold text-gray-900 truncate max-w-[200px] uppercase">{blog.title}</div>
                       </div>
                     </div>
 
-                    <div className="text-xs text-gray-500 italic">
-                      Created: {new Date(blog.created_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </div>
-
-                    <div className="flex gap-2 pt-2 border-t border-gray-200 uppercase">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => navigate(`/admin-dashboard/manage-blogs/edit/${blog.id}`)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold"
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-sm font-bold hover:bg-indigo-100 transition"
                       >
-                        <FaEdit /> Edit
+                        <Pencil size={13} /> Edit
                       </button>
                       <button
                         onClick={() => handleDelete(blog.id)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold"
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-500 border border-red-100 rounded-xl text-sm font-bold hover:bg-red-100 transition"
                       >
-                        <FaTrash size={14} /> Delete
+                        <Trash2 size={13} /> Delete
                       </button>
                     </div>
                   </div>
@@ -240,6 +272,7 @@ const ViewBlogs = () => {
               totalItems={filteredBlogs.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              activeColor="indigo"
             />
           </div>
         )}
@@ -253,7 +286,6 @@ const ViewBlogs = () => {
         message="Are you sure you want to delete this blog post? This action cannot be undone."
       />
     </div>
-
   );
 };
 

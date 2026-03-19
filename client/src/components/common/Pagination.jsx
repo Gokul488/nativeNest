@@ -1,12 +1,13 @@
 import React from "react";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Pagination = ({ 
   currentPage, 
   totalItems, 
   itemsPerPage, 
   onPageChange,
-  showTotal = true 
+  showTotal = true,
+  activeColor = "sky" // Default theme color
 }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -31,38 +32,56 @@ const Pagination = ({
     return pages;
   };
 
+  const getActiveStyles = () => {
+    switch(activeColor) {
+      case 'indigo': return 'bg-indigo-600 shadow-indigo-100 text-white';
+      case 'teal': return 'bg-teal-600 shadow-teal-100 text-white';
+      case 'purple': return 'bg-purple-600 shadow-purple-100 text-white';
+      case 'amber': return 'bg-amber-600 shadow-amber-100 text-white';
+      default: return 'bg-sky-500 shadow-sky-100 text-white';
+    }
+  };
+
+  const getHoverTextStyles = () => {
+    switch(activeColor) {
+      case 'indigo': return 'hover:text-indigo-600 hover:border-indigo-200';
+      case 'teal': return 'hover:text-teal-600 hover:border-teal-200';
+      default: return 'hover:text-sky-600 hover:border-sky-200';
+    }
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-gray-50/50 border-t border-gray-100">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-8 py-6 bg-slate-50/50 border-t border-slate-100">
       {showTotal && (
-        <div className="text-sm text-gray-500 font-medium">
-          Showing <span className="text-gray-900 font-bold">{Math.min(totalItems, (currentPage - 1) * itemsPerPage + 1)}</span> to{" "}
-          <span className="text-gray-900 font-bold">{Math.min(totalItems, currentPage * itemsPerPage)}</span> of{" "}
-          <span className="text-gray-900 font-bold">{totalItems}</span> results
+        <div className="text-sm text-slate-500 font-medium">
+          Showing <span className="text-slate-900 font-bold">{Math.min(totalItems, (currentPage - 1) * itemsPerPage + 1)}</span> to{" "}
+          <span className="text-slate-900 font-bold">{Math.min(totalItems, currentPage * itemsPerPage)}</span> of{" "}
+          <span className="text-slate-900 font-bold">{totalItems}</span> results
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={`p-2 rounded-lg border border-gray-200 transition-all ${
+          className={`p-2.5 rounded-xl border border-slate-200 transition-all duration-200 ${
             currentPage === 1
-              ? "text-gray-300 cursor-not-allowed bg-gray-50"
-              : "text-gray-600 hover:bg-white hover:text-teal-600 hover:border-teal-200 shadow-sm"
+              ? "text-slate-300 cursor-not-allowed bg-slate-50 border-slate-100"
+              : `text-slate-600 hover:bg-white ${getHoverTextStyles()} shadow-sm active:scale-95`
           }`}
         >
-          <FaChevronLeft size={14} />
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {getPageNumbers().map((no) => (
             <button
               key={no}
               onClick={() => onPageChange(no)}
-              className={`min-w-[36px] h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
+              className={`min-w-[40px] h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-200 shadow-sm ${
                 currentPage === no
-                  ? "bg-teal-600 text-white shadow-md shadow-teal-100 scale-105"
-                  : "text-gray-600 hover:bg-white hover:text-teal-600 hover:border-gray-300 border border-transparent shadow-sm"
+                  ? `${getActiveStyles()} scale-105`
+                  : `text-slate-600 bg-white hover:bg-slate-50 ${getHoverTextStyles()} border border-transparent hover:border-slate-200`
               }`}
             >
               {no}
@@ -73,13 +92,13 @@ const Pagination = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={`p-2 rounded-lg border border-gray-200 transition-all ${
+          className={`p-2.5 rounded-xl border border-slate-200 transition-all duration-200 ${
             currentPage === totalPages
-              ? "text-gray-300 cursor-not-allowed bg-gray-50"
-              : "text-gray-600 hover:bg-white hover:text-teal-600 hover:border-teal-200 shadow-sm"
+              ? "text-slate-300 cursor-not-allowed bg-slate-50 border-slate-100"
+              : `text-slate-600 hover:bg-white ${getHoverTextStyles()} shadow-sm active:scale-95`
           }`}
         >
-          <FaChevronRight size={14} />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     </div>

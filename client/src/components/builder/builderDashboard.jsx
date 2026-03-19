@@ -161,12 +161,12 @@ const BuilderDashboard = () => {
           })}
         </nav>
 
-        <div className="p-6 border-t border-slate-700/50">
+        <div className="px-4 py-8 mt-auto">
           <button 
             onClick={handleLogout} 
-            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-200 group"
+            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group border border-transparent hover:border-red-500/20"
           >
-            <LogOut className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
             <span>Logout</span>
           </button>
         </div>
@@ -321,12 +321,16 @@ const BuilderDashboard = () => {
                       <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Actions</h3>
                       <div className="grid gap-3">
                         <Link to="/builder-dashboard/post-property" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all"><PlusCircle className="w-5 h-5" /></div>
-                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Add New Property</span>
+                          <div className="bg-sky-50 p-2.5 rounded-xl shadow-sm text-sky-500 group-hover:scale-110 transition-all duration-300">
+                            <PlusCircle className="w-5 h-5" />
+                          </div>
+                          <span className="text-sm font-bold text-slate-700 group-hover:text-sky-700">Add New Property</span>
                         </Link>
-                        <Link to="/builder-dashboard/events" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-white p-2 rounded-lg shadow-sm group-hover:text-sky-500 text-slate-400 group-hover:shadow transition-all"><CalendarDays className="w-5 h-5" /></div>
-                          <span className="text-sm font-semibold text-slate-700 group-hover:text-sky-700">Book Event Stalls</span>
+                        <Link to="/builder-dashboard/events" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-indigo-50 p-2.5 rounded-xl shadow-sm text-indigo-500 group-hover:scale-110 transition-all duration-300">
+                            <CalendarDays className="w-5 h-5" />
+                          </div>
+                          <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Book Event Stalls</span>
                         </Link>
                       </div>
                     </div>

@@ -1,18 +1,17 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
+import { FaUser, FaEnvelope, FaClock, FaTrash } from "react-icons/fa";
 import {
-  FaSearch,
-  FaTrash,
-  FaInfoCircle,
-  FaExclamationTriangle,
-  FaUser,
-  FaEnvelope,
-  FaClock
-} from "react-icons/fa";
+  Search,
+  Loader2,
+  AlertCircle,
+  Trash2,
+  Mail,
+  MessageSquare,
+} from "lucide-react";
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
 import Pagination from '../common/Pagination.jsx';
-
 
 const ViewEnquiries = () => {
   const [enquiries, setEnquiries] = useState([]);
@@ -25,15 +24,13 @@ const ViewEnquiries = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [enquiryToDelete, setEnquiryToDelete] = useState(null);
 
-
   useEffect(() => {
     const fetchEnquiries = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/contact`);
         if (!response.ok) throw new Error("Failed to fetch enquiries");
         const data = await response.json();
-        const messages = data.messages || data || [];
-        setEnquiries(messages);
+        setEnquiries(data.messages || data || []);
       } catch (err) {
         setError("Failed to load contact enquiries.");
       } finally {
@@ -51,7 +48,6 @@ const ViewEnquiries = () => {
     );
   }, [searchTerm, enquiries]);
 
-  // Reset page when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
@@ -87,97 +83,136 @@ const ViewEnquiries = () => {
     }
   };
 
-
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
-      {/* Header - Aligned with ViewEvents Style */}
-      <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Contact Enquiries</h2>
-          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
+
+      {/* ── Header ── */}
+      <div className="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        {/* Left: icon + title + badge */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+            <MessageSquare className="w-5 h-5 text-indigo-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+              Contact Enquiries
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              View and manage all incoming contact messages
+            </p>
+          </div>
+          <span className="ml-1 bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
             {enquiries.length} Total
           </span>
         </div>
 
-        <div className="relative w-full md:w-72">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        {/* Right: search */}
+        <div className="relative w-full md:w-80 group">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
           <input
             type="text"
             placeholder="Search name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
           />
         </div>
       </div>
 
+      {/* ── Body ── */}
       <div className="relative flex-1">
+
+        {/* Loading */}
         {loading && (
-          <div className="absolute inset-0 bg-white/80 z-20 flex justify-center items-center gap-3 text-gray-500">
-            <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
-            Loading enquiries...
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-20 flex flex-col justify-center items-center gap-3 text-slate-400">
+            <Loader2 className="animate-spin h-7 w-7 text-indigo-500" />
+            <span className="text-sm font-semibold">Loading enquiries…</span>
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
-            <FaExclamationTriangle /> {error}
+          <div className="m-8 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="font-medium text-sm">{error}</span>
           </div>
         )}
 
+        {/* Empty state */}
         {!loading && !error && filteredEnquiries.length === 0 && (
-          <div className="py-20 text-center text-gray-500 flex flex-col items-center gap-3">
-            <FaInfoCircle className="text-4xl opacity-50" />
-            <p className="text-lg">No enquiries found matching your search.</p>
+          <div className="py-32 flex flex-col items-center gap-3 text-slate-400">
+            <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-1">
+              <Search className="w-7 h-7 text-slate-300" />
+            </div>
+            <p className="text-lg font-bold text-slate-800">No enquiries found</p>
+            <p className="text-sm text-slate-400 max-w-xs text-center">
+              {searchTerm ? `No results matching "${searchTerm}"` : "No contact enquiries received yet."}
+            </p>
           </div>
         )}
 
+        {/* Table + cards */}
         {!loading && !error && filteredEnquiries.length > 0 && (
-          <div className="flex flex-col h-full uppercase">
-            {/* Desktop Table View */}
-            <div className="hidden xl:block overflow-x-auto flex-1">
-              <table className="w-full table-fixed border-separate border-spacing-0">
-                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                  <tr>
-                    <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
-                    <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">User Details</th>
-                    <th className="px-6 py-4 text-left border-b border-gray-200">Message Content</th>
-                    <th className="w-40 px-6 py-4 text-right border-b border-gray-200">Actions</th>
+          <div className="flex flex-col">
+
+            {/* ── Desktop Table ── */}
+            <div className="hidden xl:block overflow-x-auto">
+              <table className="w-full table-fixed">
+                <thead>
+                  <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="w-14 px-6 py-4 text-left">#</th>
+                    <th className="w-1/4 px-6 py-4 text-left">User Details</th>
+                    <th className="px-6 py-4 text-left">Message Content</th>
+                    <th className="w-24 px-6 py-4 text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody className="divide-y divide-slate-50">
                   {paginatedEnquiries.map((enquiry, index) => {
                     const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                     return (
-                      <tr key={enquiry.id} className="hover:bg-gray-50/80 transition-colors group">
-                        <td className="px-6 py-5 text-sm text-gray-400 font-mono border-b border-gray-100">
+                      <tr key={enquiry.id} className="hover:bg-slate-50/60 transition-colors duration-150 group">
+
+                        {/* # */}
+                        <td className="px-6 py-4 text-sm font-bold text-slate-300">
                           {String(globalIndex).padStart(2, '0')}
                         </td>
-                        <td className="px-6 py-5 border-b border-gray-100">
-                          <div className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-                            <FaUser className="text-teal-600 text-[10px]" /> {enquiry.name}
+
+                        {/* User Details */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <FaUser className="text-indigo-400 text-[10px] shrink-0" />
+                            <span className="font-bold text-slate-800 text-sm">{enquiry.name}</span>
                           </div>
-                          <div className="text-xs text-gray-500 flex items-center gap-2">
-                            <FaEnvelope className="text-[10px]" /> {enquiry.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 border-b border-gray-100">
-                          <div className="text-sm text-gray-700 line-clamp-2 italic mb-2">"{enquiry.message}"</div>
-                          <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold">
-                            <FaClock /> {new Date(enquiry.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                          <div className="flex items-center gap-2 text-xs text-slate-400">
+                            <Mail className="w-3 h-3 text-slate-300 shrink-0" />
+                            <span className="truncate">{enquiry.email}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-5 text-right border-b border-gray-100">
+
+                        {/* Message Content */}
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-slate-600 line-clamp-2 italic mb-1.5">
+                            "{enquiry.message}"
+                          </div>
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-bold text-indigo-500">
+                            <FaClock className="text-[9px]" />
+                            {new Date(enquiry.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-4 text-center">
                           <button
                             onClick={() => handleDelete(enquiry.id)}
                             disabled={deletingId === enquiry.id}
-                            className={`p-2 rounded-lg transition-all ${deletingId === enquiry.id
-                              ? "opacity-50 cursor-not-allowed"
-                              : "text-red-500 hover:bg-red-50"
-                              }`}
+                            className={`p-2 rounded-lg transition-all ${
+                              deletingId === enquiry.id
+                                ? "opacity-40 cursor-not-allowed"
+                                : "text-red-400 hover:bg-red-50 hover:text-red-500"
+                            }`}
                             title="Delete Enquiry"
                           >
-                            <FaTrash size={16} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
+                            <Trash2 size={15} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
                           </button>
                         </td>
                       </tr>
@@ -187,39 +222,49 @@ const ViewEnquiries = () => {
               </table>
             </div>
 
-            {/* Mobile Card View */}
-            <div className="xl:hidden p-4 space-y-4 flex-1">
+            {/* ── Mobile Cards ── */}
+            <div className="xl:hidden p-4 space-y-3">
               {paginatedEnquiries.map((enquiry, index) => {
                 const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
-                  <div key={enquiry.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
-                    <div className="flex justify-between items-start border-b border-gray-200 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-teal-100 text-teal-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" title="Enquiry Number">
+                  <div key={enquiry.id} className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-3 hover:border-indigo-200 transition-colors">
+
+                    {/* Card Header */}
+                    <div className="flex justify-between items-start pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
                           {globalIndex}
+                        </span>
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm truncate max-w-[160px]">{enquiry.name}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <Mail className="w-3 h-3 text-slate-300" />
+                            <span className="text-xs text-slate-400 truncate max-w-[140px]">{enquiry.email}</span>
+                          </div>
                         </div>
-                        <div className="font-bold text-gray-900 truncate max-w-[150px]">{enquiry.name}</div>
                       </div>
                       <button
                         onClick={() => handleDelete(enquiry.id)}
                         disabled={deletingId === enquiry.id}
-                        className="text-red-500 hover:bg-red-50 p-1 rounded-md transition"
+                        className={`p-1.5 rounded-lg transition ${
+                          deletingId === enquiry.id
+                            ? "opacity-40 cursor-not-allowed"
+                            : "text-red-400 hover:bg-red-50"
+                        }`}
                       >
-                        <FaTrash size={14} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
+                        <Trash2 size={14} className={deletingId === enquiry.id ? "animate-pulse" : ""} />
                       </button>
                     </div>
 
-                    <div className="text-sm text-gray-600 space-y-2">
-                      <div className="flex items-center gap-2 text-xs">
-                        <FaEnvelope className="text-gray-400" />
-                        <span className="truncate">{enquiry.email}</span>
-                      </div>
-                      <div className="bg-white p-3 rounded-lg border border-gray-200 text-sm italic py-2">
-                        "{enquiry.message}"
-                      </div>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-semibold justify-end">
-                        <FaClock /> {new Date(enquiry.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </div>
+                    {/* Message */}
+                    <div className="bg-white p-3 rounded-xl border border-slate-100 text-sm text-slate-600 italic">
+                      "{enquiry.message}"
+                    </div>
+
+                    {/* Timestamp */}
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-bold text-indigo-500">
+                      <FaClock className="text-[9px]" />
+                      {new Date(enquiry.created_at).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                     </div>
                   </div>
                 );
@@ -231,6 +276,7 @@ const ViewEnquiries = () => {
               totalItems={filteredEnquiries.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
+              activeColor="indigo"
             />
           </div>
         )}
@@ -244,7 +290,6 @@ const ViewEnquiries = () => {
         message="Are you sure you want to delete this enquiry? This action cannot be undone."
       />
     </div>
-
   );
 };
 
