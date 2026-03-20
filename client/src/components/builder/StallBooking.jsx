@@ -1,6 +1,7 @@
 // src/components/builder/StallBooking.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   Ticket,
@@ -11,9 +12,85 @@ import {
   Store,
   Loader2,
   PackageX,
+  X,
 } from 'lucide-react';
 import API_BASE_URL from '../../config.js';
 
+/* ─────────────────────────────────────────
+   Inline Booking Confirmation Dialog
+───────────────────────────────────────── */
+const BookingConfirmDialog = ({ isOpen, onConfirm, onCancel, typeName, price }) => (
+  <AnimatePresence>
+    {isOpen && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={onCancel}
+        />
+
+        {/* Dialog */}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+          className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"
+        >
+          {/* Close button */}
+          <button
+            onClick={onCancel}
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X size={22} />
+          </button>
+
+          {/* Icon */}
+          <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Ticket className="w-7 h-7 text-indigo-500" />
+          </div>
+
+          {/* Text */}
+          <h3 className="text-xl font-extrabold text-slate-900 tracking-tight mb-1">
+            Confirm Booking
+          </h3>
+          <p className="text-sm text-slate-500 mb-6">
+            Book a{' '}
+            <span className="font-bold text-indigo-600">{typeName}</span>{' '}
+            stall for{' '}
+            <span className="font-bold text-indigo-600">
+              ₹{Number(price).toLocaleString('en-IN')}
+            </span>
+            ?
+          </p>
+
+          {/* Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all text-sm active:scale-[0.98]"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-sm active:scale-[0.98] text-sm"
+            >
+              Book
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    )}
+  </AnimatePresence>
+);
+
+/* ─────────────────────────────────────────
+   Main StallBooking Component
+───────────────────────────────────────── */
 const StallBooking = () => {
   const { id: eventId } = useParams();
   const navigate = useNavigate();
@@ -22,6 +99,10 @@ const StallBooking = () => {
   const [eventName, setEventName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState(null); // { stallTypeId, typeName, price }
 
   useEffect(() => {
     fetchStallTypes();
@@ -49,9 +130,17 @@ const StallBooking = () => {
     }
   };
 
-  const handleBook = async (stallTypeId, typeName, price) => {
-    if (!window.confirm(`Book a ${typeName} stall for ₹${price.toLocaleString('en-IN')}?`)) return;
+  // Opens the custom dialog instead of window.confirm
+  const handleBook = (stallTypeId, typeName, price) => {
+    setPendingBooking({ stallTypeId, typeName, price });
+    setDialogOpen(true);
+  };
 
+  const confirmBooking = async () => {
+    setDialogOpen(false);
+    if (!pendingBooking) return;
+
+    const { stallTypeId } = pendingBooking;
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/api/stalls/book-by-type`, {
@@ -70,7 +159,14 @@ const StallBooking = () => {
       fetchStallTypes();
     } catch (err) {
       alert(err.message);
+    } finally {
+      setPendingBooking(null);
     }
+  };
+
+  const cancelBooking = () => {
+    setDialogOpen(false);
+    setPendingBooking(null);
   };
 
   if (loading) {
@@ -83,148 +179,160 @@ const StallBooking = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
 
-      {/* Top Nav */}
-      <div className="flex justify-between items-center">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors font-semibold text-sm group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Events
-        </button>
-        <button
-          onClick={() => navigate(`/builder-dashboard/event-bookings/${eventId}`)}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-indigo-200 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-all font-bold text-sm shadow-sm"
-        >
-          <Store className="w-4 h-4" /> My Bookings
-        </button>
-      </div>
-
-      {/* Main Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-
-        {/* Header */}
-        <div className="px-8 py-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{eventName || 'Stall Booking'}</h2>
-            <p className="text-sm text-slate-400 font-medium mt-0.5">Select a stall category to book your spot</p>
-          </div>
-          <div className="flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100">
-            <Ticket className="w-4 h-4" />
-            {stallTypes.length} {stallTypes.length === 1 ? 'Category' : 'Categories'} Available
-          </div>
+        {/* Top Nav */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors font-semibold text-sm group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Events
+          </button>
+          <button
+            onClick={() => navigate(`/builder-dashboard/event-bookings/${eventId}`)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-indigo-200 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-all font-bold text-sm shadow-sm"
+          >
+            <Store className="w-4 h-4" /> My Bookings
+          </button>
         </div>
 
-        <div className="p-6 md:p-8 space-y-6">
+        {/* Main Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 shrink-0" />
-              <span className="text-sm font-medium">{error}</span>
+          {/* Header */}
+          <div className="px-8 py-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight">{eventName || 'Stall Booking'}</h2>
+              <p className="text-sm text-slate-400 font-medium mt-0.5">Select a stall category to book your spot</p>
             </div>
-          )}
-
-          {/* Info Alert */}
-          <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
-            <Info className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
-            <p className="text-sm text-indigo-800 leading-relaxed font-medium">
-              Stall booking is subject to approval. Once you book a category, our team will contact you for precise booth placement.
-            </p>
+            <div className="flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100">
+              <Ticket className="w-4 h-4" />
+              {stallTypes.length} {stallTypes.length === 1 ? 'Category' : 'Categories'} Available
+            </div>
           </div>
 
-          {/* Empty State */}
-          {stallTypes.length === 0 ? (
-            <div className="py-32 flex flex-col items-center gap-3 text-slate-400">
-              <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-1 border border-slate-100">
-                <PackageX className="w-7 h-7 text-slate-300" />
+          <div className="p-6 md:p-8 space-y-6">
+
+            {/* Error */}
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <span className="text-sm font-medium">{error}</span>
               </div>
-              <p className="text-lg font-bold text-slate-800">No stall categories yet</p>
-              <p className="text-sm text-slate-400 max-w-xs text-center">
-                No stall configurations are live for this event yet. Check back soon.
+            )}
+
+            {/* Info Alert */}
+            <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
+              <Info className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-indigo-800 leading-relaxed font-medium">
+                Stall booking is subject to approval. Once you book a category, our team will contact you for precise booth placement.
               </p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {stallTypes.map((type) => {
-                const isAvailable = type.available_count > 0;
-                const fillPercent = Math.round((type.available_count / type.total_stalls) * 100);
 
-                return (
-                  <div
-                    key={type.stall_type_id}
-                    className={`relative bg-white rounded-2xl border transition-all duration-300 flex flex-col p-6 ${
-                      isAvailable
-                        ? 'border-slate-200 hover:border-indigo-300 hover:shadow-md'
-                        : 'border-slate-100 bg-slate-50 opacity-70'
-                    }`}
-                  >
-                    {/* Top Row */}
-                    <div className="flex justify-between items-start mb-5">
-                      <div className={`p-2.5 rounded-xl ${isAvailable ? 'bg-indigo-50 text-indigo-500' : 'bg-slate-100 text-slate-400'}`}>
-                        <Tag className="w-4 h-4" />
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        isAvailable ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-500 border border-red-100'
-                      }`}>
-                        {isAvailable ? 'Available' : 'Sold Out'}
-                      </span>
-                    </div>
+            {/* Empty State */}
+            {stallTypes.length === 0 ? (
+              <div className="py-32 flex flex-col items-center gap-3 text-slate-400">
+                <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-1 border border-slate-100">
+                  <PackageX className="w-7 h-7 text-slate-300" />
+                </div>
+                <p className="text-lg font-bold text-slate-800">No stall categories yet</p>
+                <p className="text-sm text-slate-400 max-w-xs text-center">
+                  No stall configurations are live for this event yet. Check back soon.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {stallTypes.map((type) => {
+                  const isAvailable = type.available_count > 0;
+                  const fillPercent = Math.round((type.available_count / type.total_stalls) * 100);
 
-                    {/* Name & Price */}
-                    <div className="mb-5">
-                      <h3 className="text-lg font-bold text-slate-900 leading-tight mb-1">{type.stall_type_name}</h3>
-                      <div className="flex items-baseline gap-1">
-                        <span className={`text-2xl font-black ${isAvailable ? 'text-indigo-600' : 'text-slate-400'}`}>
-                          ₹{Number(type.stall_price).toLocaleString('en-IN')}
-                        </span>
-                        <span className="text-slate-400 text-xs font-semibold">/ stall</span>
-                      </div>
-                    </div>
-
-                    {/* Inventory Bar */}
-                    <div className="mt-auto space-y-2 mb-5">
-                      <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                        <span>Inventory</span>
-                        <span className={isAvailable ? 'text-indigo-500' : 'text-red-400'}>
-                          {type.available_count} left
+                  return (
+                    <div
+                      key={type.stall_type_id}
+                      className={`relative bg-white rounded-2xl border transition-all duration-300 flex flex-col p-6 ${
+                        isAvailable
+                          ? 'border-slate-200 hover:border-indigo-300 hover:shadow-md'
+                          : 'border-slate-100 bg-slate-50 opacity-70'
+                      }`}
+                    >
+                      {/* Top Row */}
+                      <div className="flex justify-between items-start mb-5">
+                        <div className={`p-2.5 rounded-xl ${isAvailable ? 'bg-indigo-50 text-indigo-500' : 'bg-slate-100 text-slate-400'}`}>
+                          <Tag className="w-4 h-4" />
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          isAvailable ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-500 border border-red-100'
+                        }`}>
+                          {isAvailable ? 'Available' : 'Sold Out'}
                         </span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${isAvailable ? 'bg-indigo-500' : 'bg-slate-300'}`}
-                          style={{ width: `${fillPercent}%` }}
-                        />
-                      </div>
-                      <p className="text-[11px] text-slate-400 font-medium">Total units: {type.total_stalls}</p>
-                    </div>
 
-                    {/* CTA */}
-                    {isAvailable ? (
-                      <button
-                        onClick={() => handleBook(type.stall_type_id, type.stall_type_name, type.stall_price)}
-                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm shadow-indigo-100"
-                      >
-                        <CheckCircle2 className="w-4 h-4" /> Book
-                      </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="w-full py-2.5 rounded-xl font-bold text-sm bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
-                      >
-                        Sold Out
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                      {/* Name & Price */}
+                      <div className="mb-5">
+                        <h3 className="text-lg font-bold text-slate-900 leading-tight mb-1">{type.stall_type_name}</h3>
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-2xl font-black ${isAvailable ? 'text-indigo-600' : 'text-slate-400'}`}>
+                            ₹{Number(type.stall_price).toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-slate-400 text-xs font-semibold">/ stall</span>
+                        </div>
+                      </div>
+
+                      {/* Inventory Bar */}
+                      <div className="mt-auto space-y-2 mb-5">
+                        <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                          <span>Inventory</span>
+                          <span className={isAvailable ? 'text-indigo-500' : 'text-red-400'}>
+                            {type.available_count} left
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${isAvailable ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                            style={{ width: `${fillPercent}%` }}
+                          />
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-medium">Total units: {type.total_stalls}</p>
+                      </div>
+
+                      {/* CTA */}
+                      {isAvailable ? (
+                        <button
+                          onClick={() => handleBook(type.stall_type_id, type.stall_type_name, type.stall_price)}
+                          className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm shadow-indigo-100"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Book</span>
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="w-full py-2.5 rounded-xl font-bold text-sm bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                        >
+                          Sold Out
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Custom Booking Confirmation Dialog */}
+      <BookingConfirmDialog
+        isOpen={dialogOpen}
+        onConfirm={confirmBooking}
+        onCancel={cancelBooking}
+        typeName={pendingBooking?.typeName || ''}
+        price={pendingBooking?.price || 0}
+      />
+    </>
   );
 };
 

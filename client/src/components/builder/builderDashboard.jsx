@@ -215,10 +215,10 @@ const BuilderDashboard = () => {
           </div>
         </header>
 
-        <main className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex-1">
+        <main className="p-4 md:p-6 max-w-[1600px] mx-auto w-full flex-1">
           <Routes>
             <Route path="/" element={
-              <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="space-y-4 animate-in fade-in duration-500">
                 
                 {/* Statistics Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
@@ -243,21 +243,21 @@ const BuilderDashboard = () => {
                     <Link
                       key={idx}
                       to={card.path}
-                      className="bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex items-center justify-between transition-all duration-300 hover:border-sky-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:scale-[1.02] group"
+                      className="bg-white px-4 py-3.5 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex items-center justify-between transition-all duration-300 hover:border-sky-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:scale-[1.02] group"
                     >
                       <div>
-                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">
                           {card.label}
                         </p>
-                        <h4 className="text-[32px] font-bold text-slate-900 mt-3 leading-none group-hover:text-emerald-500 transition-colors duration-300">
+                        <h4 className="text-[22px] font-bold text-slate-900 leading-none group-hover:text-emerald-500 transition-colors duration-300">
                           {loading ? (
-                            <Loader2 className="animate-spin w-6 h-6 text-slate-400 mt-2" />
+                            <Loader2 className="animate-spin w-5 h-5 text-slate-400 mt-1" />
                           ) : (
                             <StatCounter targetValue={card.val} />
                           )}
                         </h4>
                       </div>
-                      <div className={`${card.bg} ${card.color} w-[56px] h-[56px] rounded-[16px] flex items-center justify-center group-hover:scale-[1.1] transition-transform duration-300`}>
+                      <div className={`${card.bg} ${card.color} w-10 h-10 rounded-[12px] flex items-center justify-center group-hover:scale-[1.1] transition-transform duration-300 shrink-0`}>
                         {card.icon}
                       </div>
                     </Link>
@@ -265,46 +265,54 @@ const BuilderDashboard = () => {
                 </div>
 
                 {/* Charts & Hot Events */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-sky-500" /> Listing Activity
-                      </h3>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Last 6 Months</span>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2 bg-white p-5 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex flex-col">
+                    <div className="flex justify-between items-center mb-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-sky-500" /> Listing Activity
+                        </h3>
+                        <p className="text-[11px] text-slate-400 font-medium mt-0.5 ml-6">Last 6 months</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block" />
+                        <span className="text-[11px] font-semibold text-slate-500">Properties</span>
+                      </div>
                     </div>
-                    <div className="flex-1 w-full min-h-[320px]">
+                    <div className="w-full h-[180px]">
                       {loading ? (
-                        <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-sky-500 w-8 h-8" /></div>
+                        <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-sky-500 w-7 h-7" /></div>
                       ) : (
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={stats?.monthlyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                            <XAxis 
-                              dataKey="month" 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
-                              dy={15} 
+                          <BarChart data={stats?.monthlyStats} margin={{ top: 5, right: 5, left: -28, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                            <XAxis
+                              dataKey="month"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
+                              dy={10}
                             />
-                            <YAxis 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
-                              dx={-10}
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
+                              dx={-4}
                             />
-                            <Tooltip 
-                              cursor={{ fill: '#F8FAFC' }} 
-                              contentStyle={{ 
-                                borderRadius: '12px', 
-                                border: '1px solid #E2E8F0', 
-                                boxShadow: '0 10px 15px -3px rgba(15,23,42,0.08)',
+                            <Tooltip
+                              cursor={{ fill: '#F8FAFC', radius: 8 }}
+                              contentStyle={{
+                                borderRadius: '10px',
+                                border: '1px solid #E2E8F0',
+                                boxShadow: '0 8px 24px rgba(15,23,42,0.08)',
                                 color: '#0F172A',
-                                fontWeight: 500,
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                padding: '8px 12px',
                                 fontFamily: '"Inter", sans-serif'
-                              }} 
+                              }}
                             />
-                            <Bar dataKey="count" name="Properties" fill="#0EA5E9" radius={[6, 6, 0, 0]} barSize={24}>
+                            <Bar dataKey="count" name="Properties" radius={[5, 5, 0, 0]} barSize={18}>
                               {stats?.monthlyStats?.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={index === stats?.monthlyStats.length - 1 ? '#0EA5E9' : '#7DD3FC'} />
                               ))}
@@ -315,36 +323,36 @@ const BuilderDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-6 flex flex-col">
+                  <div className="space-y-4 flex flex-col">
                     {hotEvents.length > 0 && (
-                      <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-7 rounded-[20px] shadow-[0_4px_12px_rgba(249,115,22,0.15)] relative overflow-hidden">
-                        <Flame className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 text-white" />
-                        <h4 className="text-xl font-bold flex items-center gap-2 mb-3 text-white z-10 relative">
-                          <Flame className="w-5 h-5 text-orange-200" /> Trending Events
+                      <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-5 rounded-[20px] shadow-[0_4px_12px_rgba(249,115,22,0.15)] relative overflow-hidden">
+                        <Flame className="absolute -right-4 -bottom-4 w-28 h-28 opacity-10 text-white" />
+                        <h4 className="text-base font-bold flex items-center gap-2 mb-2 text-white z-10 relative">
+                          <Flame className="w-4 h-4 text-orange-200" /> Trending Events
                         </h4>
-                        <p className="text-sm text-white/90 mb-6 z-10 relative font-medium leading-relaxed">
+                        <p className="text-xs text-white/90 mb-4 z-10 relative font-medium leading-relaxed">
                           {hotEvents.length} exhibitions are currently active or starting soon. Don't miss out on stall bookings!
                         </p>
-                        <Link to="/builder-dashboard/events" className="inline-flex items-center gap-2 bg-white text-orange-600 px-5 py-2.5 rounded-[12px] font-bold text-sm hover:scale-[1.02] transition-transform z-10 relative shadow-sm">
-                          View & Book <ArrowRight className="w-4 h-4" />
+                        <Link to="/builder-dashboard/events" className="inline-flex items-center gap-2 bg-white text-orange-600 px-4 py-2 rounded-[10px] font-bold text-xs hover:scale-[1.02] transition-transform z-10 relative shadow-sm">
+                          View & Book <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                       </div>
                     )}
 
-                    <div className="bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex-1">
-                      <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Actions</h3>
-                      <div className="grid gap-3">
-                        <Link to="/builder-dashboard/post-property" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-sky-50 p-2.5 rounded-xl shadow-sm text-sky-500 group-hover:scale-110 transition-all duration-300">
-                            <PlusCircle className="w-5 h-5" />
+                    <div className="bg-white p-5 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex-1">
+                      <h3 className="text-sm font-bold text-slate-900 mb-3">Quick Actions</h3>
+                      <div className="grid gap-2">
+                        <Link to="/builder-dashboard/post-property" className="flex items-center gap-3 p-3 rounded-[14px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-sky-50 p-2 rounded-xl text-sky-500 group-hover:scale-110 transition-all duration-300 shrink-0">
+                            <PlusCircle className="w-4 h-4" />
                           </div>
-                          <span className="text-sm font-bold text-slate-700 group-hover:text-sky-700">Add New Property</span>
+                          <span className="text-xs font-bold text-slate-700 group-hover:text-sky-700">Add New Property</span>
                         </Link>
-                        <Link to="/builder-dashboard/events" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-indigo-50 p-2.5 rounded-xl shadow-sm text-indigo-500 group-hover:scale-110 transition-all duration-300">
-                            <CalendarDays className="w-5 h-5" />
+                        <Link to="/builder-dashboard/events" className="flex items-center gap-3 p-3 rounded-[14px] bg-slate-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-indigo-50 p-2 rounded-xl text-indigo-500 group-hover:scale-110 transition-all duration-300 shrink-0">
+                            <CalendarDays className="w-4 h-4" />
                           </div>
-                          <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Book Event Stalls</span>
+                          <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-700">Book Event Stalls</span>
                         </Link>
                       </div>
                     </div>

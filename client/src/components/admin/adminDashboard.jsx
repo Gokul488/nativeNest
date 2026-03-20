@@ -157,7 +157,7 @@ const AdminDashboard = () => {
   })();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
+    <div className="h-screen overflow-hidden bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
       
       {/* ================= SIDEBAR ================= */}
       <div 
@@ -213,7 +213,7 @@ const AdminDashboard = () => {
       )}
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="flex-1 md:ml-[280px] w-full min-w-0 transition-all duration-300 flex flex-col">
+      <div className="flex-1 md:ml-[280px] w-full min-w-0 transition-all duration-300 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 p-4 px-6 flex justify-between items-center sticky top-0 z-30">
           <div className="flex items-center gap-4">
@@ -236,7 +236,7 @@ const AdminDashboard = () => {
         </header>
 
         {/* Page Content */}
-        <main className="p-6 md:p-8 max-w-[1600px] w-full mx-auto flex-1">
+        <main className="p-6 md:p-8 max-w-[1600px] w-full mx-auto flex-1 overflow-y-auto">
           <Routes>
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">
@@ -319,54 +319,66 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   
                   {/* Left Column: Chart */}
-                  <div className="lg:col-span-2 bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-sky-500" />
-                        Registration Growth
-                        <span className="text-sm font-medium text-slate-500 ml-2 font-normal">(Last 6 Months)</span>
-                      </h3>
+                  <div className="lg:col-span-2 bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex flex-col">
+                    {/* Chart Header */}
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-sky-500" />
+                          Registration Growth
+                        </h3>
+                        <p className="text-[11px] text-slate-400 font-medium mt-0.5 ml-6">Last 6 months</p>
+                      </div>
+                      {/* Legend pills */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block" />
+                          <span className="text-[11px] font-semibold text-slate-500">Properties</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />
+                          <span className="text-[11px] font-semibold text-slate-500">Users</span>
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="flex-1 w-full min-h-[320px]">
+
+                    <div className="w-full h-[200px]">
                       {loadingStats ? (
                         <div className="h-full flex items-center justify-center">
-                          <Loader2 className="animate-spin text-sky-500 w-8 h-8" />
+                          <Loader2 className="animate-spin text-sky-500 w-7 h-7" />
                         </div>
                       ) : (
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                            <XAxis 
-                              dataKey="month" 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
-                              dy={15} 
+                          <BarChart data={chartData} margin={{ top: 5, right: 5, left: -28, bottom: 0 }} barGap={4}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                            <XAxis
+                              dataKey="month"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
+                              dy={10}
                             />
-                            <YAxis 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
-                              dx={-10}
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
+                              dx={-4}
                             />
-                            <Tooltip 
-                              cursor={{ fill: '#F8FAFC' }} 
-                              contentStyle={{ 
-                                borderRadius: '12px', 
-                                border: '1px solid #E2E8F0', 
-                                boxShadow: '0 10px 15px -3px rgba(15,23,42,0.08)',
+                            <Tooltip
+                              cursor={{ fill: '#F8FAFC', radius: 8 }}
+                              contentStyle={{
+                                borderRadius: '10px',
+                                border: '1px solid #E2E8F0',
+                                boxShadow: '0 8px 24px rgba(15,23,42,0.08)',
                                 color: '#0F172A',
-                                fontWeight: 500,
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                padding: '8px 12px',
                                 fontFamily: '"Inter", sans-serif'
-                              }} 
+                              }}
                             />
-                            <Legend 
-                              iconType="circle" 
-                              wrapperStyle={{ paddingTop: '20px', fontSize: '13px', fontWeight: 500, color: '#64748B' }} 
-                            />
-                            <Bar dataKey="properties" name="Properties" fill="#0EA5E9" radius={[6, 6, 0, 0]} barSize={20} />
-                            <Bar dataKey="buyers" name="Users" fill="#6366F1" radius={[6, 6, 0, 0]} barSize={20} />
+                            <Bar dataKey="properties" name="Properties" fill="#0EA5E9" radius={[5, 5, 0, 0]} barSize={14} />
+                            <Bar dataKey="buyers" name="Users" fill="#6366F1" radius={[5, 5, 0, 0]} barSize={14} />
                           </BarChart>
                         </ResponsiveContainer>
                       )}
@@ -399,22 +411,7 @@ const AdminDashboard = () => {
                           <span className="text-sm font-bold text-slate-700 group-hover:text-amber-700">Write New Blog</span>
                         </Link>
                       </div>
-                    </div>
-
-                    {/* Analytics Tip Box */}
-                    <div className="bg-gradient-to-br from-sky-50 to-white p-7 rounded-[20px] border border-sky-100 shadow-[0_4px_12px_rgba(14,165,233,0.06)] relative overflow-hidden flex-1">
-                      {/* Subtle background decoration */}
-                      <div className="absolute -top-6 -right-6 w-24 h-24 bg-sky-200/40 rounded-full blur-2xl"></div>
-                      
-                      <h4 className="font-bold flex items-center gap-2 mb-3 text-sky-900 z-10 relative">
-                        <Lightbulb className="w-5 h-5 text-sky-500" /> 
-                        Analytics Tip
-                      </h4>
-                      <p className="text-sm text-slate-600 leading-relaxed font-medium z-10 relative">
-                        Check the Analytics tab regularly to identify which property types are gaining the most traction in specific cities. Optimize future developments based on these trends.
-                      </p>
-                    </div>
-                    
+                    </div>                    
                   </div>
                 </div>
               </div>
