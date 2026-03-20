@@ -118,6 +118,44 @@ const AdminDashboard = () => {
   const publishedBlogs = stats?.totals?.blogs || 0;
   const totalEvents = stats?.totals?.events || 0;
 
+  const navLinks = [
+    { to: "/admin-dashboard/", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { to: "/admin-dashboard/manage-users", label: "Manage Users", icon: <Users className="w-5 h-5" /> },
+    { to: "/admin-dashboard/manage-builders", label: "Manage Builders", icon: <HardHat className="w-5 h-5" /> },
+    { to: "/admin-dashboard/manage-properties", label: "Manage Properties", icon: <Building2 className="w-5 h-5" /> },
+    { to: "/admin-dashboard/manage-blogs", label: "Manage Blogs", icon: <Newspaper className="w-5 h-5" /> },
+    { to: "/admin-dashboard/manage-events", label: "Manage Events", icon: <CalendarDays className="w-5 h-5" /> },
+    { to: "/admin-dashboard/analytics/most-viewed", label: "Analytics", icon: <BarChart3 className="w-5 h-5" /> },
+    { to: "/admin-dashboard/enquiries", label: "View Enquiries", icon: <MessageSquare className="w-5 h-5" /> },
+    { to: "/admin-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
+  ];
+
+  const subRouteLabels = [
+    { match: /\/manage-blogs\/add/,           label: "Add Blog",            icon: <Newspaper className="w-5 h-5" /> },
+    { match: /\/manage-blogs\/edit\//,         label: "Edit Blog",           icon: <Newspaper className="w-5 h-5" /> },
+    { match: /\/manage-properties\/add/,       label: "Add Property",        icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/manage-properties\/edit\//,    label: "Edit Property",       icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/manage-events\/edit\//,        label: "Edit Event",          icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/create-property-event/,        label: "Create Event",        icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/manage-stall-types\/.*\/add/,  label: "Add Stall Type",      icon: <FileText className="w-5 h-5" /> },
+    { match: /\/manage-stall-types\/.*\/edit\//, label: "Edit Stall Type",   icon: <FileText className="w-5 h-5" /> },
+    { match: /\/manage-stall-types\//,         label: "Manage Stall Types",  icon: <FileText className="w-5 h-5" /> },
+    { match: /\/event-bookings\//,             label: "Event Stall Bookings",icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/events\/.*\/participants/,     label: "Event Participants",  icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/property\/.*\/viewers/,        label: "Property Viewers",    icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/sold-properties/,              label: "Sold Properties",     icon: <Briefcase className="w-5 h-5" /> },
+  ];
+
+  const activePage = (() => {
+    const subMatch = subRouteLabels.find(r => r.match.test(location.pathname));
+    if (subMatch) return subMatch;
+    return navLinks.find(link =>
+      link.to === "/admin-dashboard/"
+        ? location.pathname === "/admin-dashboard/"
+        : location.pathname.startsWith(link.to)
+    ) || navLinks[0];
+  })();
+
   return (
     <div className="min-h-screen bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
       
@@ -134,17 +172,7 @@ const AdminDashboard = () => {
 
         <nav className="flex-1 px-4 py-6 overflow-y-auto scrollbar-hide hover:scrollbar-show transition-all">
           <div className="space-y-1">
-            {[
-              { to: "/admin-dashboard/", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
-              { to: "/admin-dashboard/manage-users", label: "Manage Users", icon: <Users className="w-5 h-5" /> },
-              { to: "/admin-dashboard/manage-builders", label: "Manage Builders", icon: <HardHat className="w-5 h-5" /> },
-              { to: "/admin-dashboard/manage-properties", label: "Manage Properties", icon: <Building2 className="w-5 h-5" /> },
-              { to: "/admin-dashboard/manage-blogs", label: "Manage Blogs", icon: <Newspaper className="w-5 h-5" /> },
-              { to: "/admin-dashboard/manage-events", label: "Manage Events", icon: <CalendarDays className="w-5 h-5" /> },
-              { to: "/admin-dashboard/analytics/most-viewed", label: "Analytics", icon: <BarChart3 className="w-5 h-5" /> },
-              { to: "/admin-dashboard/enquiries", label: "View Enquiries", icon: <MessageSquare className="w-5 h-5" /> },
-              { to: "/admin-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
-            ].map((link) => {
+            {navLinks.map((link) => {
               const active = isActive(link.to);
               return (
                 <Link
@@ -192,7 +220,10 @@ const AdminDashboard = () => {
             <button onClick={toggleSidebar} className="text-slate-500 hover:text-sky-500 transition-colors md:hidden">
               <Menu className="w-6 h-6" />
             </button>
-
+            <div className="hidden md:flex items-center gap-2 text-slate-500">
+              {activePage.icon}
+              <h2 className="text-xl font-bold text-slate-900">{activePage.label}</h2>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-slate-600 font-medium text-sm hidden sm:block">
@@ -210,11 +241,7 @@ const AdminDashboard = () => {
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">
                 
-                {/* Title Section */}
-                <div>
-                  <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
-                  <p className="text-[15px] text-slate-500 mt-1">Monitor your platform's key metrics and activities</p>
-                </div>
+
 
                 {/* Statistics Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">

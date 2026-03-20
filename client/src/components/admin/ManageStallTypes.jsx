@@ -72,23 +72,7 @@ const ManageStallTypes = () => {
 
       {/* ── Header ── */}
       <div className="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
-            <Layers className="w-5 h-5 text-indigo-500" />
-          </div>
-          <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
-              Manage Stall Types
-            </h2>
-            <p className="text-xs text-indigo-500 font-semibold mt-0.5 flex items-center gap-1">
-              <FaCalendarAlt size={10} /> {eventName || "Loading Event…"}
-            </p>
-          </div>
-          <span className="ml-1 bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
-            {stallTypes.length} Types
-          </span>
-        </div>
-
+        {/* Left: search + add */}
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-1 sm:w-64 group">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
@@ -106,6 +90,18 @@ const ManageStallTypes = () => {
           >
             <Plus className="w-4 h-4" /> Add Stall Type
           </Link>
+        </div>
+
+        {/* Right: total count */}
+        <div className="flex items-center gap-3">
+          <div>
+            <p className="text-xs text-indigo-500 font-semibold mt-0.5 flex items-center gap-1">
+              <FaCalendarAlt size={10} /> {eventName || "Loading Event…"}
+            </p>
+          </div>
+          <span className="italic ml-1 bg-indigo-50 text-indigo-600 text-md font-bold px-3 py-1 rounded-full border border-indigo-100">
+            {stallTypes.length} Types
+          </span>
         </div>
       </div>
 

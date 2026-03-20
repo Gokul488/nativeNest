@@ -101,6 +101,32 @@ const BuilderDashboard = () => {
     fetchData();
   }, []);
 
+  const navLinks = [
+    { to: "/builder-dashboard/", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <Building2 className="w-5 h-5" /> },
+    { to: "/builder-dashboard/events", label: "Event Stalls", icon: <CalendarDays className="w-5 h-5" /> },
+    { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
+  ];
+
+  const subRouteLabels = [
+    { match: /\/post-property/,        label: "Add Property",       icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/edit-property\//,      label: "Edit Property",      icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/events\/.*\/.*/, label: "Event Details",       icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/stall-booking\//,      label: "Stall Booking",      icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/event-bookings\//,     label: "Booked Stalls",      icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/interests/,            label: "Stall Interests",    icon: <CalendarDays className="w-5 h-5" /> },
+  ];
+
+  const activePage = (() => {
+    const subMatch = subRouteLabels.find(r => r.match.test(location.pathname));
+    if (subMatch) return subMatch;
+    return navLinks.find(link =>
+      link.to === "/builder-dashboard/"
+        ? location.pathname === "/builder-dashboard/"
+        : location.pathname.startsWith(link.to)
+    ) || navLinks[0];
+  })();
+
   const hotEvents = useMemo(() => {
     const today = new Date();
     return upcomingEvents.filter(event => {
@@ -136,17 +162,12 @@ const BuilderDashboard = () => {
         </div>
 
         <nav className="flex-1 px-4 py-6 overflow-y-auto scrollbar-hide hover:scrollbar-show transition-all space-y-1">
-          {[
-            { to: "/builder-dashboard/", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
-            { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <Building2 className="w-5 h-5" /> },
-            { to: "/builder-dashboard/events", label: "Event Stalls", icon: <CalendarDays className="w-5 h-5" /> },
-            { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
-          ].map((item) => {
-            const active = isActive(item.to);
+          {navLinks.map((link) => {
+            const active = isActive(link.to);
             return (
               <Link
-                key={item.to}
-                to={item.to}
+                key={link.to}
+                to={link.to}
                 onClick={closeSidebar}
                 className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${
                   active 
@@ -154,8 +175,8 @@ const BuilderDashboard = () => {
                     : "text-slate-300 hover:bg-slate-800 hover:text-white"
                 }`}
               >
-                <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{item.icon}</span>
-                <span>{item.label}</span>
+                <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{link.icon}</span>
+                <span>{link.label}</span>
               </Link>
             );
           })}
@@ -179,10 +200,9 @@ const BuilderDashboard = () => {
             <button onClick={toggleSidebar} className="text-slate-500 hover:text-sky-500 transition-colors md:hidden">
               <Menu className="w-6 h-6" />
             </button>
-            <div className="hidden md:block">
-              <h2 className="text-lg font-semibold text-slate-900 capitalize">
-                {location.pathname === '/builder-dashboard/' ? 'Dashboard Overview' : location.pathname.split('/').pop().replace('-', ' ')}
-              </h2>
+            <div className="hidden md:flex items-center gap-2 text-slate-500">
+              {activePage.icon}
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">{activePage.label}</h2>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -200,12 +220,6 @@ const BuilderDashboard = () => {
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">
                 
-                {/* Title Section */}
-                <div>
-                  <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
-                  <p className="text-[15px] text-slate-500 mt-1">Monitor your platform's key metrics and activities</p>
-                </div>
-
                 {/* Statistics Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                   {[

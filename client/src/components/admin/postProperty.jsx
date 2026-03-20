@@ -414,13 +414,8 @@ const PostProperty = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-sky-500" />
-          </div>
           <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
-              Post New Property
-            </h2>
+
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               Inventory Management System
             </p>

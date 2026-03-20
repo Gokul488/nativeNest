@@ -137,11 +137,8 @@ const AddBlog = () => {
           >
             <ArrowLeft className="w-3.5 h-3.5" />
           </Link>
-          <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center">
-            <Newspaper className="w-4 h-4 text-indigo-500" />
-          </div>
+
           <div>
-            <h2 className="text-base font-extrabold text-slate-900 tracking-tight leading-none">Add New Blog</h2>
             <p className="text-[10px] text-slate-400 font-medium mt-0.5">Content Management System</p>
           </div>
         </div>

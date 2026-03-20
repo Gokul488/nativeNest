@@ -70,16 +70,6 @@ const BuilderStallInterests = () => {
           <Link to="/builder-dashboard/events" className="p-2 hover:bg-white rounded-full transition shadow-sm border border-gray-200 text-gray-600 shrink-0">
             <FaArrowLeft />
           </Link>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight">
-              Buyer Interests
-            </h2>
-            {displayEventName && (
-              <p className="text-teal-600 font-bold flex items-center gap-2 text-sm sm:text-base mt-0.5 truncate uppercase tracking-tight italic">
-                {displayEventName}
-              </p>
-            )}
-          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full">

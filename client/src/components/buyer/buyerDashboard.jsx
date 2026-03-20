@@ -96,6 +96,31 @@ const BuyerDashboard = () => {
     return location.pathname.startsWith(path);
   };
 
+  const navLinks = [
+    { to: "/buyer-dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { to: "/buyer-dashboard/bookmarks", label: "Saved Properties", icon: <Bookmark className="w-5 h-5" /> },
+    { to: "/buyer-dashboard/events", label: "Explore Events", icon: <CalendarDays className="w-5 h-5" /> },
+    { to: "/buyer-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
+  ];
+
+  const subRouteLabels = [
+    { match: /\/events\/.*\/.*/, label: "Event Details",        icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/events\//,       label: "Event Details",        icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/my-events\/builders\//, label: "Event Builders", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/event-checkin\//, label: "Event Check-In",      icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/stall-checkin\//, label: "Stall Check-In",      icon: <CalendarDays className="w-5 h-5" /> },
+  ];
+
+  const activePage = (() => {
+    const subMatch = subRouteLabels.find(r => r.match.test(location.pathname));
+    if (subMatch) return subMatch;
+    return navLinks.find(link =>
+      link.to === "/buyer-dashboard" || link.to === "/buyer-dashboard/"
+        ? location.pathname === "/buyer-dashboard" || location.pathname === "/buyer-dashboard/"
+        : location.pathname.startsWith(link.to)
+    ) || navLinks[0];
+  })();
+
   return (
     <div className="min-h-screen bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
       {/* ================= SIDEBAR ================= */}
@@ -110,12 +135,7 @@ const BuyerDashboard = () => {
         </div>
 
         <nav className="flex-1 px-4 py-6 overflow-y-auto scrollbar-hide hover:scrollbar-show transition-all space-y-1">
-          {[
-            { to: "/buyer-dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
-            { to: "/buyer-dashboard/bookmarks", label: "Saved Properties", icon: <Bookmark className="w-5 h-5" /> },
-            { to: "/buyer-dashboard/events", label: "Explore Events", icon: <CalendarDays className="w-5 h-5" /> },
-            { to: "/buyer-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
-          ].map((link) => {
+          {navLinks.map((link) => {
             const active = isActive(link.to);
             return (
               <Link
@@ -164,14 +184,9 @@ const BuyerDashboard = () => {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="hidden md:flex items-center gap-2">
-              <Link
-                to="/buy"
-                className="flex items-center gap-2 text-slate-400 hover:text-sky-500 transition-colors text-sm font-semibold uppercase tracking-tight group"
-              >
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                <span>Browse</span>
-              </Link>
+            <div className="hidden md:flex items-center gap-2 text-slate-500">
+              {activePage.icon}
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">{activePage.label}</h2>
             </div>
           </div>
 
@@ -189,12 +204,6 @@ const BuyerDashboard = () => {
               path="/"
               element={
                 <div className="space-y-8 animate-in fade-in duration-500">
-                  
-                  {/* Title Section */}
-                  <div>
-                    <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
-                    <p className="text-[15px] text-slate-500 mt-1">Monitor your platform's key metrics and activities</p>
-                  </div>
                   
                   {/* Statistics Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">

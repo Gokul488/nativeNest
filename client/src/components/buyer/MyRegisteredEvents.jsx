@@ -56,13 +56,7 @@ const MyRegisteredEvents = () => {
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">My Registered Events</h2>
-          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
-            {events.length} Registered
-          </span>
-        </div>
-
+        {/* Left: search */}
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative flex-1 sm:w-80">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -74,6 +68,14 @@ const MyRegisteredEvents = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
             />
           </div>
+        </div>
+
+        {/* Right: title + count */}
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">My Registered Events</h2>
+          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
+            {events.length} Registered
+          </span>
         </div>
       </div>
 

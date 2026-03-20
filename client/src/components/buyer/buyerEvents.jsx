@@ -5,15 +5,30 @@ import axios from "axios";
 import {
   FaCalendarAlt,
   FaMapMarkerAlt,
-  FaSearch,
   FaCheckCircle,
-  FaInfoCircle,
-  FaExclamationTriangle,
   FaTicketAlt,
   FaBuilding,
-  FaChevronRight
+  FaChevronRight,
 } from "react-icons/fa";
-import API_BASE_URL from '../../config.js';
+import {
+  Search,
+  Loader2,
+  AlertCircle,
+  CalendarDays,
+  ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
+  X,
+} from "lucide-react";
+import API_BASE_URL from "../../config.js";
+
+const formatDateRange = (start, end) => {
+  if (!start || !end) return "—";
+  const options = { day: "numeric", month: "short", year: "numeric" };
+  return `${new Date(start).toLocaleDateString("en-IN", options)} – ${new Date(
+    end
+  ).toLocaleDateString("en-IN", options)}`;
+};
 
 const BuyerEvents = () => {
   const navigate = useNavigate();
@@ -22,6 +37,9 @@ const BuyerEvents = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: "start_date", direction: "asc" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const token = localStorage.getItem("token");
@@ -29,10 +47,9 @@ const BuyerEvents = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get(
-          `${API_BASE_URL}/api/buyer/events`,
-          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
-        );
+        const response = await axios.get(`${API_BASE_URL}/api/buyer/events`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         setEvents(response.data);
       } catch (err) {
         setError("Failed to load events. Please try again later.");
@@ -44,12 +61,53 @@ const BuyerEvents = () => {
     fetchEvents();
   }, [token]);
 
-  const filteredEvents = useMemo(() => {
-    return events.filter(e =>
-      e.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.city.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAndSortedEvents = useMemo(() => {
+    let result = [...events];
+    if (searchQuery) {
+      result = result.filter(
+        (e) =>
+          e.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          e.city.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    if (sortConfig.key) {
+      result.sort((a, b) => {
+        const aVal = a[sortConfig.key] || "";
+        const bVal = b[sortConfig.key] || "";
+        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    return result;
+  }, [events, searchQuery, sortConfig]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortConfig]);
+
+  const paginatedEvents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedEvents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedEvents, currentPage]);
+
+  const totalPages = Math.ceil(filteredAndSortedEvents.length / itemsPerPage);
+
+  const requestSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") direction = "desc";
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key)
+      return <ChevronsUpDown className="ml-1.5 w-3.5 h-3.5 opacity-40" />;
+    return sortConfig.direction === "asc" ? (
+      <ChevronUp className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />
+    ) : (
+      <ChevronDown className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />
     );
-  }, [events, searchQuery]);
+  };
 
   const handleParticipate = async () => {
     if (!selectedEvent) return;
@@ -65,10 +123,15 @@ const BuyerEvents = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(response.data.message + (response.data.emailSent ? "\n\n✅ Confirmation email sent." : ""));
+      alert(
+        response.data.message +
+          (response.data.emailSent ? "\n\n✅ Confirmation email sent." : "")
+      );
 
       setEvents((prev) =>
-        prev.map((ev) => ev.id === selectedEvent.id ? { ...ev, isRegistered: 1 } : ev)
+        prev.map((ev) =>
+          ev.id === selectedEvent.id ? { ...ev, isRegistered: 1 } : ev
+        )
       );
       setSelectedEvent(null);
     } catch (err) {
@@ -77,245 +140,372 @@ const BuyerEvents = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Available Events</h2>
-          <span className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold">
-            {loading ? "…" : events.length} Total
-          </span>
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
+
+      {/* ── Header ── */}
+      <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-center gap-4">
+        {/* Left: search */}
+        <div className="relative flex-1 sm:w-72 lg:flex-none group">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+          <input
+            type="text"
+            placeholder="Search by name or city..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+            disabled={loading}
+          />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-          <div className="relative flex-1 sm:w-80">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by event name or city..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm"
-              disabled={loading}
-            />
-          </div>
+        {/* Right: count */}
+        <div className="italic flex items-center gap-3">
+          <span className="bg-indigo-50 text-indigo-600 text-md font-bold px-3 py-1 rounded-full border border-indigo-100 italic">
+            {loading ? "…" : events.length} Events
+          </span>
         </div>
       </div>
 
-      <div className="relative flex-1">
-        {loading ? (
-          <div className="p-6 space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
-            <div className="hidden xl:block">
-              <div className="space-y-3">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse"></div>
-                ))}
-              </div>
+      {/* ── Body ── */}
+      <div className="flex-1 flex flex-col">
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex-1 flex flex-col justify-center items-center gap-3 text-slate-400 py-24">
+            <Loader2 className="animate-spin h-7 w-7 text-indigo-500" />
+            <span className="text-sm font-semibold">Loading events…</span>
+          </div>
+        )}
+
+        {/* Error */}
+        {!loading && error && (
+          <div className="m-8 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="font-medium text-sm">{error}</span>
+          </div>
+        )}
+
+        {/* Empty */}
+        {!loading && !error && filteredAndSortedEvents.length === 0 && (
+          <div className="flex-1 py-32 flex flex-col items-center gap-3 text-slate-400">
+            <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-1">
+              <Search className="w-7 h-7 text-slate-300" />
             </div>
-            <div className="xl:hidden space-y-5">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4 animate-pulse">
-                  <div className="h-7 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-5 bg-gray-200 rounded w-1/2"></div>
-                  <div className="flex gap-3">
-                    <div className="flex-1 h-16 bg-gray-200 rounded"></div>
-                    <div className="flex-1 h-16 bg-gray-200 rounded"></div>
-                  </div>
-                  <div className="h-12 bg-gray-200 rounded-xl"></div>
-                </div>
-              ))}
-            </div>
+            <p className="text-lg font-bold text-slate-800">No events found</p>
+            <p className="text-sm text-slate-400 max-w-xs text-center">
+              {searchQuery
+                ? `No events matching "${searchQuery}"`
+                : "No property events available at the moment."}
+            </p>
           </div>
-        ) : error ? (
-          <div className="m-6 bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center gap-2">
-            <FaExclamationTriangle /> {error}
-          </div>
-        ) : filteredEvents.length === 0 ? (
-          <div className="py-20 text-center text-gray-500 flex flex-col items-center gap-3">
-            <FaInfoCircle className="text-4xl opacity-50" />
-            <p className="text-lg">No property events found.</p>
-          </div>
-        ) : (
-          <>
-            {/* ── Desktop View Table ── */}
+        )}
+
+        {/* Table + Cards */}
+        {!loading && !error && filteredAndSortedEvents.length > 0 && (
+          <div className="flex flex-col">
+
+            {/* ── Desktop Table ── */}
             <div className="hidden xl:block overflow-x-auto">
-              <table className="w-full table-fixed border-separate border-spacing-0">
-                <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                  <tr>
-                    <th className="w-14 px-6 py-3 text-left border-b border-gray-200">#</th>
-                    <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Event Details</th>
-                    <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Location</th>
-                    <th className="w-56 px-4 py-3 text-center border-b border-gray-200">Dates</th>
-                    <th className="w-40 px-6 py-3 text-center border-b border-gray-200">Status</th>
-                    <th className="w-44 px-6 py-3 text-center border-b border-gray-200">Builders</th>
+              <table className="w-full table-fixed">
+                <thead>
+                  <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <th className="w-12 px-4 py-4 text-left">#</th>
+                    <th
+                      className="w-1/4 px-6 py-4 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("event_name")}
+                    >
+                      <span className="inline-flex items-center">
+                        Event Name {getSortIcon("event_name")}
+                      </span>
+                    </th>
+                    <th className="w-1/5 px-6 py-4 text-left">Location</th>
+                    <th
+                      className="w-56 px-6 py-4 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
+                      onClick={() => requestSort("start_date")}
+                    >
+                      <span className="inline-flex items-center">
+                        Dates {getSortIcon("start_date")}
+                      </span>
+                    </th>
+                    <th className="w-36 px-6 py-4 text-center">Status</th>
+                    <th className="w-40 px-6 py-4 text-center">Builders</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
-                  {filteredEvents.map((event, index) => (
-                    <tr key={event.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-3 text-sm text-gray-400 font-mono border-b border-gray-100">
-                        {String(index + 1).padStart(2, '0')}
-                      </td>
-                      <td className="px-6 py-3 border-b border-gray-100">
-                        <div
-                          className="font-bold text-gray-900 cursor-pointer hover:text-teal-600 transition-colors"
-                          onClick={() => navigate(`/buyer-dashboard/events/${event.id}`)}
-                        >
-                          {event.event_name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 border-b border-gray-100">
-                        <div className="flex items-center gap-2 text-xs text-teal-600 font-medium">
-                          <FaMapMarkerAlt size={12} className="shrink-0" />
-                          <span className="truncate">
-                            {event.event_location ? `${event.event_location}, ` : ""}
-                            {event.city}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center border-b border-gray-100">
-                        <div className="flex items-center justify-center text-xs text-gray-700 gap-2 whitespace-nowrap font-medium">
-                          <FaCalendarAlt className="text-teal-600" />
-                          <span>
-                            {new Date(event.start_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
-                            {" – "}
-                            {new Date(event.end_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 border-b border-gray-100 text-center">
-                        {event.isRegistered ? (
-                          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100">
-                            <FaCheckCircle /> Registered
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => setSelectedEvent(event)}
-                            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
-                          >
-                            <FaTicketAlt /> Participate
-                          </button>
-                        )}
-                      </td>
-                      <td className="px-6 py-3 border-b border-gray-100 text-center">
-                        {event.isRegistered ? (
-                          <button
-                            onClick={() => navigate(`/buyer-dashboard/my-events/builders/${event.id}`)}
-                            className="inline-flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white px-5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap"
-                          >
-                            <FaBuilding size={13} /> View Builders
-                          </button>
-                        ) : (
-                          <span className="text-gray-400 text-xl font-bold">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                <tbody>
+                  {paginatedEvents.map((event, index) => {
+                    const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                    return (
+                      <tr
+                        key={event.id}
+                        className="transition-colors duration-150 group hover:bg-slate-50/60"
+                      >
+                        {/* # */}
+                        <td className="px-4 py-3 text-sm font-bold text-slate-300 border-b border-slate-100">
+                          {String(globalIndex).padStart(2, "0")}
+                        </td>
+
+                        {/* Event Name */}
+                        <td className="px-6 py-3 border-b border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="w-4 h-4 text-indigo-400 shrink-0" />
+                            <span
+                              className="font-bold text-slate-800 text-sm cursor-pointer hover:text-indigo-600 transition-colors"
+                              onClick={() =>
+                                navigate(`/buyer-dashboard/events/${event.id}`)
+                              }
+                              title={event.event_name}
+                            >
+                              {event.event_name}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Location */}
+                        <td className="px-6 py-3 border-b border-slate-100">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                            <FaMapMarkerAlt className="text-slate-300 text-[9px] shrink-0" />
+                            <span className="truncate">
+                              {event.event_location
+                                ? `${event.event_location}, `
+                                : ""}
+                              {event.city}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Dates */}
+                        <td className="px-6 py-3 border-b border-slate-100">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-bold text-indigo-600">
+                            <FaCalendarAlt className="text-indigo-400 text-[10px]" />
+                            {formatDateRange(event.start_date, event.end_date)}
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-3 text-center border-b border-slate-100">
+                          {event.isRegistered ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100">
+                              <FaCheckCircle className="text-[10px]" /> Registered
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setSelectedEvent(event)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-bold transition-all shadow-sm active:scale-95"
+                            >
+                              <FaTicketAlt className="text-[10px]" /> Participate
+                            </button>
+                          )}
+                        </td>
+
+                        {/* Builders */}
+                        <td className="px-6 py-3 text-center border-b border-slate-100">
+                          {event.isRegistered ? (
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/buyer-dashboard/my-events/builders/${event.id}`
+                                )
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all"
+                            >
+                              <FaBuilding className="text-[10px]" /> View
+                            </button>
+                          ) : (
+                            <span className="text-slate-300 text-lg font-bold">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            {/* ── Mobile/Tablet View Cards ── */}
-            <div className="xl:hidden flex flex-col gap-4 p-4 sm:p-6 bg-gray-50/30">
-              {filteredEvents.map((event, index) => (
-                <div key={event.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
-                          #{String(index + 1).padStart(2, '0')}
+            {/* ── Mobile Cards ── */}
+            <div className="xl:hidden p-4 space-y-3">
+              {paginatedEvents.map((event, index) => {
+                const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
+                  <div
+                    key={event.id}
+                    className="rounded-2xl p-5 border space-y-4 bg-white hover:border-indigo-200 transition-colors border-slate-100"
+                  >
+                    {/* Card Header */}
+                    <div className="flex justify-between items-start pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 border bg-indigo-50 text-indigo-600 border-indigo-100">
+                          {globalIndex}
                         </span>
-                      </div>
-                      <h4
-                        className="font-bold text-gray-900 text-lg leading-tight cursor-pointer hover:text-teal-600 transition-colors"
-                        onClick={() => navigate(`/buyer-dashboard/events/${event.id}`)}
-                      >
-                        {event.event_name}
-                      </h4>
-                      <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                        <FaMapMarkerAlt className="text-teal-500" size={12} />
-                        {event.event_location ? `${event.event_location}, ` : ""}{event.city}
-                      </p>
-                    </div>
-                    {event.isRegistered && (
-                      <span className="bg-green-100 text-green-700 p-2 rounded-full shadow-sm">
-                        <FaCheckCircle size={18} />
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <div className="flex-1 text-center border-r border-gray-200 pr-2">
-                      <p className="text-[9px] text-gray-400 uppercase font-black tracking-tighter mb-0.5">Start Date</p>
-                      <p className="text-sm font-bold text-gray-700">
-                        {new Date(event.start_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}
-                      </p>
-                    </div>
-                    <div className="flex-1 text-center pl-2">
-                      <p className="text-[9px] text-gray-400 uppercase font-black tracking-tighter mb-0.5">End Date</p>
-                      <p className="text-sm font-bold text-gray-700">
-                        {new Date(event.end_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 space-y-3">
-                    {event.isRegistered ? (
-                      <>
-                        <div className="w-full text-center py-3 bg-green-50 text-green-700 rounded-xl text-sm font-bold border border-green-100 flex items-center justify-center gap-2">
-                          <FaCheckCircle /> Successfully Registered
+                        <div>
+                          <div
+                            className="font-bold text-slate-900 text-sm leading-tight cursor-pointer hover:text-indigo-600 transition-colors"
+                            onClick={() =>
+                              navigate(`/buyer-dashboard/events/${event.id}`)
+                            }
+                          >
+                            {event.event_name}
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
+                            <span className="text-xs text-indigo-500 font-semibold">
+                              {event.event_location
+                                ? `${event.event_location}, `
+                                : ""}
+                              {event.city}
+                            </span>
+                          </div>
                         </div>
+                      </div>
+                      {event.isRegistered && (
+                        <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">
+                          Registered
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Date row */}
+                    <div className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-600 w-full">
+                      <FaCalendarAlt className="text-indigo-400 shrink-0" />
+                      <span>{formatDateRange(event.start_date, event.end_date)}</span>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex gap-2 pt-1">
+                      {event.isRegistered ? (
+                        <>
+                          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-50 text-green-700 border border-green-100 rounded-xl text-xs font-bold">
+                            <FaCheckCircle size={12} /> Registered
+                          </div>
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/buyer-dashboard/my-events/builders/${event.id}`
+                              )
+                            }
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors"
+                          >
+                            <FaBuilding size={12} /> View Builders
+                          </button>
+                        </>
+                      ) : (
                         <button
-                          onClick={() => navigate(`/buyer-dashboard/my-events/builders/${event.id}`)}
-                          className="w-full flex items-center justify-center gap-2 py-3.5 bg-teal-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-teal-100 active:scale-[0.98] transition-all"
+                          onClick={() => setSelectedEvent(event)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm active:scale-95"
                         >
-                          <FaBuilding size={14} /> View Participating Builders <FaChevronRight size={12} />
+                          <FaTicketAlt size={12} /> Participate
                         </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => setSelectedEvent(event)}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-teal-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-teal-100 active:scale-[0.98] transition-all"
-                      >
-                        <FaTicketAlt size={14} /> Participate
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </>
+
+            {/* ── Pagination ── */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
+                <p className="text-xs text-slate-400 font-medium">
+                  Showing{" "}
+                  <span className="font-bold text-slate-600">
+                    {(currentPage - 1) * itemsPerPage + 1}–
+                    {Math.min(currentPage * itemsPerPage, filteredAndSortedEvents.length)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-bold text-slate-600">
+                    {filteredAndSortedEvents.length}
+                  </span>{" "}
+                  events
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(
+                      (p) =>
+                        p === 1 ||
+                        p === totalPages ||
+                        Math.abs(p - currentPage) <= 1
+                    )
+                    .reduce((acc, p, i, arr) => {
+                      if (i > 0 && p - arr[i - 1] > 1)
+                        acc.push("…");
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, i) =>
+                      item === "…" ? (
+                        <span key={`ellipsis-${i}`} className="px-2 text-slate-300 text-xs">
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={item}
+                          onClick={() => setCurrentPage(item)}
+                          className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+                            currentPage === item
+                              ? "bg-indigo-600 text-white shadow-sm"
+                              : "text-slate-500 hover:bg-slate-100"
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      )
+                    )}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Confirmation Modal */}
+      {/* ── Confirmation Modal ── */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all animate-in zoom-in duration-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mb-4">
-                <FaCalendarAlt size={32} />
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full relative shadow-2xl">
+            <button
+              onClick={() => setSelectedEvent(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={22} />
+            </button>
+            <div className="text-center">
+              <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <CalendarDays className="w-7 h-7 text-indigo-500" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-xl font-extrabold text-slate-900 mb-1">
                 Confirm Participation
               </h3>
-              <p className="text-gray-500 mb-8">
-                Are you sure you want to register for <br />
-                <strong className="text-gray-800">{selectedEvent.event_name}</strong>?
+              <p className="text-sm text-slate-500 mb-6">
+                Are you sure you want to register for{" "}
+                <span className="font-bold text-slate-800">
+                  {selectedEvent.event_name}
+                </span>
+                ?
               </p>
             </div>
-
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="flex-1 px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                className="flex-1 px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleParticipate}
-                className="flex-1 px-6 py-3 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 shadow-lg shadow-teal-100 transition-all active:scale-95"
+                className="flex-1 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-sm active:scale-95 text-sm"
               >
                 Yes, Register
               </button>

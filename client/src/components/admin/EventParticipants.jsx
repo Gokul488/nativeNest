@@ -85,7 +85,7 @@ const EventParticipants = () => {
             <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
               {event.event_name}
             </h2>
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-0.5">Participant List</p>
+
           </div>
         </div>
 
@@ -127,7 +127,7 @@ const EventParticipants = () => {
             <option value="attended">Attended Only</option>
             <option value="not-attended">Absent Only</option>
           </select>
-          <span className="hidden md:inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full text-xs font-bold whitespace-nowrap">
+          <span className="hidden md:inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full text-md font-bold whitespace-nowrap">
             {filteredParticipants.length} Found
           </span>
         </div>

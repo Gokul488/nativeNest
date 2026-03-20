@@ -66,7 +66,7 @@ const StallCheckIn = () => {
         <div className="bg-teal-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
           <FaStoreAlt className="text-teal-600 text-2xl" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800">Stall Check-In</h2>
+        {/* Removed redundant title - in dashboard top */}
 
         {stallInfo && (
           <div className="mt-4 space-y-1">

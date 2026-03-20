@@ -210,11 +210,9 @@ const EditPropertyEvent = () => {
           <Link to="/admin-dashboard/manage-events" className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all">
             <ArrowLeft className="w-3.5 h-3.5" />
           </Link>
-          <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
-            <PencilLine className="w-4 h-4 text-amber-500" />
-          </div>
+
           <div>
-            <h2 className="text-base font-extrabold text-slate-900 tracking-tight leading-none">Edit Event</h2>
+
             <p className="text-[10px] text-slate-400 font-medium mt-0.5">Event Management System</p>
           </div>
         </div>

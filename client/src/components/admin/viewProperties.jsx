@@ -215,13 +215,7 @@ const ViewProperties = () => {
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
       {/* Header */}
       <div className="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">Manage Properties</h2>
-          <span className="bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
-            {properties.length} Total
-          </span>
-        </div>
-
+        {/* Left: Search & Actions */}
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-1 sm:w-64 group">
             <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors text-sm" />
@@ -247,6 +241,13 @@ const ViewProperties = () => {
               <FaPlus /> Add Property
             </Link>
           </div>
+        </div>
+
+        {/* Right: Total Count */}
+        <div className="italic flex items-center gap-3">
+          <span className="bg-indigo-50 text-indigo-600 text-md font-bold px-3 py-1 rounded-full border border-indigo-100">
+            {properties.length} Properties
+          </span>
         </div>
       </div>
 

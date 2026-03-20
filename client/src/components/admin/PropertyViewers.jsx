@@ -71,17 +71,12 @@ const PropertyViewers = () => {
 
           {/* Left: icon + title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
-              <Home className="w-5 h-5 text-indigo-500" />
-            </div>
+
             <div>
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
                 {propertyTitle}
               </h2>
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="text-slate-400 text-xs">•</span>
-                <span className="text-slate-400 text-xs font-medium">Viewing Audience Analytics</span>
-              </div>
+
             </div>
           </div>
 

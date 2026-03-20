@@ -89,17 +89,6 @@ const BuilderProfileSettings = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         {/* ── Header ── */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
-            <Settings className="w-4 h-4 text-indigo-500" />
-          </div>
-          <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
-              Builder Profile Settings
-            </h2>
-            <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-              Manage your company profile and contact information
-            </p>
-          </div>
         </div>
 
         {/* ── Form Body ── */}

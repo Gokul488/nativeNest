@@ -67,24 +67,7 @@ const EventBookedStalls = () => {
                 </button>
             </div>
 
-            {/* Header Section */}
             <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-                <div className="p-6 bg-linear-to-r from-teal-600 to-teal-500 text-white">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md">
-                            <FaStoreAlt size={24} />
-                        </div>
-                        <div>
-                            <div>
-                                <h1 className="text-2xl font-bold tracking-tight">My Booked Stalls</h1>
-                                <p className="text-teal-50 opacity-90 text-sm font-medium uppercase tracking-wider mt-1 italic">
-                                    {eventName || `Event ID: #${eventId}`}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div className="p-6">
                     {error && (
                         <div className="bg-red-50 text-red-700 p-4 rounded-xl mb-6 border border-red-200 flex items-center gap-3">
@@ -99,10 +82,8 @@ const EventBookedStalls = () => {
                                 <FaStoreAlt size={48} className="opacity-20" />
                             </div>
                             <div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-800">No Stalls Booked By You</h3>
-                                    <p className="text-sm">You haven't reserved any stalls for this exhibition yet.</p>
-                                </div>
+                                <h3 className="text-lg font-bold text-gray-800">No Stalls Booked By You</h3>
+                                <p className="text-sm">You haven't reserved any stalls for this exhibition yet.</p>
                             </div>
                         </div>
                     ) : (
