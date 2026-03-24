@@ -198,20 +198,20 @@ const BuyerDashboard = () => {
           </div>
         </header>
 
-        <main className="p-4 md:p-6 max-w-[1600px] w-full mx-auto flex-1">
+        <main className="p-6 md:p-8 max-w-[1600px] w-full mx-auto flex-1">
           <Routes>
             <Route
               path="/"
               element={
-                <div className="space-y-4 animate-in fade-in duration-500">
+                <div className="space-y-8 animate-in fade-in duration-500">
                   
                   {/* Statistics Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                     {[
                       {
                         label: "Available Events",
                         val: stats.totalEvents,
-                        icon: <CalendarDays className="w-5 h-5" />,
+                        icon: <CalendarDays className="w-6 h-6" />,
                         color: "text-sky-500",
                         bg: "bg-sky-50",
                         path: "/buyer-dashboard/events"
@@ -219,7 +219,7 @@ const BuyerDashboard = () => {
                       {
                         label: "Saved Properties",
                         val: stats.bookmarks,
-                        icon: <Bookmark className="w-5 h-5" />,
+                        icon: <Bookmark className="w-6 h-6" />,
                         color: "text-indigo-500",
                         bg: "bg-indigo-50",
                         path: "/buyer-dashboard/bookmarks"
@@ -228,21 +228,21 @@ const BuyerDashboard = () => {
                       <Link
                         key={idx}
                         to={card.path}
-                        className="bg-white px-4 py-3.5 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex items-center justify-between transition-all duration-300 hover:border-sky-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:scale-[1.02] group"
+                        className="bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex items-center justify-between transition-all duration-300 hover:border-sky-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:scale-[1.02] group"
                       >
                         <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">
+                          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none">
                             {card.label}
                           </p>
-                          <h4 className="text-[22px] font-bold text-slate-900 leading-none group-hover:text-emerald-500 transition-colors duration-300">
+                          <h4 className="text-[32px] font-bold text-slate-900 mt-3 leading-none group-hover:text-emerald-500 transition-colors duration-300">
                             {loadingStats ? (
-                              <Loader2 className="animate-spin w-5 h-5 text-slate-400 mt-1" />
+                              <Loader2 className="animate-spin w-6 h-6 text-slate-400 mt-2" />
                             ) : (
                               <StatCounter targetValue={card.val} />
                             )}
                           </h4>
                         </div>
-                        <div className={`${card.bg} ${card.color} w-10 h-10 rounded-[12px] flex items-center justify-center group-hover:scale-[1.1] transition-transform duration-300 shrink-0`}>
+                        <div className={`${card.bg} ${card.color} w-[56px] h-[56px] rounded-[16px] flex items-center justify-center group-hover:scale-[1.1] transition-transform duration-300`}>
                           {card.icon}
                         </div>
                       </Link>
@@ -250,47 +250,62 @@ const BuyerDashboard = () => {
                   </div>
 
                   {/* Welcome Area & Quick Actions */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Intro Card */}
-                    <div className="lg:col-span-2 bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 relative overflow-hidden flex flex-col justify-center">
-                      <div className="absolute top-0 right-0 w-56 h-56 bg-sky-50 rounded-full blur-3xl opacity-60 -translate-y-1/2 translate-x-1/3"></div>
+                    <div className="lg:col-span-2 bg-white p-8 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 relative overflow-hidden flex flex-col justify-center min-h-[320px]">
+                      {/* Decorative fade */}
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-sky-50 rounded-full blur-3xl opacity-60 -translate-y-1/2 translate-x-1/3"></div>
+                      
                       <div className="relative z-10">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2 tracking-[-0.5px]">
+                        <h3 className="text-3xl font-bold text-slate-900 mb-4 tracking-[-0.5px]">
                           Great to see you, {user.name || "Buyer"}!
                         </h3>
-                        <p className="text-slate-500 leading-relaxed mb-4 max-w-lg text-sm">
+                        <p className="text-slate-600 leading-relaxed mb-8 max-w-lg text-[15px]">
                           Stay ahead in your property search. Manage your saved properties,
                           discover upcoming events and connect with builders across NativeNest.
                         </p>
-                        <div className="bg-gradient-to-r from-sky-50 to-white border-l-4 border-sky-400 p-4 rounded-r-[14px] max-w-xl">
-                          <p className="text-sky-900 text-xs font-medium italic">
+                        <div className="bg-gradient-to-r from-sky-50 to-white border-l-4 border-sky-400 p-5 rounded-r-[16px] max-w-xl shadow-[0_2px_8px_rgba(14,165,233,0.04)]">
+                          <p className="text-sky-900 text-[14px] font-medium italic">
                             "Find a place where your story can unfold. Your journey to a new home starts with the right connections."
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200">
-                      <h3 className="text-sm font-bold text-slate-900 mb-3">Quick Links</h3>
-                      <div className="grid gap-2">
-                        <Link to="/buy" className="flex items-center gap-3 p-3 rounded-[14px] bg-slate-50 hover:bg-emerald-50 border border-transparent hover:border-emerald-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600 group-hover:scale-110 transition-all duration-300 shrink-0">
-                            <Compass className="w-4 h-4" />
-                          </div>
-                          <span className="text-xs font-bold text-slate-700 group-hover:text-emerald-700">Browse Properties</span>
-                        </Link>
-                        <Link to="/buyer-dashboard/events" className="flex items-center gap-3 p-3 rounded-[14px] bg-slate-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600 group-hover:scale-110 transition-all duration-300 shrink-0">
-                            <CalendarDays className="w-4 h-4" />
-                          </div>
-                          <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-700">Explore Events</span>
-                        </Link>
-                        <Link to="/buyer-dashboard/profile-settings" className="flex items-center gap-3 p-3 rounded-[14px] bg-slate-50 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-slate-100 p-2 rounded-xl text-slate-600 group-hover:scale-110 transition-all duration-300 shrink-0">
-                            <Settings className="w-4 h-4" />
-                          </div>
-                          <span className="text-xs font-bold text-slate-700 group-hover:text-slate-900">Edit Profile</span>
-                        </Link>
+                    <div className="space-y-6 flex flex-col">
+                      <div className="bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200">
+                        <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Links</h3>
+                        <div className="grid gap-3">
+                          <Link to="/buy" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-emerald-50 border border-transparent hover:border-emerald-100 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-emerald-50 p-2.5 rounded-xl shadow-sm border border-emerald-100/50 text-emerald-600 group-hover:scale-110 transition-all duration-300">
+                              <Compass className="w-5 h-5" />
+                            </div>
+                            <span className="text-sm font-bold text-slate-700 group-hover:text-emerald-700">Browse Properties</span>
+                          </Link>
+                          <Link to="/buyer-dashboard/events" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-indigo-50 p-2.5 rounded-xl shadow-sm border border-indigo-100/50 text-indigo-600 group-hover:scale-110 transition-all duration-300">
+                              <CalendarDays className="w-5 h-5" />
+                            </div>
+                            <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Explore Events</span>
+                          </Link>
+                          <Link to="/buyer-dashboard/profile-settings" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all duration-200 group cursor-pointer">
+                            <div className="bg-slate-100 p-2.5 rounded-xl shadow-sm border border-slate-200/50 text-slate-600 group-hover:scale-110 transition-all duration-300">
+                              <Settings className="w-5 h-5" />
+                            </div>
+                            <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900">Edit Profile</span>
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-indigo-50 to-white p-7 rounded-[20px] border border-indigo-100 shadow-[0_4px_12px_rgba(99,102,241,0.04)] relative overflow-hidden flex-1">
+                        <div className="absolute -top-6 -right-6 w-24 h-24 bg-indigo-200/40 rounded-full blur-2xl"></div>
+                        <h4 className="font-bold flex items-center gap-2 mb-3 text-indigo-900 z-10 relative">
+                          <Sparkles className="w-5 h-5 text-indigo-500" /> 
+                          Dashboard Tip
+                        </h4>
+                        <p className="text-sm text-slate-600 leading-relaxed font-medium z-10 relative">
+                          Use the "Saved Properties" section to keep track of listings you liked during events. It makes comparing options much easier later!
+                        </p>
                       </div>
                     </div>
                   </div>
