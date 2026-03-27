@@ -28,6 +28,7 @@ import EventStallBookings from "./EventStallBookings";
 import ManageBuilders from "./ManageBuilders";
 import AddEditStallType from "./AddEditStallType";
 import SoldProperties from "./SoldProperties";
+import PropertyPreview from "../common/PropertyPreview";
 import LogoutDialog from "../LogoutDialog";
 
 // Lucide Icons
@@ -143,6 +144,7 @@ const AdminDashboard = () => {
     { match: /\/event-bookings\//,             label: "Event Stall Bookings",icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/events\/.*\/participants/,     label: "Event Participants",  icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/property\/.*\/viewers/,        label: "Property Viewers",    icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/property-preview\//,           label: "Property Preview",    icon: <Building2 className="w-5 h-5" /> },
     { match: /\/sold-properties/,              label: "Sold Properties",     icon: <Briefcase className="w-5 h-5" /> },
   ];
 
@@ -443,6 +445,7 @@ const AdminDashboard = () => {
             <Route path="/manage-stall-types/:eventId/edit/:typeId" element={<AddEditStallType />} />
             <Route path="/analytics/most-viewed" element={<MostViewedProperties />} />
             <Route path="/property/:propertyId/viewers" element={<PropertyViewers />} />
+            <Route path="/property-preview/:id" element={<PropertyPreview />} />
             <Route path="/enquiries" element={<ViewEnquiries />} />
             <Route path="/profile-settings" element={<AdminProfileSettings />} />
           </Routes>

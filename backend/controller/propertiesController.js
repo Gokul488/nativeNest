@@ -93,7 +93,7 @@ const createProperty = async (req, res) => {
       const propertyId = propertyResult.insertId;
 
       // ── Apartment variants ───────────────────────────────────────────────
-      // Each variant row: apartment_type (BHK value) + block_name + price + sqft + quantity
+      // Each variant row: block_name + floor + apartment_type + price + sqft + quantity
       if (property_type === 'Apartment' && variants) {
         let variantData;
         try {
@@ -107,30 +107,34 @@ const createProperty = async (req, res) => {
         }
 
         for (const v of variantData) {
-          const aptType   = v.apartment_type?.trim();   // stores BHK value e.g. "2BHK"
+          const aptType   = v.apartment_type?.trim();   // BHK value e.g. "2BHK"
           const blockName = v.block_name?.trim() || null;
+          const floor     = v.floor?.trim() || null;    // floor e.g. "Ground Floor"
           const vPrice    = Number(v.price);
           const vSqft     = Number(v.sqft);
           const vQty      = Number(v.quantity) || 1;
 
           if (!aptType) {
-            throw new Error('Each block must have an apartment_type (e.g. 2BHK)');
+            throw new Error('Each variant must have an apartment_type (e.g. 2BHK)');
           }
           if (!blockName) {
             throw new Error(`Variant "${aptType}" is missing a block_name`);
           }
+          if (!floor) {
+            throw new Error(`Variant "${aptType}" in block "${blockName}" is missing a floor`);
+          }
           if (isNaN(vPrice) || vPrice <= 0) {
-            throw new Error(`Block "${blockName}" (${aptType}) has an invalid price`);
+            throw new Error(`Block "${blockName}" › ${floor} (${aptType}) has an invalid price`);
           }
           if (isNaN(vSqft) || vSqft <= 0) {
-            throw new Error(`Block "${blockName}" (${aptType}) has an invalid sqft`);
+            throw new Error(`Block "${blockName}" › ${floor} (${aptType}) has an invalid sqft`);
           }
 
           await connection.query(
             `INSERT INTO property_variants
-             (property_id, apartment_type, block_name, price, sqft, quantity)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [propertyId, aptType, blockName, vPrice, vSqft, vQty]
+             (property_id, block_name, floor, apartment_type, price, sqft, quantity)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [propertyId, blockName, floor, aptType, vPrice, vSqft, vQty]
           );
         }
       }
@@ -194,12 +198,13 @@ const createProperty = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared variant formatter — apartment_type holds the BHK value, no bhk column
+// Shared variant formatter — includes block_name, floor, apartment_type
 // ─────────────────────────────────────────────────────────────────────────────
 
 const formatVariant = (v) => ({
-  apartment_type: v.apartment_type,          // BHK value e.g. "2BHK"
-  block_name:     v.block_name  || null,
+  block_name:     v.block_name     || null,
+  floor:          v.floor          || null,
+  apartment_type: v.apartment_type || null,
   price:          v.price    ? parseFloat(v.price)   : null,
   sqft:           v.sqft     ? Number(v.sqft)         : null,
   quantity:       v.quantity ? Number(v.quantity)     : null,
@@ -309,11 +314,11 @@ const getFeaturedProperties = async (req, res) => {
     const dataParams = [...params, limitNum, offset];
 
     const [properties] = await connection.query(dataQuery, dataParams);
-    
+
     if (properties.length === 0) {
-      return res.status(200).json({ 
-        properties: [], 
-        pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) } 
+      return res.status(200).json({
+        properties: [],
+        pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) }
       });
     }
 
@@ -332,8 +337,10 @@ const getFeaturedProperties = async (req, res) => {
       let variants = [];
       if (property.property_type === 'Apartment') {
         const [vRows] = await connection.query(
-          `SELECT apartment_type, block_name, price, sqft, quantity
-           FROM property_variants WHERE property_id = ? ORDER BY block_name, apartment_type ASC`,
+          `SELECT block_name, floor, apartment_type, price, sqft, quantity
+           FROM property_variants
+           WHERE property_id = ?
+           ORDER BY block_name, floor, apartment_type ASC`,
           [property.id]
         );
         variants = vRows.map(formatVariant);
@@ -354,7 +361,7 @@ const getFeaturedProperties = async (req, res) => {
       };
     }));
 
-    res.status(200).json({ 
+    res.status(200).json({
       properties: featuredProperties,
       pagination: {
         total,
@@ -442,12 +449,14 @@ const getPropertyById = async (req, res) => {
       [propertyId]
     );
 
-    // Fetch variants — apartment_type holds BHK, block_name holds the block
+    // Fetch variants — block_name › floor › apartment_type
     let variants = [];
     if (property.property_type === 'Apartment') {
       const [variantRows] = await connection.query(
-        `SELECT apartment_type, block_name, price, sqft, quantity
-         FROM property_variants WHERE property_id = ? ORDER BY block_name, apartment_type ASC`,
+        `SELECT block_name, floor, apartment_type, price, sqft, quantity
+         FROM property_variants
+         WHERE property_id = ?
+         ORDER BY block_name, floor, apartment_type ASC`,
         [propertyId]
       );
       variants = variantRows.map(formatVariant);
@@ -524,8 +533,10 @@ const getMostViewedProperties = async (req, res) => {
     let variantRows = [];
     if (propertyIds.length > 0) {
       const [vRows] = await pool.query(
-        `SELECT property_id, apartment_type, block_name, price, sqft, quantity
-         FROM property_variants WHERE property_id IN (?) ORDER BY block_name, apartment_type ASC`,
+        `SELECT property_id, block_name, floor, apartment_type, price, sqft, quantity
+         FROM property_variants
+         WHERE property_id IN (?)
+         ORDER BY block_name, floor, apartment_type ASC`,
         [propertyIds]
       );
       variantRows = vRows;

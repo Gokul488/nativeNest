@@ -35,8 +35,14 @@ const animatedComponents = makeAnimated();
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const BLOCK_LABELS = ["Block A", "Block B", "Block C", "Block D", "Block E", "Others"];
+const FLOOR_LABELS = [
+  "Ground Floor", "1st Floor", "2nd Floor", "3rd Floor", "4th Floor",
+  "5th Floor", "6th Floor", "7th Floor", "8th Floor", "9th Floor",
+  "10th Floor", "Others",
+];
 const APT_TYPE_OPTIONS = ["1BHK", "2BHK", "3BHK", "4BHK", "Penthouse", "Studio", "Others"];
 
+// A single apartment-type config row inside a floor
 const DEFAULT_CONFIG = () => ({
   id: Date.now() + Math.random(),
   apartment_type: "1BHK",
@@ -46,10 +52,20 @@ const DEFAULT_CONFIG = () => ({
   quantity: "1",
 });
 
+// A floor inside a block
+const DEFAULT_FLOOR = () => ({
+  id: Date.now() + Math.random(),
+  floor_name: "Ground Floor",
+  isCustomFloor: false,
+  configs: [DEFAULT_CONFIG()],
+});
+
+// A top-level block
 const DEFAULT_BLOCK = () => ({
+  id: Date.now() + Math.random(),
   block_name: "Block A",
   isCustomBlock: false,
-  configs: [DEFAULT_CONFIG()],
+  floors: [DEFAULT_FLOOR()],
 });
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -230,35 +246,70 @@ const PostProperty = () => {
   };
 
   // ── Block helpers ─────────────────────────────────────────────
-  const updateBlock = (idx, field, value) =>
-    setBlocks((prev) => prev.map((b, i) => i === idx ? { ...b, [field]: value } : b));
+  const updateBlock = (blockId, field, value) =>
+    setBlocks((prev) => prev.map((b) => b.id === blockId ? { ...b, [field]: value } : b));
 
   const addBlock = () => {
     const nextLabel = BLOCK_LABELS[blocks.length] || `Block ${String.fromCharCode(65 + blocks.length)}`;
     setBlocks((prev) => [...prev, { ...DEFAULT_BLOCK(), block_name: nextLabel }]);
   };
 
-  const removeBlock = (idx) =>
-    setBlocks((prev) => prev.filter((_, i) => i !== idx));
+  const removeBlock = (blockId) =>
+    setBlocks((prev) => prev.filter((b) => b.id !== blockId));
 
-  // ── Config helpers (per block) ────────────────────────────────
-  const addConfig = (blockIdx) =>
-    setBlocks((prev) => prev.map((b, i) =>
-      i === blockIdx ? { ...b, configs: [...b.configs, DEFAULT_CONFIG()] } : b
+  // ── Floor helpers (per block) ─────────────────────────────────
+  const addFloor = (blockId) =>
+    setBlocks((prev) => prev.map((b) => {
+      if (b.id !== blockId) return b;
+      const nextFloorLabel = FLOOR_LABELS[b.floors.length] || `Floor ${b.floors.length}`;
+      return { ...b, floors: [...b.floors, { ...DEFAULT_FLOOR(), floor_name: nextFloorLabel }] };
+    }));
+
+  const removeFloor = (blockId, floorId) =>
+    setBlocks((prev) => prev.map((b) =>
+      b.id !== blockId ? b : { ...b, floors: b.floors.filter((f) => f.id !== floorId) }
     ));
 
-  const removeConfig = (blockIdx, configId) =>
-    setBlocks((prev) => prev.map((b, i) =>
-      i === blockIdx
-        ? { ...b, configs: b.configs.filter((c) => c.id !== configId) }
-        : b
+  const updateFloor = (blockId, floorId, field, value) =>
+    setBlocks((prev) => prev.map((b) =>
+      b.id !== blockId ? b : {
+        ...b,
+        floors: b.floors.map((f) => f.id === floorId ? { ...f, [field]: value } : f),
+      }
     ));
 
-  const updateConfig = (blockIdx, configId, field, value) =>
-    setBlocks((prev) => prev.map((b, i) =>
-      i === blockIdx
-        ? { ...b, configs: b.configs.map((c) => c.id === configId ? { ...c, [field]: value } : c) }
-        : b
+  // ── Config helpers (per floor inside block) ───────────────────
+  const addConfig = (blockId, floorId) =>
+    setBlocks((prev) => prev.map((b) =>
+      b.id !== blockId ? b : {
+        ...b,
+        floors: b.floors.map((f) =>
+          f.id !== floorId ? f : { ...f, configs: [...f.configs, DEFAULT_CONFIG()] }
+        ),
+      }
+    ));
+
+  const removeConfig = (blockId, floorId, configId) =>
+    setBlocks((prev) => prev.map((b) =>
+      b.id !== blockId ? b : {
+        ...b,
+        floors: b.floors.map((f) =>
+          f.id !== floorId ? f : { ...f, configs: f.configs.filter((c) => c.id !== configId) }
+        ),
+      }
+    ));
+
+  const updateConfig = (blockId, floorId, configId, field, value) =>
+    setBlocks((prev) => prev.map((b) =>
+      b.id !== blockId ? b : {
+        ...b,
+        floors: b.floors.map((f) =>
+          f.id !== floorId ? f : {
+            ...f,
+            configs: f.configs.map((c) => c.id === configId ? { ...c, [field]: value } : c),
+          }
+        ),
+      }
     ));
 
   // ── Submit ────────────────────────────────────────────────────
@@ -286,40 +337,56 @@ const PostProperty = () => {
           setIsSubmitting(false);
           return;
         }
-        if (!block.configs || block.configs.length === 0) {
-          setError(`Block "${block.block_name}" needs at least one apartment configuration.`);
+        if (!block.floors || block.floors.length === 0) {
+          setError(`Block "${block.block_name}" needs at least one floor.`);
           setIsSubmitting(false);
           return;
         }
-        for (const config of block.configs) {
-          if (!config.apartment_type?.trim()) {
-            setError(`Block "${block.block_name}" has a config missing an apartment type.`);
+        for (const floor of block.floors) {
+          if (!floor.floor_name?.trim()) {
+            setError(`Block "${block.block_name}" has a floor with no name.`);
             setIsSubmitting(false);
             return;
           }
-          if (!config.price || isNaN(config.price) || Number(config.price) <= 0) {
-            setError(`Block "${block.block_name}" › ${config.apartment_type} needs a valid price.`);
+          if (!floor.configs || floor.configs.length === 0) {
+            setError(`Block "${block.block_name}" › ${floor.floor_name} needs at least one apartment configuration.`);
             setIsSubmitting(false);
             return;
           }
-          if (!config.sqft || isNaN(config.sqft) || Number(config.sqft) <= 0) {
-            setError(`Block "${block.block_name}" › ${config.apartment_type} needs a valid sqft.`);
-            setIsSubmitting(false);
-            return;
+          for (const config of floor.configs) {
+            if (!config.apartment_type?.trim()) {
+              setError(`Block "${block.block_name}" › ${floor.floor_name} has a config missing an apartment type.`);
+              setIsSubmitting(false);
+              return;
+            }
+            if (!config.price || isNaN(config.price) || Number(config.price) <= 0) {
+              setError(`Block "${block.block_name}" › ${floor.floor_name} › ${config.apartment_type} needs a valid price.`);
+              setIsSubmitting(false);
+              return;
+            }
+            if (!config.sqft || isNaN(config.sqft) || Number(config.sqft) <= 0) {
+              setError(`Block "${block.block_name}" › ${floor.floor_name} › ${config.apartment_type} needs a valid sqft.`);
+              setIsSubmitting(false);
+              return;
+            }
           }
         }
       }
     }
 
+    // Flatten hierarchy: block → floor → config
     const variants = formData.property_type === "Apartment"
       ? blocks.flatMap((block) =>
-        block.configs.map((config) => ({
-          apartment_type: config.apartment_type.trim(),
-          block_name: block.block_name.trim(),
-          price: Number(config.price),
-          sqft: Number(config.sqft),
-          quantity: Number(config.quantity) || 1,
-        }))
+        block.floors.flatMap((floor) =>
+          floor.configs.map((config) => ({
+            apartment_type: config.apartment_type.trim(),
+            block_name: block.block_name.trim(),
+            floor: floor.floor_name.trim(),
+            price: Number(config.price),
+            sqft: Number(config.sqft),
+            quantity: Number(config.quantity) || 1,
+          }))
+        )
       )
       : [];
 
@@ -348,7 +415,7 @@ const PostProperty = () => {
     }
   };
 
-  // ── Select styles — updated to match indigo/slate theme ──────
+  // ── Select styles ─────────────────────────────────────────────
   const customStyles = {
     control: (p) => ({
       ...p,
@@ -406,7 +473,6 @@ const PostProperty = () => {
     >
       {/* ── Header ── */}
       <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        {/* Left: icon + title */}
         <div className="flex items-center gap-3">
           <Link
             to={backPath}
@@ -415,14 +481,11 @@ const PostProperty = () => {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               Inventory Management System
             </p>
           </div>
         </div>
-
-        {/* Right: badge */}
         <span className="bg-sky-50 text-sky-600 text-xs font-bold px-3 py-1.5 rounded-full border border-sky-100 flex items-center gap-1.5">
           <Home className="w-3.5 h-3.5" /> Property Editor
         </span>
@@ -573,24 +636,35 @@ const PostProperty = () => {
                 </button>
               }
             >
-              <div className="space-y-4">
-                {blocks.map((block, idx) => (
+              {/* Hierarchy hint */}
+              <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5">
+                <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="text-indigo-500">Block</span>
+                <span>›</span>
+                <span className="text-sky-500">Floor</span>
+                <span>›</span>
+                <span className="text-emerald-500">Apartment Type</span>
+              </div>
+
+              <div className="space-y-5">
+                {blocks.map((block) => (
                   <div
-                    key={idx}
+                    key={block.id}
                     className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)] hover:border-indigo-200 transition-colors"
                   >
-                    {/* Block name header */}
+                    {/* ── Block header ── */}
                     <div className="flex items-center justify-between bg-indigo-50 px-5 py-3 gap-3 border-b border-indigo-100">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-3.5 h-3.5 text-indigo-500" />
                         {!block.isCustomBlock ? (
                           <select
                             value={block.block_name}
                             onChange={(e) => {
                               if (e.target.value === "Others") {
-                                updateBlock(idx, "isCustomBlock", true);
-                                updateBlock(idx, "block_name", "");
+                                updateBlock(block.id, "isCustomBlock", true);
+                                updateBlock(block.id, "block_name", "");
                               } else {
-                                updateBlock(idx, "block_name", e.target.value);
+                                updateBlock(block.id, "block_name", e.target.value);
                               }
                             }}
                             className="px-3 py-1.5 border border-indigo-200 rounded-lg text-sm font-bold bg-white text-indigo-800 focus:ring-2 focus:ring-indigo-400 outline-none"
@@ -604,12 +678,12 @@ const PostProperty = () => {
                               autoFocus
                               placeholder="e.g. Tower 1"
                               value={block.block_name}
-                              onChange={(e) => updateBlock(idx, "block_name", e.target.value)}
+                              onChange={(e) => updateBlock(block.id, "block_name", e.target.value)}
                               className="px-3 py-1.5 border border-indigo-300 rounded-lg text-sm font-bold text-indigo-800 focus:ring-2 focus:ring-indigo-400 outline-none w-32 bg-white"
                             />
                             <button
                               type="button"
-                              onClick={() => { updateBlock(idx, "isCustomBlock", false); updateBlock(idx, "block_name", "Block A"); }}
+                              onClick={() => { updateBlock(block.id, "isCustomBlock", false); updateBlock(block.id, "block_name", "Block A"); }}
                               className="text-xs text-indigo-500 hover:text-indigo-700 font-bold underline whitespace-nowrap"
                             >
                               Reset
@@ -621,15 +695,15 @@ const PostProperty = () => {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => addConfig(idx)}
+                          onClick={() => addFloor(block.id)}
                           className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold border border-indigo-200 hover:border-indigo-400 px-3 py-1.5 rounded-lg bg-white transition-all"
                         >
-                          <Plus className="w-3 h-3" /> Add Type
+                          <Plus className="w-3 h-3" /> Add Floor
                         </button>
                         {blocks.length > 1 && (
                           <button
                             type="button"
-                            onClick={() => removeBlock(idx)}
+                            onClick={() => removeBlock(block.id)}
                             className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-bold transition-colors"
                           >
                             <Trash2 className="w-3 h-3" /> Block
@@ -638,105 +712,180 @@ const PostProperty = () => {
                       </div>
                     </div>
 
-                    {/* Config rows */}
-                    <div className="divide-y divide-slate-50">
-                      {block.configs.map((config, cIdx) => (
-                        <div key={config.id} className="p-5">
+                    {/* ── Floors inside this block ── */}
+                    <div className="divide-y divide-slate-100 bg-white">
+                      {block.floors.map((floor, fIdx) => (
+                        <div key={floor.id} className="p-4">
+                          {/* Floor header */}
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                              Configuration {cIdx + 1}
-                            </span>
-                            {block.configs.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeConfig(idx, config.id)}
-                                className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold transition-colors"
-                              >
-                                <Trash2 className="w-3 h-3" /> Remove
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {/* Apartment Type */}
-                            <div>
-                              <label className={labelCls}>Apt. Type</label>
-                              {!config.isCustomType ? (
+                            <div className="flex items-center gap-2">
+                              {/* Floor level indicator dot */}
+                              <div className="w-2 h-2 rounded-full bg-sky-400" />
+                              {!floor.isCustomFloor ? (
                                 <select
-                                  value={config.apartment_type}
+                                  value={floor.floor_name}
                                   onChange={(e) => {
                                     if (e.target.value === "Others") {
-                                      updateConfig(idx, config.id, "isCustomType", true);
-                                      updateConfig(idx, config.id, "apartment_type", "");
+                                      updateFloor(block.id, floor.id, "isCustomFloor", true);
+                                      updateFloor(block.id, floor.id, "floor_name", "");
                                     } else {
-                                      updateConfig(idx, config.id, "apartment_type", e.target.value);
+                                      updateFloor(block.id, floor.id, "floor_name", e.target.value);
                                     }
                                   }}
-                                  className={inputCls}
+                                  className="px-3 py-1.5 border border-sky-200 rounded-lg text-xs font-bold bg-sky-50 text-sky-800 focus:ring-2 focus:ring-sky-400 outline-none"
                                 >
-                                  {APT_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                                  {FLOOR_LABELS.map((f) => <option key={f} value={f}>{f}</option>)}
                                 </select>
                               ) : (
-                                <div className="flex gap-1">
+                                <div className="flex items-center gap-2">
                                   <input
                                     type="text"
                                     autoFocus
-                                    placeholder="e.g. 5BHK"
-                                    value={config.apartment_type}
-                                    onChange={(e) => updateConfig(idx, config.id, "apartment_type", e.target.value)}
-                                    className={inputCls}
+                                    placeholder="e.g. Terrace"
+                                    value={floor.floor_name}
+                                    onChange={(e) => updateFloor(block.id, floor.id, "floor_name", e.target.value)}
+                                    className="px-3 py-1.5 border border-sky-300 rounded-lg text-xs font-bold text-sky-800 focus:ring-2 focus:ring-sky-400 outline-none w-32 bg-white"
                                   />
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      updateConfig(idx, config.id, "isCustomType", false);
-                                      updateConfig(idx, config.id, "apartment_type", "1BHK");
+                                      updateFloor(block.id, floor.id, "isCustomFloor", false);
+                                      updateFloor(block.id, floor.id, "floor_name", "Ground Floor");
                                     }}
-                                    className="text-xs text-indigo-500 hover:text-indigo-700 px-1 font-bold"
+                                    className="text-xs text-sky-500 hover:text-sky-700 font-bold underline whitespace-nowrap"
                                   >
-                                    ↩
+                                    Reset
                                   </button>
                                 </div>
                               )}
                             </div>
 
-                            {/* Price */}
-                            <div>
-                              <label className={labelCls}>Price (₹)</label>
-                              <input
-                                type="number"
-                                min="1"
-                                placeholder="e.g. 5000000"
-                                value={config.price}
-                                onChange={(e) => updateConfig(idx, config.id, "price", e.target.value)}
-                                className={inputCls}
-                              />
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => addConfig(block.id, floor.id)}
+                                className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800 font-bold border border-emerald-200 hover:border-emerald-400 px-2.5 py-1 rounded-lg bg-emerald-50 transition-all"
+                              >
+                                <Plus className="w-3 h-3" /> Add Type
+                              </button>
+                              {block.floors.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeFloor(block.id, floor.id)}
+                                  className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold transition-colors"
+                                >
+                                  <Trash2 className="w-3 h-3" /> Floor
+                                </button>
+                              )}
                             </div>
+                          </div>
 
-                            {/* Sqft */}
-                            <div>
-                              <label className={labelCls}>Sqft</label>
-                              <input
-                                type="number"
-                                min="1"
-                                placeholder="e.g. 1200"
-                                value={config.sqft}
-                                onChange={(e) => updateConfig(idx, config.id, "sqft", e.target.value)}
-                                className={inputCls}
-                              />
-                            </div>
+                          {/* Apartment type configs inside this floor */}
+                          <div className="ml-4 space-y-3">
+                            {floor.configs.map((config, cIdx) => (
+                              <div
+                                key={config.id}
+                                className="bg-slate-50 rounded-xl border border-slate-100 p-4"
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    Unit Config {cIdx + 1}
+                                  </span>
+                                  {floor.configs.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeConfig(block.id, floor.id, config.id)}
+                                      className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold transition-colors"
+                                    >
+                                      <Trash2 className="w-3 h-3" /> Remove
+                                    </button>
+                                  )}
+                                </div>
 
-                            {/* Qty */}
-                            <div>
-                              <label className={labelCls}>Qty</label>
-                              <input
-                                type="number"
-                                min="1"
-                                value={config.quantity}
-                                onChange={(e) => updateConfig(idx, config.id, "quantity", e.target.value)}
-                                className={inputCls}
-                              />
-                            </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  {/* Apartment Type */}
+                                  <div>
+                                    <label className={labelCls}>Apt. Type</label>
+                                    {!config.isCustomType ? (
+                                      <select
+                                        value={config.apartment_type}
+                                        onChange={(e) => {
+                                          if (e.target.value === "Others") {
+                                            updateConfig(block.id, floor.id, config.id, "isCustomType", true);
+                                            updateConfig(block.id, floor.id, config.id, "apartment_type", "");
+                                          } else {
+                                            updateConfig(block.id, floor.id, config.id, "apartment_type", e.target.value);
+                                          }
+                                        }}
+                                        className={inputCls}
+                                      >
+                                        {APT_TYPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                                      </select>
+                                    ) : (
+                                      <div className="flex gap-1">
+                                        <input
+                                          type="text"
+                                          autoFocus
+                                          placeholder="e.g. 5BHK"
+                                          value={config.apartment_type}
+                                          onChange={(e) => updateConfig(block.id, floor.id, config.id, "apartment_type", e.target.value)}
+                                          className={inputCls}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            updateConfig(block.id, floor.id, config.id, "isCustomType", false);
+                                            updateConfig(block.id, floor.id, config.id, "apartment_type", "1BHK");
+                                          }}
+                                          className="text-xs text-indigo-500 hover:text-indigo-700 px-1 font-bold"
+                                        >
+                                          ↩
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Price */}
+                                  <div>
+                                    <label className={labelCls}>Price (₹)</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      placeholder="e.g. 5000000"
+                                      value={config.price}
+                                      onChange={(e) => updateConfig(block.id, floor.id, config.id, "price", e.target.value)}
+                                      className={inputCls}
+                                    />
+                                  </div>
+
+                                  {/* Sqft */}
+                                  <div>
+                                    <label className={labelCls}>Sqft</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      placeholder="e.g. 1200"
+                                      value={config.sqft}
+                                      onChange={(e) => updateConfig(block.id, floor.id, config.id, "sqft", e.target.value)}
+                                      className={inputCls}
+                                    />
+                                  </div>
+
+                                  {/* Qty */}
+                                  <div>
+                                    <label className={labelCls}>Qty</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      value={config.quantity}
+                                      onChange={(e) => updateConfig(block.id, floor.id, config.id, "quantity", e.target.value)}
+                                      className={inputCls}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       ))}
@@ -865,11 +1014,10 @@ const PostProperty = () => {
                   key={key}
                   type="button"
                   onClick={() => setActiveMediaTab(key)}
-                  className={`inline-flex items-center gap-1.5 py-2 px-4 rounded-[10px] text-sm font-semibold transition-all duration-200 ${
-                    activeMediaTab === key
+                  className={`inline-flex items-center gap-1.5 py-2 px-4 rounded-[10px] text-sm font-semibold transition-all duration-200 ${activeMediaTab === key
                       ? "bg-white text-sky-600 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
-                  }`}
+                    }`}
                 >
                   {icon}
                   <span className="hidden sm:inline">{label}</span>

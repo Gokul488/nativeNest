@@ -39,10 +39,10 @@ const getProperties = async (req, res) => {
     if (properties.length > 0) {
       const propertyIds = properties.map(p => p.id);
       const [variantRows] = await pool.query(`
-        SELECT variant_id, property_id, apartment_type, block_name, price, sqft, quantity, sold
+        SELECT variant_id, property_id, apartment_type, block_name, floor, price, sqft, quantity, sold
         FROM property_variants 
         WHERE property_id IN (?)
-        ORDER BY block_name, apartment_type ASC
+        ORDER BY block_name, floor, apartment_type ASC
       `, [propertyIds]);
 
       const variantsMap = {};
@@ -51,6 +51,7 @@ const getProperties = async (req, res) => {
         variantsMap[row.property_id].push({
           apartment_type: row.apartment_type,
           block_name:     row.block_name || null,
+          floor:          row.floor || null,
           price:          row.price    ? parseFloat(row.price)  : null,
           sqft:           row.sqft     ? Number(row.sqft)        : null,
           quantity:       row.quantity ? Number(row.quantity)    : null,
@@ -119,9 +120,9 @@ const getPropertyById = async (req, res) => {
 
     // Fetch variants with block_name — apartment_type holds the BHK value
     const [variantRows] = await pool.query(
-      `SELECT variant_id, apartment_type, block_name, price, sqft, quantity
+      `SELECT variant_id, apartment_type, block_name, floor, price, sqft, quantity
        FROM property_variants WHERE property_id = ?
-       ORDER BY block_name, apartment_type ASC`,
+       ORDER BY block_name, floor, apartment_type ASC`,
       [id]
     );
 
@@ -129,6 +130,7 @@ const getPropertyById = async (req, res) => {
       variant_id:     v.variant_id,
       apartment_type: v.apartment_type,
       block_name:     v.block_name || null,
+      floor:          v.floor || null,
       price:          v.price    ? parseFloat(v.price)  : null,
       sqft:           v.sqft     ? Number(v.sqft)        : null,
       quantity:       v.quantity ? Number(v.quantity)    : 1,
@@ -281,6 +283,7 @@ const updateProperty = async (req, res) => {
           for (const v of variantData) {
             const aptType   = (v.apartment_type || '').trim();  // BHK value
             const blockName = (v.block_name     || '').trim();
+            const floor     = (v.floor          || '').trim();
             const vPrice    = Number(v.price);
             const vSqft     = Number(v.sqft);
             const vQty      = Number(v.quantity) || 1;
@@ -291,6 +294,9 @@ const updateProperty = async (req, res) => {
             if (!blockName) {
               throw new Error(`Variant "${aptType}" is missing a block_name`);
             }
+            if (!floor) {
+              throw new Error(`Variant "${aptType}" in block "${blockName}" is missing a floor`);
+            }
             if (isNaN(vPrice) || vPrice <= 0) {
               throw new Error(`Block "${blockName}" (${aptType}) has an invalid price`);
             }
@@ -299,9 +305,9 @@ const updateProperty = async (req, res) => {
             }
 
             await connection.query(
-              `INSERT INTO property_variants (property_id, apartment_type, block_name, price, sqft, quantity)
-               VALUES (?, ?, ?, ?, ?, ?)`,
-              [id, aptType, blockName, vPrice, vSqft, vQty]
+              `INSERT INTO property_variants (property_id, apartment_type, block_name, floor, price, sqft, quantity)
+               VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              [id, aptType, blockName, floor, vPrice, vSqft, vQty]
             );
           }
         }

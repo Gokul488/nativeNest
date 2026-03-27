@@ -1,7 +1,7 @@
 // src/components/ViewProperties.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaSearch, FaPlus, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle, FaCubes, FaBuilding, FaHistory } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaMapMarkerAlt, FaUserTie, FaSort, FaSortUp, FaSortDown, FaRulerCombined, FaInfoCircle, FaCubes, FaBuilding, FaHistory, FaChevronDown, FaTimes } from 'react-icons/fa';
 import { Pencil, Trash2, BadgeCheck } from 'lucide-react';
 import API_BASE_URL from '../../config.js';
 import DeleteDialog from '../DeleteDialog';
@@ -10,11 +10,12 @@ import Pagination from '../common/Pagination.jsx';
 const ViewProperties = () => {
   const location = useLocation();
   const [properties, setProperties] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(location.state?.builderFilter || "");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [builderFilter, setBuilderFilter] = useState(location.state?.builderFilter || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'city', direction: 'asc' });
-  const [selectedConfigs, setSelectedConfigs] = useState({}); // new: per-property selected sqft for apartments
+  const [selectedConfigs, setSelectedConfigs] = useState({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,9 +23,10 @@ const ViewProperties = () => {
 
   const navigate = useNavigate();
 
+  // Sync builderFilter from navigation state (e.g. clicking a builder from admin dashboard)
   useEffect(() => {
     if (location.state?.builderFilter) {
-      setSearchQuery(location.state.builderFilter);
+      setBuilderFilter(location.state.builderFilter);
     }
   }, [location.state]);
 
@@ -60,6 +62,14 @@ const ViewProperties = () => {
     fetchProperties();
   }, [navigate]);
 
+  // Derive unique builder names for the dropdown
+  const builderOptions = useMemo(() => {
+    const names = properties
+      .map(p => p.builder_name)
+      .filter(Boolean);
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+  }, [properties]);
+
   // Helper: get currently selected variant for an apartment property
   const getSelectedVariant = (prop) => {
     if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) return null;
@@ -69,7 +79,6 @@ const ViewProperties = () => {
     return prop.variants.find(v => v.sqft === selSqft) || prop.variants[0];
   };
 
-  // Helper functions for Apartment display
   const getDisplayPrice = (prop) => {
     if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
       return prop.price ? parseFloat(prop.price) : 0;
@@ -94,6 +103,14 @@ const ViewProperties = () => {
     return variant && variant.block_name ? variant.block_name : 'N/A';
   };
 
+  const getDisplayFloorName = (prop) => {
+    if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
+      return 'N/A';
+    }
+    const variant = getSelectedVariant(prop);
+    return variant && variant.floor ? variant.floor : 'N/A';
+  };
+
   const getDisplaySold = (prop) => {
     if (prop.property_type !== "Apartment" || !prop.variants || prop.variants.length === 0) {
       return prop.sold != null ? Number(prop.sold) : 0;
@@ -111,11 +128,20 @@ const ViewProperties = () => {
 
   const filteredProperties = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    let items = properties.filter(p =>
-      (p.title || "").toLowerCase().includes(query) ||
-      (p.city || "").toLowerCase().includes(query) ||
-      (p.builder_name || "").toLowerCase().includes(query)
-    );
+    const builderQuery = builderFilter.toLowerCase();
+
+    let items = properties.filter(p => {
+      // Text search: title or city
+      const matchesSearch = !query ||
+        (p.title || "").toLowerCase().includes(query) ||
+        (p.city || "").toLowerCase().includes(query);
+
+      // Builder filter: exact match from dropdown (or partial if typed manually)
+      const matchesBuilder = !builderQuery ||
+        (p.builder_name || "").toLowerCase().includes(builderQuery);
+
+      return matchesSearch && matchesBuilder;
+    });
 
     if (sortConfig.key !== null) {
       items.sort((a, b) => {
@@ -131,12 +157,12 @@ const ViewProperties = () => {
       });
     }
     return items;
-  }, [properties, searchQuery, sortConfig]);
+  }, [properties, searchQuery, builderFilter, sortConfig]);
 
-  // Reset page when search or sort changes
+  // Reset page when search, builder filter, or sort changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, sortConfig]);
+  }, [searchQuery, builderFilter, sortConfig]);
 
   const paginatedProperties = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -186,7 +212,6 @@ const ViewProperties = () => {
         throw new Error(data.error || 'Failed to sell property');
       }
 
-      // Update local state
       setProperties(prev => prev.map(p => {
         if (p.id === property.id) {
           if (variant) {
@@ -210,45 +235,119 @@ const ViewProperties = () => {
     }
   };
 
+  const clearBuilderFilter = () => setBuilderFilter('');
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setBuilderFilter('');
+  };
+
+  const hasActiveFilters = searchQuery || builderFilter;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
       {/* Header */}
-      <div className="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white sticky top-0 z-10">
-        {/* Left: Search & Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <div className="relative flex-1 sm:w-64 group">
+      <div className="px-6 py-4 border-b border-slate-100 flex flex-col gap-2 bg-white sticky top-0 z-10">
+        {/* Single row: Search + Builder Filter + Actions + Count */}
+        <div className="flex items-center gap-2 w-full flex-wrap">
+          {/* Text Search (title / city) */}
+          <div className="relative group flex-1 min-w-[160px] max-w-xs">
             <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors text-sm" />
             <input
               type="text"
-              placeholder="Search properties or builders..."
+              placeholder="Search by title or city..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
             />
           </div>
-          <div className="flex gap-2">
-            <Link
-              to="/admin-dashboard/sold-properties"
-              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm"
-            >
-              <FaHistory /> Sold Properties
-            </Link>
-            <Link
-              to="/admin-dashboard/manage-properties/add"
-              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm"
-            >
-              <FaPlus /> Add Property
-            </Link>
-          </div>
-        </div>
 
-        {/* Right: Total Count */}
-        <div className="italic flex items-center gap-3">
-          <span className="bg-indigo-50 text-indigo-600 text-md font-bold px-3 py-1 rounded-full border border-indigo-100">
-            {properties.length} Properties
+          {/* Builder Name Filter Dropdown */}
+          <div className="relative group w-44 shrink-0">
+            <FaUserTie className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors text-sm pointer-events-none z-10" />
+            <select
+              value={builderFilter}
+              onChange={(e) => setBuilderFilter(e.target.value)}
+              className={`w-full pl-10 pr-8 py-2.5 rounded-full bg-slate-50 border text-sm font-medium appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all cursor-pointer
+                ${builderFilter
+                  ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
+                  : 'border-slate-200 text-slate-500'
+                }`}
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.75rem center',
+                backgroundSize: '0.8em',
+              }}
+            >
+              <option value="">All Builders</option>
+              {builderOptions.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+            {builderFilter && (
+              <button
+                onClick={clearBuilderFilter}
+                title="Clear builder filter"
+                className="absolute right-7 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 transition z-10"
+              >
+                <FaTimes size={10} />
+              </button>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <Link
+            to="/admin-dashboard/sold-properties"
+            className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm shrink-0"
+          >
+            <FaHistory /> Sold Properties
+          </Link>
+          <Link
+            to="/admin-dashboard/manage-properties/add"
+            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm shrink-0"
+          >
+            <FaPlus /> Add Property
+          </Link>
+
+          {/* Property count — same line, pushed to the right */}
+          <span className="ml-auto italic bg-indigo-50 text-indigo-600 text-sm font-bold px-3 py-1.5 rounded-full border border-indigo-100 shrink-0 whitespace-nowrap">
+            {filteredProperties.length}
+            {filteredProperties.length !== properties.length && (
+              <span className="font-normal text-indigo-400"> / {properties.length}</span>
+            )}{' '}
+            Properties
           </span>
         </div>
+
+        {/* Active filter tags — only rendered when a filter is active */}
+        {hasActiveFilters && (
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            {builderFilter && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200">
+                <FaUserTie size={9} />
+                {builderFilter}
+                <button onClick={clearBuilderFilter} className="ml-0.5 hover:text-indigo-900 transition">
+                  <FaTimes size={9} />
+                </button>
+              </span>
+            )}
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">
+                <FaSearch size={9} />
+                "{searchQuery}"
+                <button onClick={() => setSearchQuery('')} className="ml-0.5 hover:text-slate-900 transition">
+                  <FaTimes size={9} />
+                </button>
+              </span>
+            )}
+            <button
+              onClick={clearAllFilters}
+              className="text-xs text-slate-400 hover:text-red-500 underline underline-offset-2 transition"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="relative flex-1">
@@ -265,6 +364,14 @@ const ViewProperties = () => {
           <div className="py-20 text-center text-slate-500 flex flex-col items-center gap-3">
             <FaInfoCircle className="text-4xl opacity-50" />
             <p className="text-lg">No properties found.</p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-indigo-500 hover:text-indigo-700 underline underline-offset-2 transition"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         )}
 
@@ -280,6 +387,7 @@ const ViewProperties = () => {
                     <th className="w-[10%] px-2 py-4 text-left whitespace-nowrap">Builder</th>
                     <th className="w-[18%] px-2 py-4 text-center">Sqft / Configuration</th>
                     <th className="w-[10%] px-2 py-4 text-center">Block</th>
+                    <th className="w-[10%] px-2 py-4 text-center">Floor</th>
                     <th className="w-[5%] px-2 py-4 text-center">Qty</th>
                     <th className="w-[5%] px-2 py-4 text-center">Sold</th>
                     <th className="w-[11%] px-2 py-4 text-center">Price</th>
@@ -295,17 +403,27 @@ const ViewProperties = () => {
                           {String(globalIndex).padStart(2, '0')}
                         </td>
                         <td className="px-2 py-2">
-                          <div className="font-bold text-slate-800 text-sm leading-tight break-words">{property.title}</div>
+                          <Link 
+                            to={`/admin-dashboard/property-preview/${property.id}`}
+                            className="font-bold text-slate-800 text-sm leading-tight hover:text-indigo-600 transition-colors"
+                          >
+                            {property.title}
+                          </Link>
                         </td>
                         <td className="px-2 py-2 text-left">
-                          <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-bold whitespace-nowrap">
+                          {/* Clicking builder name sets the builder filter */}
+                          <button
+                            onClick={() => setBuilderFilter(property.builder_name || '')}
+                            title={`Filter by ${property.builder_name}`}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-bold whitespace-nowrap hover:bg-indigo-100 hover:text-indigo-700 transition-colors cursor-pointer"
+                          >
                             <FaUserTie className="text-indigo-500 shrink-0" />
                             <span className="truncate max-w-[80px]">{property.builder_name || 'N/A'}</span>
-                          </div>
+                          </button>
                         </td>
 
                         {/* SQFT COLUMN */}
-                        <td className="px-2 py-2 text-center ">
+                        <td className="px-2 py-2 text-center">
                           <div className="flex justify-center items-center">
                             {property.property_type === "Apartment" && property.variants && property.variants.length > 0 ? (
                               <div className="relative group/select inline-flex items-center w-full max-w-[140px]">
@@ -327,7 +445,7 @@ const ViewProperties = () => {
                                 >
                                   {property.variants.map((variant, vIdx) => (
                                     <option key={vIdx} value={variant.sqft}>
-                                      {variant.sqft} ({variant.apartment_type})
+                                      {variant.sqft} ({variant.apartment_type}) - {variant.floor}
                                     </option>
                                   ))}
                                 </select>
@@ -342,35 +460,42 @@ const ViewProperties = () => {
                         </td>
 
                         {/* BLOCK TYPE COLUMN */}
-                        <td className="px-2 py-2 text-center ">
+                        <td className="px-2 py-2 text-center">
                           <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-purple-50/50 border border-purple-100 rounded text-[11px] font-bold text-purple-700">
                             <span className="truncate max-w-[60px]">{getDisplayBlockName(property)}</span>
                           </div>
                         </td>
 
+                        {/* FLOOR TYPE COLUMN */}
+                        <td className="px-2 py-2 text-center">
+                          <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-sky-50/50 border border-sky-100 rounded text-[11px] font-bold text-sky-700">
+                            <span className="truncate max-w-[80px]">{getDisplayFloorName(property)}</span>
+                          </div>
+                        </td>
+
                         {/* QUANTITY COLUMN */}
-                        <td className="px-2 py-2 text-center ">
+                        <td className="px-2 py-2 text-center">
                           <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-amber-50/50 border border-amber-100 rounded text-[11px] font-bold text-amber-700">
                             <span>{getDisplayQuantity(property)}</span>
                           </div>
                         </td>
 
                         {/* SOLD COLUMN */}
-                        <td className="px-2 py-2 text-center ">
+                        <td className="px-2 py-2 text-center">
                           <div className="inline-flex items-center gap-1 px-1.5 py-1 bg-blue-50/50 border border-blue-100 rounded text-[11px] font-bold text-blue-700">
                             <span>{getDisplaySold(property)}</span>
                           </div>
                         </td>
 
                         {/* PRICE COLUMN */}
-                        <td className="px-2 py-2 text-center ">
+                        <td className="px-2 py-2 text-center">
                           <div className="inline-flex items-center gap-0.5 px-1.5 py-1 bg-green-50/50 border border-green-100 rounded text-[11px] font-bold text-green-700 whitespace-nowrap">
                             <span className="text-[9px] opacity-70">₹</span>
                             <span>{Math.floor(getDisplayPrice(property)).toLocaleString('en-IN')}</span>
                           </div>
                         </td>
 
-                        <td className="px-2 py-2 text-right ">
+                        <td className="px-2 py-2 text-right">
                           <div className="flex justify-center items-center gap-1">
                             {getDisplayQuantity(property) > 0 ? (
                               <button
@@ -401,7 +526,7 @@ const ViewProperties = () => {
               </table>
             </div>
 
-            {/* Mobile Card View - also updated */}
+            {/* Mobile Card View */}
             <div className="md:hidden p-4 space-y-2 flex-1">
               {paginatedProperties.map((property, index) => {
                 const globalIndex = (currentPage - 1) * itemsPerPage + index + 1;
@@ -412,14 +537,25 @@ const ViewProperties = () => {
                         <div className="bg-indigo-50 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
                           {globalIndex}
                         </div>
-                        <div className="font-bold text-slate-900 truncate max-w-[180px]">{property.title}</div>
+                        <Link 
+                          to={`/admin-dashboard/property-preview/${property.id}`}
+                          className="font-bold text-slate-900 truncate max-w-[180px] hover:text-indigo-600 transition-colors"
+                        >
+                          {property.title}
+                        </Link>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-2 text-sm text-slate-600">
                       <div className="flex items-center gap-2">
                         <FaUserTie className="text-slate-400 text-xs" />
-                        <span className="truncate">{property.builder_name || 'N/A'}</span>
+                        {/* Tapping builder name on mobile sets the filter */}
+                        <button
+                          onClick={() => setBuilderFilter(property.builder_name || '')}
+                          className="truncate text-indigo-600 font-semibold hover:underline transition"
+                        >
+                          {property.builder_name || 'N/A'}
+                        </button>
                       </div>
 
                       {/* Sqft - dropdown for apartments */}
@@ -443,7 +579,7 @@ const ViewProperties = () => {
                               }}
                             >
                               {property.variants.map((v, i) => (
-                                <option key={i} value={v.sqft}>{v.sqft.toLocaleString('en-IN')} ({v.apartment_type})</option>
+                                <option key={i} value={v.sqft}>{v.sqft.toLocaleString('en-IN')} ({v.apartment_type}) - {v.floor}</option>
                               ))}
                             </select>
                           </div>
@@ -457,10 +593,19 @@ const ViewProperties = () => {
 
                       {/* Block Type */}
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-500 text-xs font-medium">Block Type</span>
+                        <span className="text-slate-500 text-xs font-medium">Block</span>
                         <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-50/50 text-purple-700 border border-purple-100 shadow-sm">
                           <FaBuilding className="text-purple-400 text-[9px]" />
                           {getDisplayBlockName(property)}
+                        </div>
+                      </div>
+
+                      {/* Floor Type */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500 text-xs font-medium">Floor</span>
+                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-sky-50/50 text-sky-700 border border-sky-100 shadow-sm">
+                          <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                          {getDisplayFloorName(property)}
                         </div>
                       </div>
 
@@ -481,7 +626,7 @@ const ViewProperties = () => {
                         </div>
                       </div>
 
-                      {/* Price (updates when sqft dropdown changes) */}
+                      {/* Price */}
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500 text-xs font-medium">Price</span>
                         <div className="px-2 py-1 rounded-lg text-[11px] font-bold bg-green-50/50 text-green-700 border border-green-100 shadow-sm">
@@ -536,7 +681,6 @@ const ViewProperties = () => {
         message="Are you sure you want to delete this property? This action cannot be undone."
       />
     </div>
-
   );
 };
 

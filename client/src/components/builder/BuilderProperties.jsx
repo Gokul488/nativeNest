@@ -211,9 +211,13 @@ const BuilderProperties = () => {
                               <Building className="w-4 h-4 text-slate-400" />
                             </div>
                             <div>
-                              <div className="font-bold text-slate-800 text-sm leading-tight line-clamp-1" title={property.title}>
+                              <Link 
+                                to={`/builder-dashboard/property-preview/${property.property_id}`}
+                                className="font-bold text-slate-800 text-sm leading-tight line-clamp-1 hover:text-indigo-600 transition-colors" 
+                                title={property.title}
+                              >
                                 {property.title}
-                              </div>
+                              </Link>
                               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">
                                 {property.property_type || "Property"}
                               </div>
@@ -311,7 +315,12 @@ const BuilderProperties = () => {
                           {globalIndex}
                         </div>
                         <div>
-                          <h4 className="font-bold text-slate-900 text-sm leading-tight line-clamp-1">{property.title}</h4>
+                          <Link 
+                            to={`/builder-dashboard/property-preview/${property.property_id}`}
+                            className="font-bold text-slate-900 text-sm leading-tight line-clamp-1 hover:text-indigo-600 transition-colors"
+                          >
+                            {property.title}
+                          </Link>
                           <div className="flex items-center gap-1 mt-0.5">
                             <MapPin className="text-slate-300 w-3 h-3" />
                             <span className="text-xs text-indigo-500 font-semibold">{property.city || "N/A"}</span>

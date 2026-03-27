@@ -23,6 +23,7 @@ import BuilderStallInterests from "./BuilderStallInterests";
 import LogoutDialog from "../../components/LogoutDialog";
 import EventDetails from "../buyer/EventDetails";
 import EventBookedStalls from "./EventBookedStalls";
+import PropertyPreview from "../common/PropertyPreview";
 
 /**
  * Animated Stat Counter Component
@@ -115,6 +116,7 @@ const BuilderDashboard = () => {
     { match: /\/stall-booking\//,      label: "Stall Booking",      icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/event-bookings\//,     label: "Booked Stalls",      icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/interests/,            label: "Stall Interests",    icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/property-preview\//,   label: "Property Preview",   icon: <Building2 className="w-5 h-5" /> },
   ];
 
   const activePage = (() => {
@@ -362,6 +364,7 @@ const BuilderDashboard = () => {
             <Route path="/interests" element={<BuilderStallInterests />} />
             <Route path="/post-property" element={<PostProperty />} />
             <Route path="/edit-property/:id" element={<EditProperty />} />
+            <Route path="/property-preview/:id" element={<PropertyPreview />} />
           </Routes>
         </main>
       </div>
