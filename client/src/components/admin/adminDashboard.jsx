@@ -29,6 +29,7 @@ import ManageBuilders from "./ManageBuilders";
 import AddEditStallType from "./AddEditStallType";
 import SoldProperties from "./SoldProperties";
 import PropertyPreview from "../common/PropertyPreview";
+import PropertyUnits from "./PropertyUnits";
 import LogoutDialog from "../LogoutDialog";
 
 // Lucide Icons
@@ -427,6 +428,8 @@ const AdminDashboard = () => {
               <Route index element={<ViewProperties />} />
               <Route path="add" element={<PostProperty />} />
               <Route path="edit/:id" element={<EditProperty />} />
+              <Route path="units/:propertyId" element={<PropertyUnits />} />
+              <Route path="units/:propertyId/:sqft" element={<PropertyUnits />} />
             </Route>
             <Route path="/sold-properties" element={<SoldProperties />} />
             <Route path="/manage-blogs">

@@ -368,34 +368,50 @@ const deleteProperty = async (req, res) => {
 };
 
 const sellProperty = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
+
     const { id } = req.params; // property_id
-    const { variant_id } = req.body;
+    const { variant_id, buyer_id, buyer_name, buyer_mobile, buyer_email } = req.body;
 
     if (variant_id) {
       // Sell a specific variant
-      const [result] = await pool.query(
+      const [result] = await connection.query(
         'UPDATE property_variants SET quantity = quantity - 1, sold = sold + 1 WHERE variant_id = ? AND quantity > 0',
         [variant_id]
       );
       if (result.affectedRows === 0) {
+        await connection.rollback();
         return res.status(400).json({ error: 'Property variant out of stock or not found' });
       }
     } else {
       // Sell the main property
-      const [result] = await pool.query(
+      const [result] = await connection.query(
         'UPDATE properties SET quantity = quantity - 1, sold = sold + 1 WHERE property_id = ? AND quantity > 0',
         [id]
       );
       if (result.affectedRows === 0) {
+        await connection.rollback();
         return res.status(400).json({ error: 'Property out of stock or not found' });
       }
     }
 
+    // Record the sale
+    await connection.query(
+      `INSERT INTO property_sales (property_id, variant_id, buyer_id, buyer_name, buyer_mobile, buyer_email)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, variant_id || null, buyer_id || null, buyer_name || null, buyer_mobile || null, buyer_email || null]
+    );
+
+    await connection.commit();
     res.json({ message: 'Property sold successfully' });
   } catch (error) {
+    await connection.rollback();
     console.error('Error selling property:', error);
     res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    connection.release();
   }
 };
 
