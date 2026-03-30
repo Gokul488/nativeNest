@@ -158,7 +158,9 @@ const PropertyUnits = () => {
     ? variants.filter(v => v.block_name === viewingBlock && v.floor === viewingFloor)
     : [];
   const currentVariant = viewingVariant || (sqft ? variants.find(v => v.sqft === parseInt(sqft)) : null);
-  const quantity = viewingVariant ? viewingVariant.quantity : (currentVariant ? currentVariant.quantity : property.quantity);
+  const availableCount = viewingVariant ? (viewingVariant.quantity || 0) : (currentVariant ? (currentVariant.quantity || 0) : (property.quantity || 0));
+  const soldCount = viewingVariant ? (viewingVariant.sold || 0) : (currentVariant ? (currentVariant.sold || 0) : (property.sold || 0));
+  const totalUnitsInView = availableCount + soldCount;
   const unitDetails = viewingVariant || currentVariant || property;
 
   /* ─── Breadcrumb label for header subtitle ─── */
@@ -172,15 +174,15 @@ const PropertyUnits = () => {
           ? `${currentVariant.block_name} · Floor ${currentVariant.floor}`
           : property.city;
 
-  const totalUnits = hasVariants
-    ? variants.reduce((s, v) => s + v.quantity, 0)
-    : property.quantity;
+  const totalUnitsAvailable = hasVariants
+    ? variants.reduce((s, v) => s + (v.quantity || 0), 0)
+    : (property.quantity || 0);
 
   const counterLabel = viewingVariant
-    ? `${quantity} Apt. Units`
+    ? `${availableCount} Available Units`
     : viewingFloor
-      ? `${variantsInFloor.reduce((s, v) => s + v.quantity, 0)} on This Floor`
-      : `${totalUnits} Total Available`;
+      ? `${variantsInFloor.reduce((s, v) => s + (v.quantity || 0), 0)} Available on Floor`
+      : `${totalUnitsAvailable} Units Available`;
 
   return (
     <>
@@ -264,46 +266,81 @@ const PropertyUnits = () => {
                 <h3 className="font-bold text-slate-800 text-[15px]">Individual Units Availability</h3>
               </div>
 
-              {quantity > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {Array.from({ length: quantity }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="group bg-white border border-slate-200 rounded-[18px] p-5 hover:border-sky-300 hover:shadow-[0_8px_24px_rgba(14,165,233,0.10)] transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
-                    >
-                      {/* unit number tag */}
-                      <div className="absolute top-0 right-0 px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-400 rounded-bl-xl group-hover:bg-sky-50 group-hover:text-sky-500 transition-colors">
-                        UNIT #{idx + 1}
-                      </div>
-
-                      <div className="mb-5">
-                        <div className="w-11 h-11 bg-slate-100 rounded-[12px] flex items-center justify-center mb-4 group-hover:bg-sky-500 group-hover:text-white text-slate-500 transition-all duration-300">
-                          <FaBuilding size={18} />
-                        </div>
-                        <h4 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-sky-600 transition-colors leading-snug">
-                          {unitDetails.apartment_type ? `${unitDetails.apartment_type} Apartment` : property.title}
-                        </h4>
-                        <p className="text-[11px] text-slate-400 font-medium">
-                          Block {unitDetails.block_name || 'N/A'} · Floor {unitDetails.floor || 'N/A'}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => handleSellClick(idx)}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-900 text-white rounded-[12px] text-xs font-bold hover:bg-emerald-600 hover:shadow-[0_4px_12px_rgba(5,150,105,0.25)] active:scale-95 transition-all duration-200"
-                      >
-                        <BadgeCheck size={14} /> Mark as Sold
-                      </button>
-                    </div>
-                  ))}
+              {totalUnitsInView > 0 ? (
+                <div className="overflow-x-auto border border-slate-200 rounded-[18px]">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unit #</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Apartment Detail</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Block / Floor</th>
+                        <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {Array.from({ length: totalUnitsInView }).map((_, idx) => {
+                        const isSold = idx >= availableCount;
+                        return (
+                          <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                            <td className="px-6 py-4">
+                              <span className="text-xs font-bold text-slate-400 group-hover:text-sky-500 transition-colors">
+                                #{idx + 1}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isSold ? "bg-slate-100 text-slate-400" : "bg-sky-50 text-sky-500"}`}>
+                                  <FaBuilding size={14} />
+                                </div>
+                                <span className="font-bold text-slate-900 text-sm">
+                                  {unitDetails.apartment_type ? `${unitDetails.apartment_type} Apartment` : property.title}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-xs text-slate-500 font-medium">
+                                Block {unitDetails.block_name || 'N/A'} · Floor {unitDetails.floor || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              {isSold ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[10px] font-bold">
+                                  <FaCheckCircle size={10} /> SOLD
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-50 text-sky-600 border border-sky-100 rounded-full text-[10px] font-bold">
+                                  AVAILABLE
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              {!isSold ? (
+                                <button
+                                  onClick={() => handleSellClick(idx)}
+                                  className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-all active:scale-95 shadow-sm"
+                                >
+                                  <BadgeCheck size={14} /> Mark as Sold
+                                </button>
+                              ) : (
+                                <span className="text-xs font-bold text-emerald-600 flex items-center justify-end gap-1.5 mr-2">
+                                  <FaHistory size={11} /> Sale Recorded
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
-                /* Sold Out Empty State */
+                /* Sold Out Empty State (Should rarely be hit now as we show Sold units) */
                 <div className="py-20 text-center bg-slate-50 rounded-[20px] border border-dashed border-slate-200">
                   <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <FaHistory className="text-slate-300 text-2xl" />
                   </div>
-                  <p className="text-slate-700 font-bold text-base">All units sold out</p>
+                  <p className="text-slate-700 font-bold text-base">No units found</p>
                   <p className="text-slate-400 text-sm mt-1 font-medium">Check other variants or add more quantity.</p>
                   <Link
                     to="/admin-dashboard/manage-properties"
@@ -338,7 +375,7 @@ const PropertyUnits = () => {
                       <h4 className="font-bold text-slate-900 text-base group-hover:text-sky-600 transition-colors">{block}</h4>
                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5 uppercase tracking-widest">Property Block</p>
                       <div className="mt-3 px-3 py-1 bg-sky-50 text-sky-600 border border-sky-100 rounded-full text-[10px] font-bold">
-                        {blockUnits} units
+                        {blockUnits} available
                       </div>
                     </button>
                   );
@@ -371,7 +408,7 @@ const PropertyUnits = () => {
                       <h4 className="font-bold text-slate-900 text-base group-hover:text-sky-600 transition-colors">{floor}</h4>
                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5 uppercase tracking-widest">Floor</p>
                       <div className="mt-3 px-3 py-1 bg-sky-50 text-sky-600 border border-sky-100 rounded-full text-[10px] font-bold">
-                        {floorUnits} units
+                        {floorUnits} available
                       </div>
                     </button>
                   );
@@ -403,10 +440,6 @@ const PropertyUnits = () => {
                       <div className="flex justify-between items-start mb-5">
                         <div className="bg-sky-50 border border-sky-100 p-3 rounded-[14px] text-sky-500 group-hover:bg-sky-500 group-hover:text-white transition-all duration-300">
                           <FaBuilding size={18} />
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Variant ID</span>
-                          <span className="text-xs font-bold text-slate-700">#VAR-{v.variant_id}</span>
                         </div>
                       </div>
 

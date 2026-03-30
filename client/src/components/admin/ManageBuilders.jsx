@@ -168,9 +168,9 @@ const ManageBuilders = () => {
                     <th className="px-6 py-2.5 text-left">Email Address</th>
                     <th
                       className="px-6 py-2.5 text-center cursor-pointer hover:text-indigo-600 transition-colors select-none"
-                      onClick={() => requestSort("total_quantity")}
+                      onClick={() => requestSort("total_properties")}
                     >
-                      <span className="inline-flex items-center justify-center">Quantities {getSortIcon("total_quantity")}</span>
+                      <span className="inline-flex items-center justify-center">Properties {getSortIcon("total_properties")}</span>
                     </th>
                     <th
                       className="px-6 py-2.5 text-center cursor-pointer hover:text-indigo-600 transition-colors select-none"
@@ -230,7 +230,7 @@ const ManageBuilders = () => {
                         <td className="px-6 py-2.5 text-center">
                           <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100">
                             <LayoutGrid className="w-3 h-3 text-indigo-400" />
-                            {builder.total_quantity ?? 0}
+                            {builder.total_properties ?? 0}
                           </span>
                         </td>
 
@@ -301,7 +301,7 @@ const ManageBuilders = () => {
                       <div className="flex items-center gap-2.5 bg-indigo-50 rounded-xl px-3 py-2.5 border border-indigo-100">
                         <LayoutGrid className="w-4 h-4 text-indigo-400 shrink-0" />
                         <span className="font-bold text-indigo-700 text-sm">
-                          {builder.total_quantity ?? 0} Units
+                          {builder.total_properties ?? 0} Properties
                         </span>
                       </div>
                     </div>
