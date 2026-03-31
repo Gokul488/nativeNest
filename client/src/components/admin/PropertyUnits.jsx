@@ -179,9 +179,9 @@ const PropertyUnits = () => {
     : (property.quantity || 0);
 
   const counterLabel = viewingVariant
-    ? `${availableCount} Available Units`
+    ? `${availableCount} Available · ${soldCount} Sold`
     : viewingFloor
-      ? `${variantsInFloor.reduce((s, v) => s + (v.quantity || 0), 0)} Available on Floor`
+      ? `${variantsInFloor.reduce((s, v) => s + (v.quantity || 0) + (v.sold || 0), 0)} Total Units on Floor`
       : `${totalUnitsAvailable} Units Available`;
 
   return (
@@ -273,6 +273,7 @@ const PropertyUnits = () => {
                       <tr className="bg-slate-50 border-b border-slate-200">
                         <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unit #</th>
                         <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Apartment Detail</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sqft</th>
                         <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Block / Floor</th>
                         <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                         <th className="px-6 py-4 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Action</th>
@@ -295,6 +296,14 @@ const PropertyUnits = () => {
                                 </div>
                                 <span className="font-bold text-slate-900 text-sm">
                                   {unitDetails.apartment_type ? `${unitDetails.apartment_type} Apartment` : property.title}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <FaRulerCombined className="text-slate-300" size={11} />
+                                <span className="text-xs text-slate-700 font-bold">
+                                  {unitDetails.sqft ? `${unitDetails.sqft.toLocaleString('en-IN')}` : 'N/A'}
                                 </span>
                               </div>
                             </td>
@@ -362,7 +371,8 @@ const PropertyUnits = () => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {uniqueBlocks.map(block => {
-                  const blockUnits = variants.filter(v => v.block_name === block).reduce((s, v) => s + v.quantity, 0);
+                  const blockUnits = variants.filter(v => v.block_name === block).reduce((s, v) => s + (v.quantity || 0) + (v.sold || 0), 0);
+                  const blockSold = variants.filter(v => v.block_name === block).reduce((s, v) => s + (v.sold || 0), 0);
                   return (
                     <button
                       key={block}
@@ -375,7 +385,7 @@ const PropertyUnits = () => {
                       <h4 className="font-bold text-slate-900 text-base group-hover:text-sky-600 transition-colors">{block}</h4>
                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5 uppercase tracking-widest">Property Block</p>
                       <div className="mt-3 px-3 py-1 bg-sky-50 text-sky-600 border border-sky-100 rounded-full text-[10px] font-bold">
-                        {blockUnits} available
+                        {blockUnits - blockSold} available · {blockSold} sold
                       </div>
                     </button>
                   );
@@ -395,7 +405,10 @@ const PropertyUnits = () => {
                 {floorsInBlock.map(floor => {
                   const floorUnits = variants
                     .filter(v => v.block_name === viewingBlock && v.floor === floor)
-                    .reduce((s, v) => s + v.quantity, 0);
+                    .reduce((s, v) => s + (v.quantity || 0) + (v.sold || 0), 0);
+                  const floorSold = variants
+                    .filter(v => v.block_name === viewingBlock && v.floor === floor)
+                    .reduce((s, v) => s + (v.sold || 0), 0);
                   return (
                     <button
                       key={floor}
@@ -408,7 +421,7 @@ const PropertyUnits = () => {
                       <h4 className="font-bold text-slate-900 text-base group-hover:text-sky-600 transition-colors">{floor}</h4>
                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5 uppercase tracking-widest">Floor</p>
                       <div className="mt-3 px-3 py-1 bg-sky-50 text-sky-600 border border-sky-100 rounded-full text-[10px] font-bold">
-                        {floorUnits} available
+                        {floorUnits - floorSold} available · {floorSold} sold
                       </div>
                     </button>
                   );
@@ -464,23 +477,34 @@ const PropertyUnits = () => {
                         </div>
                         <div className="flex justify-between items-center py-2">
                           <span className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5">
-                            <FaCubes className="text-slate-300" size={11} /> Available Units
+                            <FaCubes className="text-slate-300" size={11} /> Units
                           </span>
-                          <span className={`px-2.5 py-0.5 rounded-lg text-[11px] font-black ${v.quantity > 0
+                          <div className="flex items-center gap-1.5">
+                            <span className={`px-2.5 py-0.5 rounded-lg text-[11px] font-black ${v.quantity > 0
                               ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                               : 'bg-red-50 text-red-500 border border-red-100'
-                            }`}>
-                            {v.quantity} UNITS
-                          </span>
+                              }`}>
+                              {v.quantity} AVAIL
+                            </span>
+                            {(v.sold || 0) > 0 && (
+                              <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-black bg-slate-100 text-slate-500 border border-slate-200">
+                                {v.sold} SOLD
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
                       <button
                         onClick={() => setViewingVariant(v)}
-                        disabled={v.quantity === 0}
+                        disabled={(v.quantity || 0) + (v.sold || 0) === 0}
                         className="w-full py-3 bg-slate-900 text-white rounded-[14px] text-sm font-bold hover:bg-sky-600 hover:shadow-[0_6px_16px_rgba(14,165,233,0.25)] disabled:opacity-40 disabled:bg-slate-100 disabled:text-slate-400 transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98]"
                       >
-                        {v.quantity > 0 ? 'View & Manage Units' : 'Sold Out'}
+                        {(v.quantity || 0) + (v.sold || 0) === 0
+                          ? 'No Units'
+                          : v.quantity === 0
+                            ? 'View Sold Units'
+                            : 'View & Manage Units'}
                       </button>
                     </div>
                   </div>
@@ -530,8 +554,8 @@ const PropertyUnits = () => {
                 <button
                   onClick={() => setBuyerType('registered')}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[10px] text-sm font-bold transition-all ${buyerType === 'registered'
-                      ? 'bg-white text-indigo-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-white text-indigo-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                     }`}
                 >
                   <FaUser size={12} /> Registered Buyer
@@ -539,8 +563,8 @@ const PropertyUnits = () => {
                 <button
                   onClick={() => setBuyerType('new')}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[10px] text-sm font-bold transition-all ${buyerType === 'new'
-                      ? 'bg-white text-emerald-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-white text-emerald-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                     }`}
                 >
                   <FaUserPlus size={12} /> New / Guest

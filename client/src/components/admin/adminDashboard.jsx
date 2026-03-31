@@ -29,6 +29,7 @@ import ManageBuilders from "./ManageBuilders";
 import AddEditStallType from "./AddEditStallType";
 import SoldProperties from "./SoldProperties";
 import PropertyPreview from "../common/PropertyPreview";
+import EventDetails from "../buyer/EventDetails";
 import PropertyUnits from "./PropertyUnits";
 import LogoutDialog from "../LogoutDialog";
 
@@ -144,6 +145,7 @@ const AdminDashboard = () => {
     { match: /\/manage-stall-types\//,         label: "Manage Stall Types",  icon: <FileText className="w-5 h-5" /> },
     { match: /\/event-bookings\//,             label: "Event Stall Bookings",icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/events\/.*\/participants/,     label: "Event Participants",  icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/events\/\d+$/,                 label: "Event Details",        icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/property\/.*\/viewers/,        label: "Property Viewers",    icon: <Building2 className="w-5 h-5" /> },
     { match: /\/property-preview\//,           label: "Property Preview",    icon: <Building2 className="w-5 h-5" /> },
     { match: /\/sold-properties/,              label: "Sold Properties",     icon: <Briefcase className="w-5 h-5" /> },
@@ -423,6 +425,7 @@ const AdminDashboard = () => {
             {/* Sub-Routes Mapping */}
             <Route path="/manage-users" element={<ManageUsers />} />
             <Route path="/events/:eventId/participants" element={<EventParticipants />} />
+            <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/manage-builders" element={<ManageBuilders />} />
             <Route path="/manage-properties">
               <Route index element={<ViewProperties />} />

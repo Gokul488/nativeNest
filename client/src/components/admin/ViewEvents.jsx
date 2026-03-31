@@ -304,9 +304,13 @@ const ViewEvents = () => {
                           <div className="flex items-center gap-2">
                             <CalendarDays className="w-4 h-4 text-indigo-400 shrink-0" />
                             <div>
-                              <span className="font-bold text-slate-800 text-sm" title={event.event_name}>
+                              <Link
+                                to={`/admin-dashboard/events/${event.id}`}
+                                className="font-bold text-slate-800 text-sm hover:underline hover:text-indigo-600 transition-colors"
+                                title={event.event_name}
+                              >
                                 {event.event_name}
-                              </span>
+                              </Link>
                               {event.city && (
                                 <div className="flex items-center gap-1 mt-0.5">
                                   <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
@@ -417,7 +421,12 @@ const ViewEvents = () => {
                           {globalIndex}
                         </span>
                         <div>
-                          <div className="font-bold text-slate-900 text-sm leading-tight">{event.event_name}</div>
+                          <Link
+                            to={`/admin-dashboard/events/${event.id}`}
+                            className="font-bold text-slate-900 text-sm leading-tight hover:text-indigo-600 transition-colors"
+                          >
+                            {event.event_name}
+                          </Link>
                           <div className="flex items-center gap-1 mt-0.5">
                             <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
                             <span className="text-xs text-indigo-500 font-semibold">{event.city}</span>
