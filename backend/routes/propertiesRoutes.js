@@ -13,7 +13,8 @@ const {
   getAmenities,
   getMostViewedProperties,
   getPropertyViewers,
-  getAllBuilders
+  getAllBuilders,
+  getCities
 } = require('../controller/propertiesController');
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -40,6 +41,7 @@ router.get('/builders', getBuilders);
 router.get('/builders-list', getAllBuilders);
 router.get('/featured', getFeaturedProperties);
 router.get('/max-price', getMaxPrice);
+router.get('/cities', getCities);
 
 // ────────────────────────────────────────────────
 //  PROTECTED ROUTES (with authMiddleware inline)

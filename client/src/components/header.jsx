@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser } from "react-icons/fa";
+import API_BASE_URL from '../config';
 
-const Header = () => { 
+const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
@@ -13,10 +14,34 @@ const Header = () => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const isBuyerLoggedIn = !!token && user.account_type === "buyer";
+  const [userName, setUserName] = useState(user.name || "");
+
+  useEffect(() => {
+    if (isBuyerLoggedIn && token) {
+      const fetchUserDetails = async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/user`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setUserName(data.name);
+            // Sync with localStorage
+            const updatedUser = { ...user, name: data.name };
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+          }
+        } catch (err) {
+          console.error("Error fetching user details in header:", err);
+        }
+      };
+      fetchUserDetails();
+    }
+  }, [isBuyerLoggedIn, token]);
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/buy", label: "Browse" },
+    { to: "/buy", label: "Properties" },
+    { to: "/events", label: "Events" },
     { to: "/blog", label: "Blog" },
     { to: "/about", label: "About" },
     { to: "/contactUs", label: "Contact" },
@@ -27,6 +52,8 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("activeRole");
+    setUserName("");
     setIsDropdownOpen(false);
     navigate("/");
   };
@@ -47,8 +74,8 @@ const Header = () => {
 
   return (
     <header
-  className="fixed top-0 left-0 w-full z-50 shadow-lg h-[72px]"
->
+      className="fixed top-0 left-0 w-full z-50 shadow-lg h-[72px]"
+    >
       <div className="absolute inset-0 bg-linear-to-r from-[#2e6171] to-[#011936] opacity-90"></div>
       <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
 
@@ -78,9 +105,8 @@ const Header = () => {
             >
               <Link
                 to={link.to}
-                className={`px-4 py-2 text-white font-medium text-sm lg:text-base transition-all duration-300 hover:text-[#f2f2f2] hover:scale-105 ${
-                  isActive(link.to) ? "bg-white/20 rounded-full" : ""
-                }`}
+                className={`px-4 py-2 text-white font-medium text-sm lg:text-base transition-all duration-300 hover:text-[#f2f2f2] hover:scale-105 ${isActive(link.to) ? "bg-white/20 rounded-full" : ""
+                  }`}
               >
                 {link.label}
               </Link>
@@ -97,10 +123,15 @@ const Header = () => {
                   e.stopPropagation();
                   setIsDropdownOpen(!isDropdownOpen);
                 }}
-                className="text-white p-2 hover:bg-white/20 rounded-full transition"
+                className="text-white flex items-center gap-2 p-2 hover:bg-white/20 rounded-full sm:rounded-xl transition group"
                 aria-label="User menu"
               >
-                <FaUser className="w-6 h-6" />
+                <span className="hidden sm:inline font-semibold text-white/90 group-hover:text-white transition-colors duration-200">
+                  Hi, {userName || "User"}
+                </span>
+                <div className="bg-white/10 p-1.5 rounded-full backdrop-blur-md border border-white/20">
+                  <FaUser className="w-5 h-5 text-white" />
+                </div>
               </button>
 
               {isDropdownOpen && (
@@ -115,7 +146,7 @@ const Header = () => {
                       className="w-full text-left px-4 py-3 text-gray-800 hover:bg-gray-100 transition flex items-center gap-3"
                     >
                       <FaUser className="w-4 h-4" />
-                      Buyer Dashboard
+                      Buyer Summary
                     </button>
                     <button
                       onClick={handleLogout}
@@ -184,11 +215,10 @@ const Header = () => {
                 <Link
                   to={link.to}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block py-3 text-white font-medium text-lg transition-colors ${
-                    isActive(link.to)
+                  className={`block py-3 text-white font-medium text-lg transition-colors ${isActive(link.to)
                       ? "text-white bg-[#2e6171] rounded-lg px-4"
                       : "hover:text-[#2e6171]"
-                  }`}
+                    }`}
                 >
                   {link.label}
                 </Link>

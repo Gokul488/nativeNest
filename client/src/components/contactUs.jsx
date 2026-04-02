@@ -163,11 +163,10 @@ const ContactUs = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`p-4 rounded-lg mb-6 text-sm font-medium border ${
-                  status.type === "success"
-                    ? "bg-green-50 text-green-700 border-green-200"
-                    : "bg-red-50 text-red-700 border-red-200"
-                }`}
+                className={`p-4 rounded-lg mb-6 text-sm font-medium border ${status.type === "success"
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : "bg-red-50 text-red-700 border-red-200"
+                  }`}
               >
                 {status.message}
               </motion.div>
@@ -227,7 +226,7 @@ const ContactUs = () => {
                 Ready to Find Your Dream Home?
               </h2>
               <p className="text-lg mb-8 max-w-2xl mx-auto opacity-95">
-                List your property or start browsing — NativeNest makes it simple.
+                Start browsing — NativeNest makes it simple.
               </p>
               <Link
                 to="/register"

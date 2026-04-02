@@ -94,6 +94,7 @@ const AdminDashboard = () => {
   const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("activeRole");
     navigate("/", { replace: true });
   };
 
@@ -122,33 +123,33 @@ const AdminDashboard = () => {
   const totalEvents = stats?.totals?.events || 0;
 
   const navLinks = [
-    { to: "/admin-dashboard/", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
-    { to: "/admin-dashboard/manage-users", label: "Manage Users", icon: <Users className="w-5 h-5" /> },
-    { to: "/admin-dashboard/manage-builders", label: "Manage Builders", icon: <HardHat className="w-5 h-5" /> },
+    { to: "/admin-dashboard/", label: "Summary", icon: <LayoutDashboard className="w-5 h-5" /> },
     { to: "/admin-dashboard/manage-properties", label: "Manage Properties", icon: <Building2 className="w-5 h-5" /> },
-    { to: "/admin-dashboard/manage-blogs", label: "Manage Blogs", icon: <Newspaper className="w-5 h-5" /> },
     { to: "/admin-dashboard/manage-events", label: "Manage Events", icon: <CalendarDays className="w-5 h-5" /> },
+    { to: "/admin-dashboard/manage-builders", label: "Manage Builders", icon: <HardHat className="w-5 h-5" /> },
+    { to: "/admin-dashboard/manage-users", label: "Manage Users", icon: <Users className="w-5 h-5" /> },
+    { to: "/admin-dashboard/manage-blogs", label: "Manage Blogs", icon: <Newspaper className="w-5 h-5" /> },
     { to: "/admin-dashboard/analytics/most-viewed", label: "Analytics", icon: <BarChart3 className="w-5 h-5" /> },
     { to: "/admin-dashboard/enquiries", label: "View Enquiries", icon: <MessageSquare className="w-5 h-5" /> },
     { to: "/admin-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
   ];
 
   const subRouteLabels = [
-    { match: /\/manage-blogs\/add/,           label: "Add Blog",            icon: <Newspaper className="w-5 h-5" /> },
-    { match: /\/manage-blogs\/edit\//,         label: "Edit Blog",           icon: <Newspaper className="w-5 h-5" /> },
-    { match: /\/manage-properties\/add/,       label: "Add Property",        icon: <Building2 className="w-5 h-5" /> },
-    { match: /\/manage-properties\/edit\//,    label: "Edit Property",       icon: <Building2 className="w-5 h-5" /> },
-    { match: /\/manage-events\/edit\//,        label: "Edit Event",          icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/create-property-event/,        label: "Create Event",        icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/manage-stall-types\/.*\/add/,  label: "Add Stall Type",      icon: <FileText className="w-5 h-5" /> },
-    { match: /\/manage-stall-types\/.*\/edit\//, label: "Edit Stall Type",   icon: <FileText className="w-5 h-5" /> },
-    { match: /\/manage-stall-types\//,         label: "Manage Stall Types",  icon: <FileText className="w-5 h-5" /> },
-    { match: /\/event-bookings\//,             label: "Event Stall Bookings",icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/events\/.*\/participants/,     label: "Event Participants",  icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/events\/\d+$/,                 label: "Event Details",        icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/property\/.*\/viewers/,        label: "Property Viewers",    icon: <Building2 className="w-5 h-5" /> },
-    { match: /\/property-preview\//,           label: "Property Preview",    icon: <Building2 className="w-5 h-5" /> },
-    { match: /\/sold-properties/,              label: "Sold Properties",     icon: <Briefcase className="w-5 h-5" /> },
+    { match: /\/manage-blogs\/add/, label: "Add Blog", icon: <Newspaper className="w-5 h-5" /> },
+    { match: /\/manage-blogs\/edit\//, label: "Edit Blog", icon: <Newspaper className="w-5 h-5" /> },
+    { match: /\/manage-properties\/add/, label: "Add Property", icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/manage-properties\/edit\//, label: "Edit Property", icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/manage-events\/edit\//, label: "Edit Event", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/create-property-event/, label: "Create Event", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/manage-stall-types\/.*\/add/, label: "Add Stall Type", icon: <FileText className="w-5 h-5" /> },
+    { match: /\/manage-stall-types\/.*\/edit\//, label: "Edit Stall Type", icon: <FileText className="w-5 h-5" /> },
+    { match: /\/manage-stall-types\//, label: "Manage Stall Types", icon: <FileText className="w-5 h-5" /> },
+    { match: /\/event-bookings\//, label: "Event Stall Bookings", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/events\/.*\/participants/, label: "Event Participants", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/events\/\d+$/, label: "Event Details", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/property\/.*\/viewers/, label: "Property Viewers", icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/property-preview\//, label: "Property Preview", icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/sold-properties/, label: "Sold Properties", icon: <Briefcase className="w-5 h-5" /> },
   ];
 
   const activePage = (() => {
@@ -163,12 +164,11 @@ const AdminDashboard = () => {
 
   return (
     <div className="h-screen overflow-hidden bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
-      
+
       {/* ================= SIDEBAR ================= */}
-      <div 
-        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } bg-gradient-to-b from-slate-800 to-slate-900 shadow-[0_4px_24px_rgba(15,23,42,0.15)] z-50`}
+      <div
+        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } bg-gradient-to-b from-slate-800 to-slate-900 shadow-[0_4px_24px_rgba(15,23,42,0.15)] z-50`}
       >
         <div className="p-8 pb-6 border-b border-slate-700/50">
           <h1 className="text-3xl font-bold text-white tracking-[-1px]">NativeNest</h1>
@@ -184,11 +184,10 @@ const AdminDashboard = () => {
                   key={link.to}
                   to={link.to}
                   onClick={closeSidebar}
-                  className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${
-                    active 
-                      ? "bg-sky-500 text-white shadow-md shadow-sky-500/20" 
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  }`}
+                  className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${active
+                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    }`}
                 >
                   <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{link.icon}</span>
                   <span className="truncate">{link.label}</span>
@@ -199,8 +198,8 @@ const AdminDashboard = () => {
         </nav>
 
         <div className="px-4 py-8 mt-auto">
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group border border-transparent hover:border-red-500/20"
           >
             <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
@@ -245,7 +244,7 @@ const AdminDashboard = () => {
           <Routes>
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">
-                
+
 
 
                 {/* Statistics Cards Grid */}
@@ -322,7 +321,7 @@ const AdminDashboard = () => {
 
                 {/* 2-Column Dashboard Below */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  
+
                   {/* Left Column: Chart */}
                   <div className="lg:col-span-2 bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex flex-col">
                     {/* Chart Header */}
@@ -362,6 +361,7 @@ const AdminDashboard = () => {
                               tickLine={false}
                               tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
                               dy={10}
+                              interval={0}
                             />
                             <YAxis
                               axisLine={false}
@@ -392,7 +392,7 @@ const AdminDashboard = () => {
 
                   {/* Right Column: Quick Actions & Tip */}
                   <div className="space-y-6 flex flex-col">
-                    
+
                     {/* Quick Actions Card */}
                     <div className="bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200">
                       <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Actions</h3>
@@ -416,7 +416,7 @@ const AdminDashboard = () => {
                           <span className="text-sm font-bold text-slate-700 group-hover:text-amber-700">Write New Blog</span>
                         </Link>
                       </div>
-                    </div>                    
+                    </div>
                   </div>
                 </div>
               </div>
@@ -457,7 +457,7 @@ const AdminDashboard = () => {
           </Routes>
         </main>
       </div>
-      
+
       <LogoutDialog
         isOpen={isLogoutDialogOpen}
         onConfirm={confirmLogout}

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FiUser, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { motion } from "framer-motion";
 import API_BASE_URL from "../config.js";
+import { setAuthData } from "../utils/auth.js";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,6 +30,7 @@ const Login = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Login failed");
 
+      sessionStorage.setItem("activeRole", data.user.account_type);
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 

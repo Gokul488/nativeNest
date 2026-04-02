@@ -12,6 +12,8 @@ import BlogDetail from "./components/blogDetail";
 import Blog from "./components/blog";
 import PropertyDetails from "./components/propertyDetails";
 import Buy from "./components/buy";
+import PublicEvents from "./components/PublicEvents";
+import PublicEventDetails from "./components/PublicEventDetails";
 import AdminDashboard from "./components/admin/adminDashboard";
 import WhatsappChatWidget from "./components/WhatsappChatWidget";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -39,6 +41,9 @@ function AppContent() {
         <Route element={<ProtectedRoute allowedRole="buyer" />}>
           <Route path="/buyer-dashboard/*" element={<BuyerDashboard />} />
         </Route>
+
+        <Route path="/events" element={<PublicEvents />} />
+        <Route path="/events/:id" element={<PublicEventDetails />} />
 
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/blog" element={<Blog />} />

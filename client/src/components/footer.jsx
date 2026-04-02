@@ -85,22 +85,37 @@ const Footer = () => {
                 { placeholder: "Interest Rate (%)", value: interestRate, set: setInterestRate },
                 { placeholder: "Loan Term (Years)", value: loanTerm, set: setLoanTerm },
               ].map((input, i) => (
-                <div key={i} className="relative group">
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder={input.placeholder}
-                    value={input.value}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "" || parseFloat(val) >= 0) {
-                        input.set(val);
-                      }
-                    }}
-                    /* Added appearance-none for Tailwind support */
-                    className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/50 transition pr-10 appearance-none"
-                    aria-label={input.placeholder}
-                  />
+        <div key={i} className="relative group">
+          <input
+            type="text"
+            placeholder={input.placeholder}
+            value={
+              input.value === "" ? "" :
+              input.placeholder.includes("Rate")
+                ? `${input.value}%`
+                : input.placeholder.includes("Term")
+                ? `${input.value} Years`
+                : input.placeholder.includes("Amount") || input.placeholder.includes("Payment")
+                ? `₹ ${Number(input.value.toString().replace(/₹|,/g, "")).toLocaleString("en-IN")}`
+                : input.value
+            }
+            onChange={(e) => {
+              let val = e.target.value;
+              if (input.placeholder.includes("Rate")) {
+                val = val.replace(/%/g, "");
+              } else if (input.placeholder.includes("Term")) {
+                val = val.replace(/Years| /g, "");
+              } else if (input.placeholder.includes("Amount") || input.placeholder.includes("Payment")) {
+                val = val.replace(/₹|,| /g, "");
+              }
+              
+              if (val === "" || !isNaN(parseFloat(val))) {
+                input.set(val);
+              }
+            }}
+            className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/50 transition pr-10 text-sm"
+            aria-label={input.placeholder}
+          />
                   {input.value && (
                     <button
                       onClick={() => input.set("")}

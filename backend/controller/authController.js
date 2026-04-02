@@ -5,7 +5,10 @@ const jwt = require('jsonwebtoken');
 /* ===================== REGISTER ===================== */
 const register = async (req, res) => {
   try {
-    const { name, mobile_number, email, password, confirm_password, account_type } = req.body;
+    const { 
+      name, mobile_number, email, password, confirm_password, account_type,
+      gender, dob, city, country, photo 
+    } = req.body;
 
     if (!name || !mobile_number || !password || !confirm_password || !account_type) {
       return res.status(400).json({ error: 'All required fields must be filled' });
@@ -41,8 +44,18 @@ const register = async (req, res) => {
       }
 
       [result] = await pool.query(
-        'INSERT INTO buyers (name, mobile_number, email, password, created_at) VALUES (?, ?, ?, ?, NOW())',
-        [name, mobile_number, email || null, hashedPassword]
+        'INSERT INTO buyers (name, mobile_number, email, password, gender, dob, city, country, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+        [
+          name, 
+          mobile_number, 
+          email || null, 
+          hashedPassword,
+          gender || null,
+          dob || null,
+          city || null,
+          country || null,
+          photo ? photo.split(',')[1] : null
+        ]
       );
 
       user = {
@@ -50,6 +63,10 @@ const register = async (req, res) => {
         name,
         mobile_number,
         email,
+        gender,
+        dob,
+        city,
+        country,
         account_type: 'buyer'
       };
     }
@@ -87,7 +104,7 @@ const register = async (req, res) => {
       if (!contact_person) {
         return res.status(400).json({ error: 'Contact person is required for builders' });
       }
-      
+
       const [existing] = await pool.query(
         'SELECT id FROM builders WHERE mobile_number = ? OR email = ?',
         [mobile_number, email || null]

@@ -14,7 +14,8 @@ const Buy = () => {
   const [maxPrice, setMaxPrice] = useState(0);
   const [selectedMinPrice, setSelectedMinPrice] = useState(0);
   const [selectedMaxPrice, setSelectedMaxPrice] = useState(0);
-  const [searchLocation, setSearchLocation] = useState('');
+  const [cities, setCities] = useState([]);
+  const [searchLocation, setSearchLocation] = useState('All');
   const [selectedPropertyType, setSelectedPropertyType] = useState('All');
   const [builders, setBuilders] = useState([]);
   const [selectedBuilder, setSelectedBuilder] = useState('All');
@@ -22,7 +23,7 @@ const Buy = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toast, setToast] = useState(null);
-  
+
   const HEADER_HEIGHT = 72;
   const navigate = useNavigate();
   const location = useLocation();
@@ -127,6 +128,17 @@ const Buy = () => {
     }
   }, []);
 
+  const fetchCities = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/properties/cities`);
+      if (!response.ok) throw new Error(`Failed to fetch cities`);
+      const data = await response.json();
+      setCities(['All', ...(data.cities || [])]);
+    } catch (err) {
+      console.error('Cities error:', err.message);
+    }
+  }, []);
+
   const fetchMaxPrice = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/properties/max-price`);
@@ -169,13 +181,14 @@ const Buy = () => {
     fetchPropertyTypes();
     fetchMaxPrice();
     fetchBuilders();
+    fetchCities();
     fetchBookmarks();
-  }, [fetchPropertyTypes, fetchMaxPrice, fetchBuilders, fetchBookmarks]);
+  }, [fetchPropertyTypes, fetchMaxPrice, fetchBuilders, fetchCities, fetchBookmarks]);
 
   useEffect(() => {
     if (maxPrice === 0 && isInitialLoad.current) return;
     const params = new URLSearchParams(location.search);
-    const initialLocation = params.get('location') || '';
+    const initialLocation = params.get('location') || 'All';
     const initialPriceRange = params.get('priceRange') || '';
     const initialPropertyType = params.get('propertyType') || 'All';
     const initialBuilder = params.get('builder') || 'All';
@@ -214,7 +227,7 @@ const Buy = () => {
     };
     fetchProperties(filters, 1);
     const queryParams = new URLSearchParams();
-    if (searchLocation) queryParams.append('location', searchLocation);
+    if (searchLocation && searchLocation !== 'All') queryParams.append('location', searchLocation);
     if (selectedMinPrice > 0 || selectedMaxPrice < maxPrice) queryParams.append('priceRange', `${selectedMinPrice}-${selectedMaxPrice}`);
     if (selectedPropertyType !== 'All') queryParams.append('propertyType', selectedPropertyType);
     if (selectedBuilder !== 'All') queryParams.append('builder', selectedBuilder);
@@ -246,17 +259,17 @@ const Buy = () => {
     navigate(`/buy?${queryParams.toString()}`);
   }, [searchLocation, selectedMinPrice, selectedMaxPrice, selectedPropertyType, selectedBuilder, maxPrice, fetchProperties, navigate]);
 
-  const clearLocation = () => { setSearchLocation(''); updateFiltersAndNavigate({ location: '' }); };
+  const clearLocation = () => { setSearchLocation('All'); updateFiltersAndNavigate({ location: 'All' }); };
 
   const resetFilters = useCallback(() => {
-    setSearchLocation('');
+    setSearchLocation('All');
     setSelectedPropertyType('All');
     setSelectedBuilder('All');
     setSelectedMinPrice(0);
     setSelectedMaxPrice(maxPrice);
     setCurrentPage(1);
     navigate('/buy', { replace: true });
-    fetchProperties({ location: '', minPrice: 0, maxPrice, propertyType: 'All', builder: 'All' }, 1);
+    fetchProperties({ location: 'All', minPrice: 0, maxPrice, propertyType: 'All', builder: 'All' }, 1);
     setIsSidebarOpen(false);
   }, [maxPrice, fetchProperties, navigate]);
 
@@ -279,12 +292,12 @@ const Buy = () => {
   const handlePageChange = (page) => {
     if (page < 1 || page > pagination.totalPages) return;
     setCurrentPage(page);
-    const filters = { 
-      location: searchLocation, 
-      minPrice: selectedMinPrice, 
-      maxPrice: selectedMaxPrice, 
-      propertyType: selectedPropertyType, 
-      builder: selectedBuilder 
+    const filters = {
+      location: searchLocation,
+      minPrice: selectedMinPrice,
+      maxPrice: selectedMaxPrice,
+      propertyType: selectedPropertyType,
+      builder: selectedBuilder
     };
     fetchProperties(filters, page);
     const queryParams = new URLSearchParams();
@@ -337,27 +350,17 @@ const Buy = () => {
               <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center">
                 <div className="w-full xl:w-auto flex flex-col md:flex-row gap-4 items-start md:items-center">
                   <div className="relative w-full md:w-56">
-                    <div className="flex items-center border border-gray-300 rounded-xl focus-within:ring-2 focus-within:ring-[#2e6171] focus-within:border-[#2e6171] transition-all duration-300 shadow-sm bg-gray-50/70 overflow-hidden">
-                      <i className="fa-solid fa-location-dot text-[#2e6171] ml-4 text-lg"></i>
-                      <input
-                        id="location-search"
-                        type="text"
-                        placeholder="Search by city..."
-                        className="h-12 grow px-3 text-base bg-transparent focus:outline-none placeholder-gray-500"
-                        value={searchLocation}
-                        onChange={(e) => setSearchLocation(e.target.value)}
-                      />
-                      {searchLocation && (
-                        <button
-                          type="button"
-                          onClick={clearLocation}
-                          className="mr-3 text-gray-500 hover:text-[#011936] transition-colors"
-                          aria-label="Clear location search"
-                        >
-                          <i className="fa-solid fa-circle-xmark text-xl"></i>
-                        </button>
-                      )}
-                    </div>
+                    <select
+                      className="h-12 border border-gray-300 pr-10 pl-4 rounded-xl w-full text-base focus:outline-none focus:ring-2 focus:ring-[#2e6171] focus:border-[#2e6171] transition-all duration-300 shadow-sm bg-gray-50/70 cursor-pointer appearance-none"
+                      value={searchLocation}
+                      onChange={(e) => setSearchLocation(e.target.value)}
+                    >
+                      <option value="All">All Cities</option>
+                      {cities.filter(city => city !== 'All').map((city, index) => (
+                        <option key={index} value={city}>{city}</option>
+                      ))}
+                    </select>
+                    <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[#2e6171] pointer-events-none"></i>
                   </div>
 
                   <div className="relative w-full md:w-40">
@@ -483,23 +486,18 @@ const Buy = () => {
               </div>
 
               <div className="p-4 space-y-4 overflow-y-auto h-[calc(100%-4rem)]">
-                <div className="location-search-container">
-                  <div className="flex items-center border border-gray-300 rounded-xl focus-within:ring-2 focus-within:ring-[#2e6171]">
-                    <i className="fa-solid fa-location-dot text-[#2e6171] ml-3"></i>
-                    <input
-                      id="mobile-location"
-                      type="text"
-                      placeholder="Search by city..."
-                      className="h-11 grow px-3 bg-transparent focus:outline-none"
-                      value={searchLocation}
-                      onChange={(e) => setSearchLocation(e.target.value)}
-                    />
-                    {searchLocation && (
-                      <button type="button" onClick={clearLocation} className="mr-3 text-gray-500 hover:text-[#011936]">
-                        <i className="fa-solid fa-circle-xmark"></i>
-                      </button>
-                    )}
-                  </div>
+                <div className="relative">
+                  <select
+                    className="h-11 w-full border border-gray-300 rounded-xl pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#2e6171] appearance-none"
+                    value={searchLocation}
+                    onChange={(e) => setSearchLocation(e.target.value)}
+                  >
+                    <option value="All">All Cities</option>
+                    {cities.filter(city => city !== 'All').map((city, i) => (
+                      <option key={i} value={city}>{city}</option>
+                    ))}
+                  </select>
+                  <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[#2e6171] pointer-events-none"></i>
                 </div>
 
                 <div className="relative">
@@ -662,20 +660,32 @@ const Buy = () => {
                       </span>
                     </div>
 
-                    {/* Bookmark Icon — top right */}
-                    <button
-                      onClick={(e) => toggleBookmark(e, listing.id, listing.title)}
-                      className="absolute top-3 right-3 p-2.5 rounded-full transition-all duration-300 z-10 hover:scale-110"
-                      style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-                      title={bookmarks.has(listing.id) ? "Remove from bookmarks" : "Add to bookmarks"}
-                      aria-label={bookmarks.has(listing.id) ? "Remove bookmark" : "Bookmark property"}
-                    >
-                      {bookmarks.has(listing.id) ? (
-                        <i className="fa-solid fa-bookmark text-red-500 text-base"></i>
-                      ) : (
-                        <i className="fa-regular fa-bookmark text-[#011936] text-base"></i>
-                      )}
-                    </button>
+                    {/* Views & Bookmark — top right */}
+                    <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                      {/* Views Pill */}
+                      <div className="px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                        style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                        <i className="fa-solid fa-eye text-[#2e6171] text-[11px]"></i>
+                        <span className="text-[#011936] font-bold text-[12px] leading-none">
+                          {listing.views || 0}
+                        </span>
+                      </div>
+
+                      {/* Bookmark Icon */}
+                      <button
+                        onClick={(e) => toggleBookmark(e, listing.id, listing.title)}
+                        className="p-1.5 rounded-full transition-all duration-300 hover:scale-110"
+                        style={{ background: 'transparent' }}
+                        title={bookmarks.has(listing.id) ? "Remove from bookmarks" : "Add to bookmarks"}
+                        aria-label={bookmarks.has(listing.id) ? "Remove bookmark" : "Bookmark property"}
+                      >
+                        {bookmarks.has(listing.id) ? (
+                          <i className="fa-solid fa-heart text-red-500 text-base"></i>
+                        ) : (
+                          <i className="fa-regular fa-heart text-white text-base"></i>
+                        )}
+                      </button>
+                    </div>
 
                     {/* Sqft badge — bottom left on image */}
                     <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
@@ -759,11 +769,10 @@ const Buy = () => {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl transition-all duration-300 ${
-                    currentPage === 1 
-                      ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
-                      : 'text-[#2e6171] hover:bg-[#2e6171] hover:text-white bg-white shadow-sm hover:shadow-lg active:scale-95'
-                  }`}
+                  className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl transition-all duration-300 ${currentPage === 1
+                    ? 'text-gray-300 cursor-not-allowed bg-gray-50'
+                    : 'text-[#2e6171] hover:bg-[#2e6171] hover:text-white bg-white shadow-sm hover:shadow-lg active:scale-95'
+                    }`}
                   aria-label="Previous page"
                 >
                   <i className="fa-solid fa-chevron-left"></i>
@@ -774,25 +783,24 @@ const Buy = () => {
                   {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => {
                     // Show first, last, current, and pages around current
                     if (
-                      page === 1 || 
-                      page === pagination.totalPages || 
+                      page === 1 ||
+                      page === pagination.totalPages ||
                       (page >= currentPage - 1 && page <= currentPage + 1)
                     ) {
                       return (
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-sm sm:text-base font-bold transition-all duration-300 ${
-                            currentPage === page
-                              ? 'bg-[#2e6171] text-white shadow-lg scale-110 z-10'
-                              : 'text-[#011936] hover:bg-[#2e6171]/10 bg-transparent'
-                          }`}
+                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-sm sm:text-base font-bold transition-all duration-300 ${currentPage === page
+                            ? 'bg-[#2e6171] text-white shadow-lg scale-110 z-10'
+                            : 'text-[#011936] hover:bg-[#2e6171]/10 bg-transparent'
+                            }`}
                         >
                           {page}
                         </button>
                       );
                     } else if (
-                      (page === 2 && currentPage > 3) || 
+                      (page === 2 && currentPage > 3) ||
                       (page === pagination.totalPages - 1 && currentPage < pagination.totalPages - 2)
                     ) {
                       return (
@@ -809,11 +817,10 @@ const Buy = () => {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === pagination.totalPages}
-                  className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl transition-all duration-300 ${
-                    currentPage === pagination.totalPages 
-                      ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
-                      : 'text-[#2e6171] hover:bg-[#2e6171] hover:text-white bg-white shadow-sm hover:shadow-lg active:scale-95'
-                  }`}
+                  className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl transition-all duration-300 ${currentPage === pagination.totalPages
+                    ? 'text-gray-300 cursor-not-allowed bg-gray-50'
+                    : 'text-[#2e6171] hover:bg-[#2e6171] hover:text-white bg-white shadow-sm hover:shadow-lg active:scale-95'
+                    }`}
                   aria-label="Next page"
                 >
                   <i className="fa-solid fa-chevron-right"></i>

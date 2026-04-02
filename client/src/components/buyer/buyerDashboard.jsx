@@ -85,6 +85,7 @@ const BuyerDashboard = () => {
   const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("activeRole");
     navigate("/", { replace: true });
   };
 
@@ -104,11 +105,11 @@ const BuyerDashboard = () => {
   ];
 
   const subRouteLabels = [
-    { match: /\/events\/.*\/.*/, label: "Event Details",        icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/events\//,       label: "Event Details",        icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/events\/.*\/.*/, label: "Event Details", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/events\//, label: "Event Details", icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/my-events\/builders\//, label: "Event Builders", icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/event-checkin\//, label: "Event Check-In",      icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/stall-checkin\//, label: "Stall Check-In",      icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/event-checkin\//, label: "Event Check-In", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/stall-checkin\//, label: "Stall Check-In", icon: <CalendarDays className="w-5 h-5" /> },
   ];
 
   const activePage = (() => {
@@ -142,11 +143,10 @@ const BuyerDashboard = () => {
                 key={link.to}
                 to={link.to}
                 onClick={closeSidebar}
-                className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${
-                  active 
-                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20" 
+                className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${active
+                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
                     : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
+                  }`}
               >
                 <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{link.icon}</span>
                 <span className="truncate">{link.label}</span>
@@ -156,8 +156,8 @@ const BuyerDashboard = () => {
         </nav>
 
         <div className="px-4 py-8 mt-auto">
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group border border-transparent hover:border-red-500/20"
           >
             <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
@@ -204,7 +204,7 @@ const BuyerDashboard = () => {
               path="/"
               element={
                 <div className="space-y-8 animate-in fade-in duration-500">
-                  
+
                   {/* Statistics Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                     {[
@@ -255,7 +255,7 @@ const BuyerDashboard = () => {
                     <div className="lg:col-span-2 bg-white p-8 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 relative overflow-hidden flex flex-col justify-center min-h-[320px]">
                       {/* Decorative fade */}
                       <div className="absolute top-0 right-0 w-64 h-64 bg-sky-50 rounded-full blur-3xl opacity-60 -translate-y-1/2 translate-x-1/3"></div>
-                      
+
                       <div className="relative z-10">
                         <h3 className="text-3xl font-bold text-slate-900 mb-4 tracking-[-0.5px]">
                           Great to see you, {user.name || "Buyer"}!
@@ -300,7 +300,7 @@ const BuyerDashboard = () => {
                       <div className="bg-gradient-to-br from-indigo-50 to-white p-7 rounded-[20px] border border-indigo-100 shadow-[0_4px_12px_rgba(99,102,241,0.04)] relative overflow-hidden flex-1">
                         <div className="absolute -top-6 -right-6 w-24 h-24 bg-indigo-200/40 rounded-full blur-2xl"></div>
                         <h4 className="font-bold flex items-center gap-2 mb-3 text-indigo-900 z-10 relative">
-                          <Sparkles className="w-5 h-5 text-indigo-500" /> 
+                          <Sparkles className="w-5 h-5 text-indigo-500" />
                           Dashboard Tip
                         </h4>
                         <p className="text-sm text-slate-600 leading-relaxed font-medium z-10 relative">

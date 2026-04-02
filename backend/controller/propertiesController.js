@@ -1,13 +1,13 @@
 const pool = require('../db');
-const jwt  = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 const createProperty = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
-    const decoded     = jwt.verify(token, process.env.JWT_SECRET);
-    const userId      = decoded.userId;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
     const accountType = decoded.account_type;
 
     const {
@@ -32,8 +32,8 @@ const createProperty = async (req, res) => {
     }
 
     // ── Price / sqft / qty ───────────────────────────────────────────────────
-    let finalPrice    = null;
-    let finalSqft     = sqft ? Number(sqft) : null;
+    let finalPrice = null;
+    let finalSqft = sqft ? Number(sqft) : null;
     let finalQuantity = (quantity && !isNaN(quantity)) ? Number(quantity) : 1;
 
     if (property_type !== 'Apartment') {
@@ -46,17 +46,17 @@ const createProperty = async (req, res) => {
       }
     } else {
       // Apartments store all details in property_variants — NULLs in main row
-      finalPrice    = null;
-      finalSqft     = null;
+      finalPrice = null;
+      finalSqft = null;
       finalQuantity = null;
     }
 
     // ── Builder ──────────────────────────────────────────────────────────────
-    let adminId   = null;
+    let adminId = null;
     let builderId = null;
 
     if (accountType === 'admin') {
-      adminId   = userId;
+      adminId = userId;
       builderId = builder_id;
       if (!builderId) return res.status(400).json({ error: 'Builder ID is required when posting as admin' });
     } else if (accountType === 'builder') {
@@ -70,8 +70,8 @@ const createProperty = async (req, res) => {
 
     // ── Files ────────────────────────────────────────────────────────────────
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
-    const video      = req.files?.['video']?.[0]?.buffer       || null;
-    const images     = req.files?.['images[]']
+    const video = req.files?.['video']?.[0]?.buffer || null;
+    const images = req.files?.['images[]']
       ? (Array.isArray(req.files['images[]']) ? req.files['images[]'] : [req.files['images[]']])
       : [];
 
@@ -87,7 +87,7 @@ const createProperty = async (req, res) => {
           pincode, property_type, sqft, quantity, cover_image, video, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [adminId, builderId, title, description, finalPrice, address, city, state, country,
-         pincode, property_type, finalSqft, finalQuantity, coverImage, video]
+          pincode, property_type, finalSqft, finalQuantity, coverImage, video]
       );
 
       const propertyId = propertyResult.insertId;
@@ -107,12 +107,12 @@ const createProperty = async (req, res) => {
         }
 
         for (const v of variantData) {
-          const aptType   = v.apartment_type?.trim();   // BHK value e.g. "2BHK"
+          const aptType = v.apartment_type?.trim();   // BHK value e.g. "2BHK"
           const blockName = v.block_name?.trim() || null;
-          const floor     = v.floor?.trim() || null;    // floor e.g. "Ground Floor"
-          const vPrice    = Number(v.price);
-          const vSqft     = Number(v.sqft);
-          const vQty      = Number(v.quantity) || 1;
+          const floor = v.floor?.trim() || null;    // floor e.g. "Ground Floor"
+          const vPrice = Number(v.price);
+          const vSqft = Number(v.sqft);
+          const vQty = Number(v.quantity) || 1;
 
           if (!aptType) {
             throw new Error('Each variant must have an apartment_type (e.g. 2BHK)');
@@ -202,12 +202,12 @@ const createProperty = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const formatVariant = (v) => ({
-  block_name:     v.block_name     || null,
-  floor:          v.floor          || null,
+  block_name: v.block_name || null,
+  floor: v.floor || null,
   apartment_type: v.apartment_type || null,
-  price:          v.price    ? parseFloat(v.price)   : null,
-  sqft:           v.sqft     ? Number(v.sqft)         : null,
-  quantity:       v.quantity ? Number(v.quantity)     : null,
+  price: v.price ? parseFloat(v.price) : null,
+  sqft: v.sqft ? Number(v.sqft) : null,
+  quantity: v.quantity ? Number(v.quantity) : null,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ const getFeaturedProperties = async (req, res) => {
     const params = [];
     const conditions = [];
 
-    if (location) {
+    if (location && location !== 'All') {
       conditions.push(`(p.city LIKE ? OR p.state LIKE ? OR p.country LIKE ?)`);
       const s = `%${location}%`;
       params.push(s, s, s);
@@ -306,6 +306,7 @@ const getFeaturedProperties = async (req, res) => {
     let dataQuery = `
       SELECT p.property_id AS id, p.title, p.price, p.city, p.pincode,
              p.property_type, p.sqft, p.created_at, p.cover_image,
+             (SELECT COUNT(*) FROM property_views WHERE property_id = p.property_id) AS views,
              b.name AS builderName
       ${baseQuery}
       ORDER BY p.created_at DESC
@@ -357,6 +358,7 @@ const getFeaturedProperties = async (req, res) => {
         created_at: property.created_at,
         img: imageBase64,
         builderName: property.builderName,
+        views: property.views || 0,
         variants,
       };
     }));
@@ -383,10 +385,10 @@ const getPropertyById = async (req, res) => {
   const propertyId = parseInt(id, 10);
   if (isNaN(propertyId) || propertyId <= 0) return res.status(400).json({ error: 'Invalid property ID' });
 
-  const token   = req.headers.authorization?.split(' ')[1];
+  const token = req.headers.authorization?.split(' ')[1];
   const guestId = req.query.guestId || null;
-  let buyerId   = null;
-  let isAdmin   = false;
+  let buyerId = null;
+  let isAdmin = false;
 
   if (token) {
     try {
@@ -425,7 +427,9 @@ const getPropertyById = async (req, res) => {
     const [properties] = await connection.query(
       `SELECT p.property_id AS id, p.title, p.description, p.price, p.address, p.city,
               p.state, p.country, p.pincode, p.property_type, p.sqft, p.quantity, p.created_at,
-              p.cover_image, p.video, p.views, b.name,
+              p.cover_image, p.video,
+              (SELECT COUNT(*) FROM property_views WHERE property_id = p.property_id) AS views,
+              b.name,
               COALESCE(a.mobile_number, b.mobile_number) AS mobile_number,
               COALESCE(a.email, b.email) AS email,
               b.name AS builderName
@@ -442,7 +446,7 @@ const getPropertyById = async (req, res) => {
 
     const property = properties[0];
 
-    const [images]          = await connection.query(`SELECT image FROM property_images WHERE property_id = ?`, [propertyId]);
+    const [images] = await connection.query(`SELECT image FROM property_images WHERE property_id = ?`, [propertyId]);
     const [amenitiesResult] = await connection.query(
       `SELECT a.amenity_id, a.name, a.icon FROM amenities a
        JOIN property_amenities pa ON a.amenity_id = pa.amenity_id WHERE pa.property_id = ?`,
@@ -464,7 +468,7 @@ const getPropertyById = async (req, res) => {
 
     await connection.commit();
 
-    const coverImage   = property.cover_image
+    const coverImage = property.cover_image
       ? `data:image/jpeg;base64,${Buffer.from(property.cover_image).toString('base64')}`
       : null;
     const imageBase64s = images.map(img => `data:image/jpeg;base64,${Buffer.from(img.image).toString('base64')}`);
@@ -475,27 +479,27 @@ const getPropertyById = async (req, res) => {
 
     res.json({
       property: {
-        id:            property.id,
-        title:         property.title,
-        description:   property.description,
-        price:         parseFloat(property.price),
-        address:       property.address,
-        city:          property.city,
-        state:         property.state,
-        country:       property.country,
-        pincode:       property.pincode,
+        id: property.id,
+        title: property.title,
+        description: property.description,
+        price: parseFloat(property.price),
+        address: property.address,
+        city: property.city,
+        state: property.state,
+        country: property.country,
+        pincode: property.pincode,
         property_type: property.property_type,
-        sqft:          property.sqft,
-        quantity:      property.quantity != null ? Number(property.quantity) : null,
-        created_at:    property.created_at,
-        cover_image:   coverImage,
-        images:        imageBase64s,
+        sqft: property.sqft,
+        quantity: property.quantity != null ? Number(property.quantity) : null,
+        created_at: property.created_at,
+        cover_image: coverImage,
+        images: imageBase64s,
         video,
-        views:         property.views,
-        amenities:     amenitiesResult.map(a => ({ id: a.amenity_id, name: a.name, icon: a.icon })),
-        builderName:   property.builderName,
+        views: property.views,
+        amenities: amenitiesResult.map(a => ({ id: a.amenity_id, name: a.name, icon: a.icon })),
+        builderName: property.builderName,
         mobile_number: property.mobile_number,
-        email:         property.email,
+        email: property.email,
         variants,
       }
     });
@@ -522,11 +526,13 @@ const getMostViewedProperties = async (req, res) => {
 
     const [rows] = await pool.query(`
       SELECT p.property_id AS id, p.title, p.city, p.price, p.property_type,
-             p.sqft, p.views, p.created_at, p.cover_image, b.name AS builderName
+             p.sqft, 
+             (SELECT COUNT(*) FROM property_views WHERE property_id = p.property_id) AS views,
+             p.created_at, p.cover_image, b.name AS builderName
       FROM properties p
       LEFT JOIN builders b ON p.builder_id = b.id
-      WHERE p.views > 0
-      ORDER BY p.views DESC LIMIT 50
+      HAVING views > 0
+      ORDER BY views DESC LIMIT 50
     `);
 
     const propertyIds = rows.map(p => p.id);
@@ -545,7 +551,7 @@ const getMostViewedProperties = async (req, res) => {
     const properties = rows.map(p => ({
       ...p,
       builderName: p.builderName || 'Unknown',
-      variants:    variantRows.filter(v => v.property_id === p.id).map(formatVariant),
+      variants: variantRows.filter(v => v.property_id === p.id).map(formatVariant),
       cover_image: p.cover_image
         ? `data:image/jpeg;base64,${Buffer.from(p.cover_image).toString('base64')}`
         : null,
@@ -592,6 +598,17 @@ const getAllBuilders = async (req, res) => {
   }
 };
 
+const getCities = async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT DISTINCT city FROM properties WHERE city IS NOT NULL AND city != "" ORDER BY city ASC');
+    const cities = rows.map(row => row.city);
+    res.json({ cities });
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   createProperty,
   getPropertyTypes,
@@ -602,5 +619,6 @@ module.exports = {
   getAmenities,
   getMostViewedProperties,
   getPropertyViewers,
-  getAllBuilders
+  getAllBuilders,
+  getCities
 };

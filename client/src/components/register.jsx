@@ -11,6 +11,7 @@ const Register = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [accountType, setAccountType] = useState("");
+  const [photoBase64, setPhotoBase64] = useState("");
   const navigate = useNavigate();
 
   const accountTypes = ["buyer", "admin", "builder"];
@@ -29,19 +30,24 @@ const Register = () => {
       confirm_password: formData.get("confirm_password"),
       account_type: formData.get("account_type"),
       contact_person: formData.get("contact_person"),
+      gender: formData.get("gender"),
+      dob: formData.get("dob"),
+      city: formData.get("city"),
+      country: formData.get("country"),
+      photo: photoBase64 || null,
     };
 
     // Only include contact_person when builder is selected
-      if (payload.account_type === "builder") {
-        payload.contact_person = formData.get("contact_person")?.trim() || "";
-      }
+    if (payload.account_type === "builder") {
+      payload.contact_person = formData.get("contact_person")?.trim() || "";
+    }
 
-      // Optional: client-side validation before sending
-      if (payload.account_type === "builder" && !payload.contact_person) {
-        setError("Contact person is required for builders");
-        setLoading(false);
-        return;
-      }
+    // Optional: client-side validation before sending
+    if (payload.account_type === "builder" && !payload.contact_person) {
+      setError("Contact person is required for builders");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -175,60 +181,176 @@ const Register = () => {
               </div>
 
               {/* Account Type */}
-                <div>
+              <div>
+                <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                  ACCOUNT TYPE *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                    <FiType size={16} />
+                  </span>
+                  <select
+                    name="account_type"
+                    required
+                    value={accountType}                    // ← controlled value (very important!)
+                    onChange={(e) => {
+                      setAccountType(e.target.value);
+                      console.log("Account type changed to:", e.target.value); // ← debug
+                    }}
+                    className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all appearance-none"
+                  >
+                    <option value="" disabled>
+                      Select type
+                    </option>
+                    {accountTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Contact Person – shown only for builder */}
+              {accountType === "builder" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="md:col-span-2"
+                >
                   <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
-                    ACCOUNT TYPE *
+                    Contact Person Name *
                   </label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-                      <FiType size={16} />
+                      <FiUserPlus size={16} />
                     </span>
-                    <select
-                      name="account_type"
+                    <input
+                      type="text"
+                      name="contact_person" // This must match the backend req.body key
+                      placeholder="Primary contact for this business"
                       required
-                      value={accountType}                    // ← controlled value (very important!)
-                      onChange={(e) => {
-                        setAccountType(e.target.value);
-                        console.log("Account type changed to:", e.target.value); // ← debug
-                      }}
-                      className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all appearance-none"
-                    >
-                      <option value="" disabled>
-                        Select type
-                      </option>
-                      {accountTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </option>
-                      ))}
-                    </select>
+                      className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                    />
                   </div>
-                </div>
+                </motion.div>
+              )}
 
-                {/* Contact Person – shown only for builder */}
-                {accountType === "builder" && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }} 
-                    animate={{ opacity: 1, y: 0 }}
-                    className="md:col-span-2"
-                  >
+              {/* Buyer Specific Fields */}
+              {accountType === "buyer" && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100"
+                >
+                  <div className="md:col-span-2">
+                     <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em] mb-4">Additional Information (Buyer)</p>
+                  </div>
+
+                  {/* Gender */}
+                  <div>
                     <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
-                      Contact Person Name *
+                      Gender
                     </label>
                     <div className="relative">
                       <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-                        <FiUserPlus size={16} />
+                        <FiType size={16} />
+                      </span>
+                      <select
+                        name="gender"
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all appearance-none"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Date of Birth */}
+                  <div>
+                      <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                        Date of Birth
+                      </label>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                          <FiType size={16} />
+                        </span>
+                        <input
+                          type="date"
+                          name="dob"
+                          className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                        />
+                      </div>
+                  </div>
+
+                  {/* City */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                      City
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                        <FiType size={16} />
                       </span>
                       <input
                         type="text"
-                        name="contact_person" // This must match the backend req.body key
-                        placeholder="Primary contact for this business"
-                        required
+                        name="city"
+                        placeholder="Your City"
                         className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
                       />
                     </div>
-                  </motion.div>
-                )}
+                  </div>
+
+                  {/* Country */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                      Country
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                        <FiType size={16} />
+                      </span>
+                      <input
+                        type="text"
+                        name="country"
+                        placeholder="Your Country"
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Photo Upload */}
+                  <div className="md:col-span-2">
+                     <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                        Profile Photo (Optional)
+                      </label>
+                      <div className="flex items-center gap-4 p-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-300">
+                        {photoBase64 ? (
+                          <img src={photoBase64} alt="Preview" className="w-12 h-12 rounded-full object-cover border border-white shadow-sm" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
+                             <FiUser size={24} />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => setPhotoBase64(reader.result);
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer"
+                        />
+                      </div>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Password */}
               <div>

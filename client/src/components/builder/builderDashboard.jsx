@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import {
   LayoutDashboard, Building2, CalendarDays, Settings, LogOut, Menu, User, Loader2,
-  Flame, PlusCircle, ArrowRight, TrendingUp, Sparkles 
+  Flame, PlusCircle, ArrowRight, TrendingUp, Sparkles
 } from "lucide-react";
 import { isAfter, isBefore, addDays } from "date-fns";
 import API_BASE_URL from "../../config.js";
@@ -70,6 +70,7 @@ const BuilderDashboard = () => {
   const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("activeRole");
     navigate("/", { replace: true });
   };
 
@@ -94,7 +95,7 @@ const BuilderDashboard = () => {
         setStats(statsRes.data);
         setUpcomingEvents(eventsRes.data.events || []);
       } catch (err) {
-        console.error("Dashboard fetch error:", err);
+        console.error("Summary fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -103,20 +104,20 @@ const BuilderDashboard = () => {
   }, []);
 
   const navLinks = [
-    { to: "/builder-dashboard/", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { to: "/builder-dashboard/", label: "Summary", icon: <LayoutDashboard className="w-5 h-5" /> },
     { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <Building2 className="w-5 h-5" /> },
     { to: "/builder-dashboard/events", label: "Event Stalls", icon: <CalendarDays className="w-5 h-5" /> },
     { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
   ];
 
   const subRouteLabels = [
-    { match: /\/post-property/,        label: "Add Property",       icon: <Building2 className="w-5 h-5" /> },
-    { match: /\/edit-property\//,      label: "Edit Property",      icon: <Building2 className="w-5 h-5" /> },
-    { match: /\/events\/.*\/.*/, label: "Event Details",       icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/stall-booking\//,      label: "Stall Booking",      icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/event-bookings\//,     label: "Booked Stalls",      icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/interests/,            label: "Stall Interests",    icon: <CalendarDays className="w-5 h-5" /> },
-    { match: /\/property-preview\//,   label: "Property Preview",   icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/post-property/, label: "Add Property", icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/edit-property\//, label: "Edit Property", icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/events\/.*\/.*/, label: "Event Details", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/stall-booking\//, label: "Stall Booking", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/event-bookings\//, label: "Booked Stalls", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/interests/, label: "Stall Interests", icon: <CalendarDays className="w-5 h-5" /> },
+    { match: /\/property-preview\//, label: "Property Preview", icon: <Building2 className="w-5 h-5" /> },
   ];
 
   const activePage = (() => {
@@ -143,7 +144,7 @@ const BuilderDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
-      
+
       {/* ================= SIDEBAR ================= */}
       {/* Backdrop for mobile */}
       {isSidebarOpen && (
@@ -153,10 +154,9 @@ const BuilderDashboard = () => {
         />
       )}
 
-      <div 
-        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } bg-gradient-to-b from-slate-800 to-slate-900 shadow-[0_4px_24px_rgba(15,23,42,0.15)] z-50`}
+      <div
+        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } bg-gradient-to-b from-slate-800 to-slate-900 shadow-[0_4px_24px_rgba(15,23,42,0.15)] z-50`}
       >
         <div className="p-8 pb-6 border-b border-slate-700/50">
           <h1 className="text-3xl font-bold text-white tracking-[-1px]">NativeNest</h1>
@@ -171,11 +171,10 @@ const BuilderDashboard = () => {
                 key={link.to}
                 to={link.to}
                 onClick={closeSidebar}
-                className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${
-                  active 
-                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20" 
+                className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${active
+                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
                     : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
+                  }`}
               >
                 <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{link.icon}</span>
                 <span>{link.label}</span>
@@ -185,8 +184,8 @@ const BuilderDashboard = () => {
         </nav>
 
         <div className="px-4 py-8 mt-auto">
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group border border-transparent hover:border-red-500/20"
           >
             <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
@@ -221,7 +220,7 @@ const BuilderDashboard = () => {
           <Routes>
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">
-                
+
                 {/* Statistics Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                   {[
@@ -282,29 +281,29 @@ const BuilderDashboard = () => {
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stats?.monthlyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                            <XAxis 
-                              dataKey="month" 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
-                              dy={15} 
+                            <XAxis
+                              dataKey="month"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }}
+                              dy={15}
                             />
-                            <YAxis 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }} 
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }}
                               dx={-10}
                             />
-                            <Tooltip 
-                              cursor={{ fill: '#F8FAFC' }} 
-                              contentStyle={{ 
-                                borderRadius: '12px', 
-                                border: '1px solid #E2E8F0', 
+                            <Tooltip
+                              cursor={{ fill: '#F8FAFC' }}
+                              contentStyle={{
+                                borderRadius: '12px',
+                                border: '1px solid #E2E8F0',
                                 boxShadow: '0 10px 15px -3px rgba(15,23,42,0.08)',
                                 color: '#0F172A',
                                 fontWeight: 500,
                                 fontFamily: '"Inter", sans-serif'
-                              }} 
+                              }}
                             />
                             <Bar dataKey="count" name="Properties" fill="#0EA5E9" radius={[6, 6, 0, 0]} barSize={24}>
                               {stats?.monthlyStats?.map((entry, index) => (

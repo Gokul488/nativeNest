@@ -186,7 +186,7 @@ const ViewEvents = () => {
             </p>
           </div>
           <span className="italic ml-1 bg-indigo-50 text-indigo-600 text-md font-bold px-3 py-1 rounded-full border border-indigo-100">
-            {events.length} Events  
+            {events.length} Events
           </span>
         </div>
       </div>
@@ -202,17 +202,15 @@ const ViewEvents = () => {
               key={key}
               type="button"
               onClick={() => handleTabSwitch(key)}
-              className={`inline-flex items-center gap-2 py-3.5 px-1 border-b-2 font-semibold text-sm transition-colors ${
-                activeTab === key
+              className={`inline-flex items-center gap-2 py-3.5 px-1 border-b-2 font-semibold text-sm transition-colors ${activeTab === key
                   ? "border-indigo-500 text-indigo-600"
                   : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"
-              }`}
+                }`}
             >
               {icon}
               {label}
-              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                activeTab === key ? "bg-indigo-50 text-indigo-600" : "bg-slate-100 text-slate-500"
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === key ? "bg-indigo-50 text-indigo-600" : "bg-slate-100 text-slate-500"
+                }`}>
                 {count}
               </span>
             </button>
@@ -290,9 +288,8 @@ const ViewEvents = () => {
                     return (
                       <tr
                         key={event.id}
-                        className={`transition-colors duration-150 group ${
-                          isCompleted ? "hover:bg-green-50/30" : "hover:bg-slate-50/60"
-                        }`}
+                        className={`transition-colors duration-150 group ${isCompleted ? "hover:bg-green-50/30" : "hover:bg-slate-50/60"
+                          }`}
                       >
                         {/* # */}
                         <td className="px-4 py-3 text-sm font-bold text-slate-300">
@@ -320,7 +317,7 @@ const ViewEvents = () => {
                             </div>
                             {isCompleted && (
                               <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full shrink-0">
-                                Done
+                                Completed
                               </span>
                             )}
                           </div>
@@ -406,18 +403,16 @@ const ViewEvents = () => {
                 return (
                   <div
                     key={event.id}
-                    className={`rounded-2xl p-5 border space-y-4 bg-white hover:border-indigo-200 transition-colors ${
-                      isCompleted ? "border-green-100" : "border-slate-100"
-                    }`}
+                    className={`rounded-2xl p-5 border space-y-4 bg-white hover:border-indigo-200 transition-colors ${isCompleted ? "border-green-100" : "border-slate-100"
+                      }`}
                   >
                     {/* Card Header */}
                     <div className="flex justify-between items-start pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-3">
-                        <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 border ${
-                          isCompleted
+                        <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 border ${isCompleted
                             ? "bg-green-50 text-green-600 border-green-100"
                             : "bg-indigo-50 text-indigo-600 border-indigo-100"
-                        }`}>
+                          }`}>
                           {globalIndex}
                         </span>
                         <div>

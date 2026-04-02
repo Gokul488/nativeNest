@@ -89,6 +89,7 @@ const getBookmarkedProperties = async (req, res) => {
            p.city,
            p.property_type,
            p.sqft,
+           (SELECT COUNT(*) FROM property_views WHERE property_id = p.property_id) AS views,
            b.name AS builderName,
            p.cover_image
          FROM properties p
@@ -138,6 +139,7 @@ const getBookmarkedProperties = async (req, res) => {
             price: parseFloat(property.price),
             property_type: property.property_type,
             sqft: property.sqft ? Number(property.sqft) : null,
+            views: property.views || 0,
             img,
             builderName: property.builderName || null,
             variants: propVariants
