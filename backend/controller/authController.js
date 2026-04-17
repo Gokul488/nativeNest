@@ -5,9 +5,9 @@ const jwt = require('jsonwebtoken');
 /* ===================== REGISTER ===================== */
 const register = async (req, res) => {
   try {
-    const { 
+    const {
       name, mobile_number, email, password, confirm_password, account_type,
-      gender, dob, city, country, photo 
+      gender, dob, city, country, photo
     } = req.body;
 
     if (!name || !mobile_number || !password || !confirm_password || !account_type) {
@@ -46,27 +46,28 @@ const register = async (req, res) => {
       [result] = await pool.query(
         'INSERT INTO buyers (name, mobile_number, email, password, gender, dob, city, country, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
         [
-          name, 
-          mobile_number, 
-          email || null, 
+          name,
+          mobile_number,
+          email || null,
           hashedPassword,
           gender || null,
           dob || null,
           city || null,
           country || null,
-          photo ? photo.split(',')[1] : null
+          photo ? Buffer.from(photo.includes(',') ? photo.split(',')[1] : photo, 'base64') : null
         ]
       );
 
+      const [newUser] = await pool.query(
+        'SELECT id, name, mobile_number, email, gender, dob, city, country, photo FROM buyers WHERE id = ?',
+        [result.insertId]
+      );
+
+      const photoBase = newUser[0].photo ? Buffer.from(newUser[0].photo).toString('base64') : null;
+
       user = {
-        id: result.insertId,
-        name,
-        mobile_number,
-        email,
-        gender,
-        dob,
-        city,
-        country,
+        ...newUser[0],
+        photo: photoBase,
         account_type: 'buyer'
       };
     }
@@ -160,7 +161,7 @@ const login = async (req, res) => {
 
     /* -------- BUYER LOGIN -------- */
     let [rows] = await pool.query(
-      `SELECT id, name, mobile_number, email, password
+      `SELECT id, name, mobile_number, email, password, gender, dob, city, country, photo
        FROM buyers
        WHERE mobile_number = ? OR email = ?`,
       [identifier, identifier]
@@ -212,6 +213,8 @@ const login = async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    const photoBase = user.photo ? Buffer.from(user.photo).toString('base64') : null;
+
     res.json({
       message: 'Login successful',
       token,
@@ -220,6 +223,11 @@ const login = async (req, res) => {
         name: user.name,
         mobile_number: user.mobile_number,
         email: user.email,
+        gender: user.gender,
+        dob: user.dob,
+        city: user.city,
+        country: user.country,
+        photo: photoBase,
         account_type
       }
     });

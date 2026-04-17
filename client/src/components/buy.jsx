@@ -692,7 +692,7 @@ const Buy = () => {
                       style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.3)' }}>
                       <i className="fas fa-vector-square text-white/80 text-[11px]"></i>
                       <span className="text-white font-bold text-[13px] leading-none">
-                        {listing.property_type === 'Apartment' && listing.variants?.length > 0
+                        {(listing.property_type === 'Apartment' || listing.property_type === 'Villas') && listing.variants?.length > 0
                           ? `${listing.variants[0].sqft.toLocaleString('en-IN')}–${listing.variants[listing.variants.length - 1].sqft.toLocaleString('en-IN')}`
                           : (listing.sqft ? listing.sqft.toLocaleString('en-IN') : 'N/A')}
                       </span>
@@ -721,7 +721,7 @@ const Buy = () => {
                       <div>
                         <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-0.5">Price</p>
                         <p className="text-[17px] font-extrabold text-[#011936] leading-none">
-                          {listing.property_type === 'Apartment' && listing.variants?.length > 0
+                          {(listing.property_type === 'Apartment' || listing.property_type === 'Villas') && listing.variants?.length > 0
                             ? <>₹&nbsp;{Math.floor(listing.variants[0].price).toLocaleString('en-IN')} <span className="text-[11px] font-semibold text-gray-400">onwards</span></>
                             : formatCurrency(listing.price)}
                         </p>

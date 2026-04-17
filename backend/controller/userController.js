@@ -14,7 +14,7 @@ const getUserDetails = async (req, res) => {
     }
 
     const [users] = await pool.query(
-      'SELECT id, name, mobile_number, email FROM buyers WHERE id = ?',
+      'SELECT id, name, mobile_number, email, gender, dob, city, country, photo FROM buyers WHERE id = ?',
       [decoded.userId]
     );
 
@@ -22,7 +22,17 @@ const getUserDetails = async (req, res) => {
       return res.status(404).json({ error: 'Buyer not found' });
     }
 
-    res.json({ ...users[0], account_type: 'buyer' });
+    const user = users[0];
+    if (user.photo) {
+      try {
+        user.photo = Buffer.from(user.photo).toString('base64');
+      } catch (e) {
+        console.error('Error converting photo to base64:', e);
+        user.photo = null;
+      }
+    }
+
+    res.json({ ...user, account_type: 'buyer' });
   } catch (error) {
     console.error('Error fetching buyer details:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -42,11 +52,11 @@ const updateUserDetails = async (req, res) => {
     }
 
     const userId = decoded.userId;
-    const { name, email, mobile_number, password } = req.body;
+    const { name, email, mobile_number, password, gender, dob, city, country, photo } = req.body;
 
     if (!name || !email || !mobile_number) {
-      return res.status(400).json({ 
-        error: 'Name, email and mobile number are required' 
+      return res.status(400).json({
+        error: 'Name, email and mobile number are required'
       });
     }
 
@@ -68,8 +78,8 @@ const updateUserDetails = async (req, res) => {
     );
 
     if (existing.length > 0) {
-      return res.status(400).json({ 
-        error: 'Mobile number or email is already in use by another account' 
+      return res.status(400).json({
+        error: 'Mobile number or email is already in use by another account'
       });
     }
 
@@ -78,15 +88,36 @@ const updateUserDetails = async (req, res) => {
       UPDATE buyers 
       SET name = ?, 
           email = ?, 
-          mobile_number = ?
+          mobile_number = ?,
+          gender = ?,
+          dob = ?,
+          city = ?,
+          country = ?,
+          photo = ?
     `;
-    let params = [name, email, mobile_number];
+    let photoBuffer = null;
+    if (photo) {
+      // Remove prefix if exists before converting to Buffer
+      const cleanBase64 = photo.includes(',') ? photo.split(',')[1] : photo;
+      photoBuffer = Buffer.from(cleanBase64, 'base64');
+    }
+
+    let params = [
+      name,
+      email,
+      mobile_number,
+      gender || null,
+      dob || null,
+      city || null,
+      country || null,
+      photoBuffer
+    ];
 
     // Handle optional password change
     if (password && password.trim() !== '') {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password.trim(), salt);
-      
+
       query += `, password = ?`;
       params.push(hashedPassword);
     }
@@ -98,7 +129,7 @@ const updateUserDetails = async (req, res) => {
 
     // Fetch updated user data to return
     const [updatedRows] = await pool.query(
-      `SELECT id, name, email, mobile_number 
+      `SELECT id, name, email, mobile_number, gender, dob, city, country, photo 
        FROM buyers 
        WHERE id = ?`,
       [userId]
@@ -113,6 +144,15 @@ const updateUserDetails = async (req, res) => {
       account_type: 'buyer'
     };
 
+    if (updatedUser.photo) {
+      try {
+        updatedUser.photo = Buffer.from(updatedUser.photo).toString('base64');
+      } catch (e) {
+        console.error('Error converting updated photo to base64:', e);
+        updatedUser.photo = null;
+      }
+    }
+
     res.status(200).json({
       message: 'Profile updated successfully',
       user: updatedUser   // ← returning full updated object (helps frontend)
@@ -120,13 +160,13 @@ const updateUserDetails = async (req, res) => {
 
   } catch (error) {
     console.error('Error updating buyer details:', error);
-    
+
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    res.status(500).json({ 
-      error: 'Internal server error while updating profile' 
+    res.status(500).json({
+      error: 'Internal server error while updating profile'
     });
   }
 };
@@ -167,4 +207,4 @@ const getBuyerDashboardStats = async (req, res) => {
   }
 };
 
-module.exports = { getUserDetails, updateUserDetails, getBuyerDashboardStats};
+module.exports = { getUserDetails, updateUserDetails, getBuyerDashboardStats };

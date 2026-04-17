@@ -2,13 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
-import { useQuill } from "react-quilljs";
-import "quill/dist/quill.snow.css";
-import "quill-table-better/dist/quill-table-better.css";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import API_BASE_URL from "../../config.js";
-import { QuillTableBetter } from "../../utils/registerQuillModules";
+
 import {
   ArrowLeft,
   Home,
@@ -134,49 +131,7 @@ const EditProperty = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeMediaTab, setActiveMediaTab] = useState("cover");
 
-  // ── Quill setup ───────────────────────────────────────────────
-  const { quill, quillRef } = useQuill({
-    modules: {
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ["bold", "italic", "underline"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        ["link"],
-        [{ align: [] }],
-        ["clean"],
-        [{ color: [] }, { background: [] }],
-        ["table"],
-      ],
-      "table-better": {
-        operationMenu: {
-          items: {
-            insertColumnRight: { text: "Insert Column Right" },
-            insertColumnLeft: { text: "Insert Column Left" },
-            insertRowUp: { text: "Insert Row Above" },
-            insertRowDown: { text: "Insert Row Below" },
-            mergeCells: { text: "Merge Cells" },
-            unmergeCells: { text: "Unmerge Cells" },
-            deleteColumn: { text: "Delete Column" },
-            deleteRow: { text: "Delete Row" },
-            deleteTable: { text: "Delete Table" },
-          },
-        },
-      },
-      keyboard: { bindings: QuillTableBetter.keyboardBindings },
-    },
-    formats: ["header", "bold", "italic", "underline", "list", "link", "align", "color", "background", "table"],
-  });
 
-  useEffect(() => {
-    if (quill) {
-      quill.getModule("toolbar").addHandler("table", () => {
-        quill.getModule("table-better").insertTable(2, 2);
-      });
-      quill.on("text-change", () => {
-        setFormData((prev) => ({ ...prev, description: quill.root.innerHTML }));
-      });
-    }
-  }, [quill]);
 
   // ── Fetch property data ───────────────────────────────────────
   useEffect(() => {
@@ -212,7 +167,7 @@ const EditProperty = () => {
           const blockMap = new Map();
           prop.variants.forEach((v) => {
             const bKey = v.block_name || "Block A";
-            const fKey = v.floor      || "Ground Floor";
+            const fKey = v.floor || "Ground Floor";
             if (!blockMap.has(bKey)) {
               blockMap.set(bKey, {
                 id: Date.now() + Math.random(),
@@ -251,9 +206,7 @@ const EditProperty = () => {
           setBlocks([DEFAULT_BLOCK()]);
         }
 
-        if (quill && prop.description) {
-          quill.clipboard.dangerouslyPasteHTML(prop.description);
-        }
+
 
         const [typesRes, amenitiesRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/properties/types`),
@@ -389,7 +342,7 @@ const EditProperty = () => {
     setSuccess("");
     setIsSubmitting(true);
 
-    if (!formData.description || formData.description === "<p><br></p>") {
+    if (!formData.description || !formData.description.trim()) {
       setError("Description is required");
       setIsSubmitting(false);
       return;
@@ -452,17 +405,17 @@ const EditProperty = () => {
 
     const variants = formData.property_type === "Apartment"
       ? blocks.flatMap((block) =>
-          block.floors.flatMap((floor) =>
-            floor.configs.map((config) => ({
-              apartment_type: config.apartment_type.trim(),
-              block_name: block.block_name.trim(),
-              floor: floor.floor_name.trim(),
-              price: Number(config.price),
-              sqft: Number(config.sqft),
-              quantity: Number(config.quantity) || 1,
-            }))
-          )
+        block.floors.flatMap((floor) =>
+          floor.configs.map((config) => ({
+            apartment_type: config.apartment_type.trim(),
+            block_name: block.block_name.trim(),
+            floor: floor.floor_name.trim(),
+            price: Number(config.price),
+            sqft: Number(config.sqft),
+            quantity: Number(config.quantity) || 1,
+          }))
         )
+      )
       : [];
 
     const data = new FormData();
@@ -636,9 +589,15 @@ const EditProperty = () => {
             {/* Description */}
             <div>
               <label className={labelCls}>Description <span className="text-red-400">*</span></label>
-              <div className="rounded-xl border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all bg-slate-50">
-                <div ref={quillRef} className="min-h-[260px] text-slate-700" />
-              </div>
+              <input
+                type="text"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                required
+                placeholder="Brief description of the property"
+                className={inputCls}
+              />
             </div>
 
             {/* Property Type */}
@@ -702,7 +661,7 @@ const EditProperty = () => {
             )}
           </SectionCard>
 
-           {/* ── Section: Apartment Block Configurations ──────── */}
+          {/* ── Section: Apartment Block Configurations ──────── */}
           {formData.property_type === "Apartment" && (
             <SectionCard
               icon={<Layers className="w-4 h-4 text-indigo-500" />}
@@ -1095,11 +1054,10 @@ const EditProperty = () => {
                   key={key}
                   type="button"
                   onClick={() => setActiveMediaTab(key)}
-                  className={`inline-flex items-center gap-1.5 py-2 px-4 rounded-[10px] text-sm font-semibold transition-all duration-200 ${
-                    activeMediaTab === key
+                  className={`inline-flex items-center gap-1.5 py-2 px-4 rounded-[10px] text-sm font-semibold transition-all duration-200 ${activeMediaTab === key
                       ? "bg-white text-sky-600 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
-                  }`}
+                    }`}
                 >
                   {icon}
                   <span className="hidden sm:inline">{label}</span>

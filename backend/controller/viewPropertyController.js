@@ -1,5 +1,5 @@
 const pool = require('../db');
-const jwt  = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 const getProperties = async (req, res) => {
   try {
@@ -7,7 +7,7 @@ const getProperties = async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId  = decoded.userId;
+    const userId = decoded.userId;
 
     const [properties] = await pool.query(`
       SELECT 
@@ -50,13 +50,13 @@ const getProperties = async (req, res) => {
         if (!variantsMap[row.property_id]) variantsMap[row.property_id] = [];
         variantsMap[row.property_id].push({
           apartment_type: row.apartment_type,
-          block_name:     row.block_name || null,
-          floor:          row.floor || null,
-          price:          row.price    ? parseFloat(row.price)  : null,
-          sqft:           row.sqft     ? Number(row.sqft)        : null,
-          quantity:       row.quantity ? Number(row.quantity)    : null,
-          sold:           row.sold     ? Number(row.sold)        : 0,
-          variant_id:     row.variant_id
+          block_name: row.block_name || null,
+          floor: row.floor || null,
+          price: row.price ? parseFloat(row.price) : null,
+          sqft: row.sqft ? Number(row.sqft) : null,
+          quantity: row.quantity ? Number(row.quantity) : null,
+          sold: row.sold ? Number(row.sold) : 0,
+          variant_id: row.variant_id
         });
       });
 
@@ -127,19 +127,19 @@ const getPropertyById = async (req, res) => {
     );
 
     const variants = variantRows.map(v => ({
-      variant_id:     v.variant_id,
+      variant_id: v.variant_id,
       apartment_type: v.apartment_type,
-      block_name:     v.block_name || null,
-      floor:          v.floor || null,
-      price:          v.price    ? parseFloat(v.price)  : null,
-      sqft:           v.sqft     ? Number(v.sqft)        : null,
-      quantity:       v.quantity ? Number(v.quantity)    : 1,
+      block_name: v.block_name || null,
+      floor: v.floor || null,
+      price: v.price ? parseFloat(v.price) : null,
+      sqft: v.sqft ? Number(v.sqft) : null,
+      quantity: v.quantity ? Number(v.quantity) : 1,
     }));
 
     const property = {
       ...properties[0],
       images,
-      sqft:     properties[0].sqft     || null,
+      sqft: properties[0].sqft || null,
       quantity: properties[0].quantity || 1,
       variants,
       amenities: amenitiesResult.map(a => ({ id: a.amenity_id, name: a.name, icon: a.icon })),
@@ -158,8 +158,8 @@ const updateProperty = async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId  = decoded.userId;
-    const { id }  = req.params;
+    const userId = decoded.userId;
+    const { id } = req.params;
 
     const {
       title, builder_id, description,
@@ -183,14 +183,14 @@ const updateProperty = async (req, res) => {
     }
 
     // ── Price / sqft / qty ───────────────────────────────────────────────────
-    let finalPrice    = price ? Number(price) : null;
-    let finalSqft     = sqft  ? Number(sqft)  : null;
+    let finalPrice = price ? Number(price) : null;
+    let finalSqft = sqft ? Number(sqft) : null;
     let finalQuantity = (quantity && !isNaN(quantity)) ? Number(quantity) : 1;
 
     if (property_type === 'Apartment') {
       // NULLs in main row — all details live in property_variants
-      finalPrice    = null;
-      finalSqft     = null;
+      finalPrice = null;
+      finalSqft = null;
       finalQuantity = null;
     } else {
       if (!price || isNaN(finalPrice) || finalPrice <= 0) {
@@ -204,8 +204,8 @@ const updateProperty = async (req, res) => {
     if (propCheck[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
 
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
-    const video      = req.files?.['video']?.[0]?.buffer       || null;
-    const images     = req.files?.['images[]']
+    const video = req.files?.['video']?.[0]?.buffer || null;
+    const images = req.files?.['images[]']
       ? (Array.isArray(req.files['images[]']) ? req.files['images[]'] : [req.files['images[]']])
       : [];
 
@@ -223,9 +223,9 @@ const updateProperty = async (req, res) => {
           video = COALESCE(?, video)
          WHERE property_id = ?`,
         [title, builder_id, description, finalPrice,
-         address, city, state, country, pincode,
-         property_type, finalSqft, finalQuantity,
-         coverImage, video, id]
+          address, city, state, country, pincode,
+          property_type, finalSqft, finalQuantity,
+          coverImage, video, id]
       );
 
       // ── Images ────────────────────────────────────────────────────────────
@@ -281,12 +281,12 @@ const updateProperty = async (req, res) => {
 
         if (Array.isArray(variantData) && variantData.length > 0) {
           for (const v of variantData) {
-            const aptType   = (v.apartment_type || '').trim();  // BHK value
-            const blockName = (v.block_name     || '').trim();
-            const floor     = (v.floor          || '').trim();
-            const vPrice    = Number(v.price);
-            const vSqft     = Number(v.sqft);
-            const vQty      = Number(v.quantity) || 1;
+            const aptType = (v.apartment_type || '').trim();  // BHK value
+            const blockName = (v.block_name || '').trim();
+            const floor = (v.floor || '').trim();
+            const vPrice = Number(v.price);
+            const vSqft = Number(v.sqft);
+            const vQty = Number(v.quantity) || 1;
 
             if (!aptType) {
               throw new Error('Each block must have an apartment_type (e.g. 2BHK)');
@@ -335,8 +335,8 @@ const deleteProperty = async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId  = decoded.userId;
-    const { id }  = req.params;
+    const userId = decoded.userId;
+    const { id } = req.params;
 
     const [properties] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
     if (properties.length === 0) return res.status(404).json({ error: 'Property not found' });
@@ -421,7 +421,7 @@ const getSoldProperties = async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId  = decoded.userId;
+    const userId = decoded.userId;
 
     // Fetch sold properties from properties table
     const [soldMain] = await pool.query(`

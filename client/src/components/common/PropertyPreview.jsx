@@ -46,9 +46,13 @@ const PropertyPreview = () => {
         const data = await response.json();
         setProperty(data.property);
 
-        if (data.property.property_type === 'Apartment' && data.property.variants?.length > 0) {
+        if ((data.property.property_type === 'Apartment' || data.property.property_type === 'Villas') && data.property.variants?.length > 0) {
           const firstVariant = data.property.variants[0];
-          setSelectedBlock(firstVariant.block_name || 'General');
+          if (data.property.property_type === 'Apartment') {
+            setSelectedBlock(firstVariant.block_name || 'General');
+          } else {
+            setSelectedBlock(firstVariant.facing || 'Default');
+          }
           setSelectedVariant(firstVariant);
         }
       } catch (err) {
@@ -158,7 +162,7 @@ const PropertyPreview = () => {
             <div className="flex items-center gap-1.5 text-indigo-600 font-black text-3xl tracking-tight">
               <span className="text-xl">₹</span>
               <span>
-                {property.property_type === 'Apartment' && selectedVariant
+                {(property.property_type === 'Apartment' || property.property_type === 'Villas') && selectedVariant
                   ? formatPrice(selectedVariant.price)
                   : formatPrice(property.price)}
               </span>
@@ -166,7 +170,7 @@ const PropertyPreview = () => {
             <div className="flex items-center gap-1.5 text-slate-500 text-xs font-bold mt-1">
               <Ruler className="w-3.5 h-3.5" />
               <span>
-                {property.property_type === 'Apartment' && selectedVariant
+                {(property.property_type === 'Apartment' || property.property_type === 'Villas') && selectedVariant
                   ? selectedVariant.sqft.toLocaleString('en-IN')
                   : (property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A')}
                 <span className="ml-1 opacity-60">sq.ft</span>
@@ -228,7 +232,7 @@ const PropertyPreview = () => {
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-teal-400" />
                   <p className="font-bold text-slate-800">
-                    {property.property_type === 'Apartment' && selectedVariant?.quantity != null
+                    {(property.property_type === 'Apartment' || property.property_type === 'Villas') && selectedVariant?.quantity != null
                       ? `${selectedVariant.quantity} Units`
                       : (property.quantity != null ? `${property.quantity} Units` : 'N/A')}
                   </p>
@@ -331,6 +335,50 @@ const PropertyPreview = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Villa Variant Selector */}
+          {property.property_type === 'Villas' && property.variants?.length > 0 && (
+            <div className="bg-gradient-to-br from-indigo-600 to-indigo-900 rounded-[32px] p-8 shadow-xl text-white">
+              <h3 className="text-xl font-black mb-6 flex items-center gap-2">
+                 <Layers className="w-5 h-5" />
+                 Villa Configuration
+              </h3>
+              <div className="space-y-6">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Facing Selection</label>
+                    <div className="grid grid-cols-1 gap-3">
+                       {property.variants.map((variant, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                               setSelectedVariant(variant);
+                               setSelectedBlock(variant.facing);
+                            }}
+                            className={`w-full flex items-center justify-between py-4 px-5 rounded-2xl text-left transition-all ${
+                              selectedVariant?.facing === variant.facing
+                                ? 'bg-white text-indigo-900 shadow-xl scale-[1.02]'
+                                : 'bg-indigo-500/20 text-indigo-100 hover:bg-indigo-500/40 border border-indigo-400/20'
+                            }`}
+                          >
+                             <div>
+                                <p className="font-black text-sm">{variant.facing} Facing</p>
+                                <p className={`text-[10px] font-bold ${selectedVariant?.facing === variant.facing ? 'text-indigo-500' : 'text-indigo-300'}`}>
+                                   {variant.sqft.toLocaleString('en-IN')} SQ.FT
+                                </p>
+                             </div>
+                             <div className="text-right">
+                                <p className="font-black text-sm whitespace-nowrap">₹ {formatPrice(variant.price)}</p>
+                                <p className={`text-[10px] font-bold ${variant.quantity > 0 ? 'text-emerald-400' : 'text-red-300'}`}>
+                                   {variant.quantity > 0 ? `${variant.quantity} Available` : 'Sold Out'}
+                                </p>
+                             </div>
+                          </button>
+                       ))}
+                    </div>
+                 </div>
               </div>
             </div>
           )}

@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { getAdminDetails, updateAdminDetails, getWhatsappAdmin,  getAllUsers, getAllEvents, getEventParticipants, getAllBuilders, getDashboardStats} = require('../controller/adminController');
+const { getAdminDetails, updateAdminDetails, getWhatsappAdmin,  getAllUsers, getAllEvents, getEventParticipants, getAllBuilders, getDashboardStats, adminUpdateUser} = require('../controller/adminController');
 
 router.get('/admin', getAdminDetails);
 router.put('/admin', updateAdminDetails);
 router.get('/public/admin-whatsapp', getWhatsappAdmin);
 router.get('/admin/users', getAllUsers);
+router.put('/admin/users/:userId', adminUpdateUser);
 router.get('/admin/events', getAllEvents);
 router.get('/admin/events/:eventId/participants', getEventParticipants);
 router.get('/admin/builders', getAllBuilders);

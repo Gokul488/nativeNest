@@ -15,6 +15,7 @@ import {
   Mail,
   Contact,
   Users,
+  Edit2
 } from "lucide-react";
 
 const ManageUsers = () => {
@@ -109,7 +110,7 @@ const ManageUsers = () => {
         </div>
 
         {/* Right: total count */}
-        <div className=" italic flex items-center gap-3">
+        <div className=" flex items-center gap-3">
           <span className="ml-1 bg-indigo-50 text-indigo-600 text-md font-bold px-3 py-1 rounded-full border border-indigo-100">
             {users.length} Users
           </span>
@@ -172,6 +173,7 @@ const ManageUsers = () => {
                     >
                       <span className="inline-flex items-center justify-center">Registration {getSortIcon("created_at")}</span>
                     </th>
+                    <th className="px-6 py-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -221,6 +223,17 @@ const ManageUsers = () => {
                             }).toUpperCase()}
                           </span>
                         </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-2.5 text-right">
+                          <button
+                            onClick={() => navigate(`/admin-dashboard/manage-users/edit/${user.id}`)}
+                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                            title="Edit User"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -266,6 +279,14 @@ const ManageUsers = () => {
                         <Mail className="w-4 h-4 text-slate-300 shrink-0" />
                         <span className="font-medium text-slate-600 truncate">{user.email || "—"}</span>
                       </div>
+                      
+                      <button
+                        onClick={() => navigate(`/admin-dashboard/manage-users/edit/${user.id}`)}
+                        className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-100 active:scale-95 transition-all"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        Edit Buyer Profile
+                      </button>
                     </div>
                   </div>
                 );

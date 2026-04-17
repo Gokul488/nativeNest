@@ -2,13 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
-import { useQuill } from "react-quilljs";
-import "quill/dist/quill.snow.css";
-import "quill-table-better/dist/quill-table-better.css";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import API_BASE_URL from "../../config.js";
-import { QuillTableBetter } from "../../utils/registerQuillModules";
 import { jwtDecode } from "jwt-decode";
 import {
   ArrowLeft,
@@ -94,6 +90,16 @@ const PostProperty = () => {
     quantity: "1",
   });
 
+  const descriptionRef = React.useRef(null);
+
+  // Auto-expand description textarea
+  useEffect(() => {
+    if (descriptionRef.current) {
+      descriptionRef.current.style.height = "auto";
+      descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
+    }
+  }, [formData.description]);
+
   const [accountType, setAccountType] = useState(null);
   const [builderName, setBuilderName] = useState("");
   const [selectedAmenities, setSelectedAmenities] = useState([]);
@@ -104,6 +110,10 @@ const PostProperty = () => {
   const [otherAmenityName, setOtherAmenityName] = useState("");
   const [builders, setBuilders] = useState([]);
   const [selectedBuilderId, setSelectedBuilderId] = useState("");
+  const [villaVariants, setVillaVariants] = useState([
+    { id: Date.now(), facing: "East", price: "", sqft: "", quantity: "1" }
+  ]);
+
 
   // ── Media state ───────────────────────────────────────────────
   const [coverImage, setCoverImage] = useState(null);
@@ -118,49 +128,7 @@ const PostProperty = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeMediaTab, setActiveMediaTab] = useState("cover");
 
-  // ── Quill setup ───────────────────────────────────────────────
-  const { quill, quillRef } = useQuill({
-    modules: {
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ["bold", "italic", "underline"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        ["link"],
-        [{ align: [] }],
-        ["clean"],
-        [{ color: [] }, { background: [] }],
-        ["table"],
-      ],
-      "table-better": {
-        operationMenu: {
-          items: {
-            insertColumnRight: { text: "Insert Column Right" },
-            insertColumnLeft: { text: "Insert Column Left" },
-            insertRowUp: { text: "Insert Row Above" },
-            insertRowDown: { text: "Insert Row Below" },
-            mergeCells: { text: "Merge Cells" },
-            unmergeCells: { text: "Unmerge Cells" },
-            deleteColumn: { text: "Delete Column" },
-            deleteRow: { text: "Delete Row" },
-            deleteTable: { text: "Delete Table" },
-          },
-        },
-      },
-      keyboard: { bindings: QuillTableBetter.keyboardBindings },
-    },
-    formats: ["header", "bold", "italic", "underline", "list", "link", "align", "color", "background", "table"],
-  });
 
-  useEffect(() => {
-    if (quill) {
-      quill.getModule("toolbar").addHandler("table", () => {
-        quill.getModule("table-better").insertTable(2, 2);
-      });
-      quill.on("text-change", () => {
-        setFormData((prev) => ({ ...prev, description: quill.root.innerHTML }));
-      });
-    }
-  }, [quill]);
 
   // ── Fetch initial data ────────────────────────────────────────
   useEffect(() => {
@@ -312,6 +280,18 @@ const PostProperty = () => {
       }
     ));
 
+  // ── Villa helpers ─────────────────────────────────────────────
+  const addVillaVariant = () => {
+    setVillaVariants([...villaVariants, { id: Date.now(), facing: "East", price: "", sqft: "", quantity: "1" }]);
+  };
+  const removeVillaVariant = (id) => {
+    setVillaVariants(villaVariants.filter((v) => v.id !== id));
+  };
+  const updateVillaVariant = (id, field, value) => {
+    setVillaVariants(villaVariants.map((v) => (v.id === id ? { ...v, [field]: value } : v)));
+  };
+
+
   // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -319,8 +299,15 @@ const PostProperty = () => {
     setSuccess("");
     setIsSubmitting(true);
 
-    if (!formData.description || formData.description === "<p><br></p>") {
+    if (!formData.description || !formData.description.trim()) {
       setError("Description is required");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Basic fields validation (excluding price/sqft since they vary by type)
+    if (!formData.title || !formData.address || !formData.city || !formData.state || !formData.country || !formData.pincode) {
+      setError("Please fill all required basic fields (title, address, city, state, country, pincode)");
       setIsSubmitting(false);
       return;
     }
@@ -374,6 +361,27 @@ const PostProperty = () => {
       }
     }
 
+    if (formData.property_type === "Villas") {
+      if (villaVariants.length === 0) {
+        setError("Please add at least one villa configuration.");
+        setIsSubmitting(false);
+        return;
+      }
+      for (const v of villaVariants) {
+        if (!v.price || isNaN(v.price) || Number(v.price) <= 0) {
+          setError(`Villa facing ${v.facing} needs a valid price.`);
+          setIsSubmitting(false);
+          return;
+        }
+        if (!v.sqft || isNaN(v.sqft) || Number(v.sqft) <= 0) {
+          setError(`Villa facing ${v.facing} needs a valid sqft.`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
+
     // Flatten hierarchy: block → floor → config
     const variants = formData.property_type === "Apartment"
       ? blocks.flatMap((block) =>
@@ -388,10 +396,28 @@ const PostProperty = () => {
           }))
         )
       )
-      : [];
+      : formData.property_type === "Villas"
+        ? villaVariants.map((v) => ({
+          facing: v.facing,
+          price: Number(v.price),
+          sqft: Number(v.sqft),
+          quantity: Number(v.quantity) || 1,
+        }))
+        : [];
+
 
     const data = new FormData();
-    Object.entries(formData).forEach(([k, v]) => data.append(k, v));
+    let submissionData = { ...formData };
+
+    // For Villas, the main 'price' column in the properties table should reflect the starting price
+    if (formData.property_type === "Villas" && variants.length > 0) {
+      const minPrice = Math.min(...variants.map(v => v.price));
+      if (!isNaN(minPrice) && minPrice !== Infinity) {
+        submissionData.price = minPrice;
+      }
+    }
+
+    Object.entries(submissionData).forEach(([k, v]) => data.append(k, v));
     data.append("builder_id", selectedBuilderId);
     selectedAmenities.forEach((opt) => data.append("amenities[]", opt.value));
     if (showOtherInput && otherAmenityName.trim()) data.append("other_amenity", otherAmenityName.trim());
@@ -400,6 +426,10 @@ const PostProperty = () => {
     if (coverImage) data.append("cover_image", coverImage);
     if (video) data.append("video", video);
     data.append("variants", JSON.stringify(variants));
+    if (formData.property_type === "Villas") {
+      data.append("villa_variants", JSON.stringify(variants));
+    }
+
 
     try {
       const token = localStorage.getItem("token");
@@ -555,9 +585,16 @@ const PostProperty = () => {
             {/* Description */}
             <div>
               <label className={labelCls}>Description <span className="text-red-400">*</span></label>
-              <div className="rounded-xl border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all bg-slate-50">
-                <div ref={quillRef} className="min-h-[260px] text-slate-700" />
-              </div>
+              <textarea
+                ref={descriptionRef}
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                required
+                placeholder="Brief description of the property"
+                className={`${inputCls} resize-none overflow-hidden min-h-[42px]`}
+                rows={1}
+              />
             </div>
 
             {/* Property Type */}
@@ -578,8 +615,8 @@ const PostProperty = () => {
               </select>
             </div>
 
-            {/* Price / Sqft / Qty — non-apartment */}
-            {formData.property_type !== "Apartment" && (
+            {/* Price / Sqft / Qty — non-apartment and non-villa */}
+            {formData.property_type !== "Apartment" && formData.property_type !== "Villas" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className={labelCls}>Price (₹) <span className="text-red-400">*</span></label>
@@ -619,7 +656,90 @@ const PostProperty = () => {
                 </div>
               </div>
             )}
+
           </SectionCard>
+
+          {/* ── Section: Villa Face Configurations ────────────── */}
+          {formData.property_type === "Villas" && (
+            <SectionCard
+              icon={<Sparkles className="w-4 h-4 text-amber-500" />}
+              title="Villa Face Configurations"
+              action={
+                <button
+                  type="button"
+                  onClick={addVillaVariant}
+                  className="flex items-center gap-1.5 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 px-3.5 py-2 rounded-xl transition-all duration-200 shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Facing
+                </button>
+              }
+            >
+              <div className="space-y-4">
+                {villaVariants.map((v, idx) => (
+                  <div
+                    key={v.id}
+                    className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 relative group"
+                  >
+                    <div>
+                      <label className={labelCls}>Facing <span className="text-red-400">*</span></label>
+                      <select
+                        value={v.facing}
+                        onChange={(e) => updateVillaVariant(v.id, "facing", e.target.value)}
+                        className={inputCls}
+                      >
+                        <option value="East">East</option>
+                        <option value="West">West</option>
+                        <option value="North">North</option>
+                        <option value="South">South</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Price (₹) <span className="text-red-400">*</span></label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 8500000"
+                        value={v.price}
+                        onChange={(e) => updateVillaVariant(v.id, "price", e.target.value)}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Area (sqft) <span className="text-red-400">*</span></label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 2100"
+                        value={v.sqft}
+                        onChange={(e) => updateVillaVariant(v.id, "sqft", e.target.value)}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <label className={labelCls}>Quantity</label>
+                        <input
+                          type="number"
+                          value={v.quantity}
+                          onChange={(e) => updateVillaVariant(v.id, "quantity", e.target.value)}
+                          min="1"
+                          className={inputCls}
+                        />
+                      </div>
+                      {villaVariants.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeVillaVariant(v.id)}
+                          className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 transition-all shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+
 
           {/* ── Section: Apartment Block Configurations ──────── */}
           {formData.property_type === "Apartment" && (
@@ -924,7 +1044,7 @@ const PostProperty = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className={labelCls}>State <span className="text-red-400">*</span></label>
                 <input
@@ -1015,8 +1135,8 @@ const PostProperty = () => {
                   type="button"
                   onClick={() => setActiveMediaTab(key)}
                   className={`inline-flex items-center gap-1.5 py-2 px-4 rounded-[10px] text-sm font-semibold transition-all duration-200 ${activeMediaTab === key
-                      ? "bg-white text-sky-600 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
+                    ? "bg-white text-sky-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
                     }`}
                 >
                   {icon}
