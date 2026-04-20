@@ -53,10 +53,18 @@ const PropertyDetails = () => {
 
   // Calculate and format rate per sq. ft.
   const getRatePerSqFt = () => {
-    if (!property?.sqft || !property?.price || property.sqft <= 0) {
+    let p = property?.price;
+    let s = property?.sqft;
+
+    if ((property?.property_type === 'Apartment' || property?.property_type === 'Villas') && selectedVariant) {
+      p = selectedVariant.price;
+      s = selectedVariant.sqft;
+    }
+
+    if (!s || !p || s <= 0) {
       return 'N/A';
     }
-    const rate = property.price / property.sqft;
+    const rate = p / s;
     return formatPriceInINR(Math.round(rate));
   };
 
@@ -72,6 +80,12 @@ const PropertyDetails = () => {
     setSelectedBlock(blockName);
     const types = typesForBlock(blockName);
     setSelectedVariant(types[0] || null);
+  };
+
+  const handleFacingChange = (facing) => {
+    setSelectedBlock(facing);
+    const variant = (property?.variants || []).find(v => v.facing === facing);
+    setSelectedVariant(variant || null);
   };
 
   const handleTypeChange = (apartmentType) => {
@@ -101,10 +115,15 @@ const PropertyDetails = () => {
 
       const data = await response.json();
       setProperty(data.property);
-      if (data.property.property_type === 'Apartment' && data.property.variants?.length > 0) {
+      if ((data.property.property_type === 'Apartment' || data.property.property_type === 'Villas') && data.property.variants?.length > 0) {
         const firstVariant = data.property.variants[0];
-        const firstBlock = firstVariant.block_name || 'General';
-        setSelectedBlock(firstBlock);
+        if (data.property.property_type === 'Apartment') {
+          const firstBlock = firstVariant.block_name || 'General';
+          setSelectedBlock(firstBlock);
+        } else {
+          // For Villas, we use facing as the primary selector if no blocks
+          setSelectedBlock(firstVariant.facing || 'Default');
+        }
         setSelectedVariant(firstVariant);
       } else {
         setSelectedBlock(null);
@@ -312,7 +331,7 @@ const PropertyDetails = () => {
                 <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '14px', padding: '12px 20px', minWidth: '130px' }}>
                   <span className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Total Price</span>
                   <span className="text-white font-bold" style={{ fontSize: '1.15rem' }}>
-                    ₹ {property.property_type === 'Apartment' && selectedVariant
+                    ₹ { (property.property_type === 'Apartment' || property.property_type === 'Villas') && selectedVariant
                       ? formatPriceInINR(selectedVariant.price)
                       : formatPriceInINR(property.price)}
                   </span>
@@ -321,7 +340,7 @@ const PropertyDetails = () => {
                 <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '14px', padding: '12px 20px', minWidth: '130px' }}>
                   <span className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Area</span>
                   <span className="text-white font-bold" style={{ fontSize: '1.15rem' }}>
-                    {property.property_type === 'Apartment' && selectedVariant
+                    {(property.property_type === 'Apartment' || property.property_type === 'Villas') && selectedVariant
                       ? selectedVariant.sqft.toLocaleString('en-IN')
                       : (property.sqft ? property.sqft.toLocaleString('en-IN') : 'N/A')}
                     <span className="text-white/50 text-xs font-normal ml-1">sq.ft</span>
@@ -337,8 +356,8 @@ const PropertyDetails = () => {
                   </div>
                 )}
 
-                {/* Units available — non-apartment only */}
-                {property.property_type !== 'Apartment' && property.quantity != null && (
+                {/* Units available — non-apartment/non-villa only */}
+                {property.property_type !== 'Apartment' && property.property_type !== 'Villas' && property.quantity != null && (
                   <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '14px', padding: '12px 20px', minWidth: '130px' }}>
                     <span className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Units Left</span>
                     <span className="text-white font-bold" style={{ fontSize: '1.15rem' }}>
@@ -348,8 +367,8 @@ const PropertyDetails = () => {
                   </div>
                 )}
 
-                {/* Selected variant quantity — Apartment */}
-                {property.property_type === 'Apartment' && selectedVariant?.quantity != null && (
+                {/* Selected variant quantity — Apartment or Villa */}
+                {(property.property_type === 'Apartment' || property.property_type === 'Villas') && selectedVariant?.quantity != null && (
                   <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '14px', padding: '12px 20px', minWidth: '130px' }}>
                     <span className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Units Left</span>
                     <span className="text-white font-bold" style={{ fontSize: '1.15rem' }}>
@@ -360,7 +379,7 @@ const PropertyDetails = () => {
                 )}
               </div>
 
-              {/* Variant selector — two custom dropdowns */}
+              {/* Variant selector — Apartment */}
               {property.property_type === 'Apartment' && property.variants?.length > 0 && (
                 <div className="flex flex-wrap items-end gap-3">
 
@@ -431,6 +450,41 @@ const PropertyDetails = () => {
                     )}
                   </div>
 
+                </div>
+              )}
+
+              {/* Variant selector — Villas */}
+              {property.property_type === 'Villas' && property.variants?.length > 0 && (
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="flex flex-col gap-1.5 relative" style={{ zIndex: heroBlockOpen ? 50 : 1 }} data-dropdown>
+                    <label className="text-white/50 text-[10px] uppercase tracking-widest font-semibold">Facing</label>
+                    <button
+                      onClick={() => { setHeroBlockOpen(o => !o); }}
+                      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+                      style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', color: 'white', minWidth: '150px' }}
+                    >
+                      <i className="fas fa-compass text-[10px]" style={{ color: '#7eb8c4' }}></i>
+                      <span className="flex-1 text-left">{selectedVariant?.facing || '—'}</span>
+                      <i className={`fas fa-chevron-down text-[10px] transition-transform duration-200 ${heroBlockOpen ? 'rotate-180' : ''}`} style={{ color: 'rgba(255,255,255,0.5)' }}></i>
+                    </button>
+                    {heroBlockOpen && (
+                      <div className="absolute top-full left-0 mt-2 rounded-2xl overflow-hidden"
+                        style={{ minWidth: '170px', background: 'white', boxShadow: '0 16px 48px rgba(1,25,54,0.22)', border: '1px solid #dde8ec', zIndex: 50 }}>
+                        {property.variants.map((v, i) => (
+                          <button key={i} onClick={() => { handleFacingChange(v.facing); setHeroBlockOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                            style={{ background: selectedVariant?.facing === v.facing ? 'linear-gradient(135deg, #eaf4f7, #d0e9ef)' : 'white', borderTop: i > 0 ? '1px solid #f0f4f6' : 'none' }}>
+                            <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                              style={{ background: selectedVariant?.facing === v.facing ? 'linear-gradient(135deg, #2e6171, #011936)' : '#f4f9fb' }}>
+                              <i className="fas fa-compass" style={{ fontSize: '9px', color: selectedVariant?.facing === v.facing ? 'white' : '#2e6171' }}></i>
+                            </div>
+                            <span className="text-sm font-semibold" style={{ color: '#011936' }}>{v.facing}</span>
+                            {selectedVariant?.facing === v.facing && <i className="fas fa-check ml-auto text-xs" style={{ color: '#2e6171' }}></i>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -643,8 +697,136 @@ const PropertyDetails = () => {
             </motion.section>
           )}
 
-          {/* ── UNITS AVAILABLE (non-Apartment) ── */}
-          {property.property_type !== 'Apartment' && property.quantity != null && (
+          {/* ── VILLA CONFIGURATIONS (Villas) ── */}
+          {property.property_type === 'Villas' && property.variants?.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-white rounded-3xl"
+              style={{ boxShadow: '0 2px 24px rgba(1,25,54,0.07)', overflow: 'visible' }}
+            >
+              <div className="px-8 pt-8 pb-6 flex items-center gap-3">
+                <div className="w-1 h-7 rounded-full" style={{ background: 'linear-gradient(to bottom, #2e6171, #011936)' }} />
+                <h2 className="text-2xl font-bold" style={{ color: '#011936' }}>Villa Configurations</h2>
+              </div>
+
+              <div className="px-8 pb-8">
+                <div
+                  className="flex items-stretch rounded-2xl"
+                  style={{ border: '1.5px solid #dde8ec', background: 'linear-gradient(to right, #f4f9fb, #eef5f8)', overflow: 'visible', position: 'relative' }}
+                >
+                  {/* ── Facing custom dropdown ── */}
+                  <div className="relative border-r flex-shrink-0" style={{ borderColor: '#dde8ec', zIndex: blockDropdownOpen ? 50 : 1 }}
+                    data-dropdown>
+                    <button
+                      onClick={() => { setBlockDropdownOpen(o => !o); }}
+                      className="flex items-center gap-3 px-5 py-4 h-full w-full text-left transition-colors hover:bg-white/60"
+                      style={{ minWidth: '160px' }}
+                    >
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #2e6171, #011936)' }}>
+                        <i className="fas fa-compass text-xs text-white"></i>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] uppercase tracking-widest font-bold mb-0.5" style={{ color: '#2e6171' }}>Facing</p>
+                        <p className="text-sm font-bold truncate" style={{ color: '#011936' }}>{selectedVariant?.facing || '—'}</p>
+                      </div>
+                      <i className={`fas fa-chevron-down text-[10px] transition-transform duration-200 ml-1 flex-shrink-0 ${blockDropdownOpen ? 'rotate-180' : ''}`}
+                        style={{ color: '#2e6171' }}></i>
+                    </button>
+                    {/* Facing dropdown panel */}
+                    {blockDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-2 rounded-2xl overflow-hidden"
+                        style={{ minWidth: '180px', background: 'white', boxShadow: '0 12px 40px rgba(1,25,54,0.15)', border: '1px solid #dde8ec', zIndex: 50 }}>
+                        {property.variants.map((v, i) => (
+                          <button
+                            key={v.facing}
+                            onClick={() => { handleFacingChange(v.facing); setBlockDropdownOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                            style={{
+                              background: selectedVariant?.facing === v.facing ? 'linear-gradient(135deg, #eaf4f7, #d0e9ef)' : 'white',
+                              borderTop: i > 0 ? '1px solid #f0f4f6' : 'none'
+                            }}
+                          >
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                              style={{ background: selectedVariant?.facing === v.facing ? 'linear-gradient(135deg, #2e6171, #011936)' : '#f4f9fb' }}>
+                              <i className="fas fa-compass" style={{ fontSize: '10px', color: selectedVariant?.facing === v.facing ? 'white' : '#2e6171' }}></i>
+                            </div>
+                            <span className="text-sm font-semibold" style={{ color: selectedVariant?.facing === v.facing ? '#011936' : '#374151' }}>{v.facing}</span>
+                            {selectedVariant?.facing === v.facing && (
+                              <i className="fas fa-check ml-auto text-xs" style={{ color: '#2e6171' }}></i>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Area ── */}
+                  <div className="flex items-center gap-3 px-5 py-4 border-r" style={{ borderColor: '#dde8ec', flex: '1 1 0', minWidth: '0' }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'white', border: '1px solid #d0e9ef' }}>
+                      <i className="fas fa-ruler-combined text-xs" style={{ color: '#2e6171' }}></i>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-widest font-bold mb-0.5" style={{ color: '#6b7280' }}>Area</p>
+                      <p className="text-sm font-bold whitespace-nowrap" style={{ color: '#011936' }}>
+                        {selectedVariant?.sqft ? selectedVariant.sqft.toLocaleString('en-IN') : '—'}
+                        <span className="text-xs font-normal ml-1" style={{ color: '#9ca3af' }}>sq.ft</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ── Price ── */}
+                  <div className="flex items-center gap-3 px-5 py-4 border-r" style={{ borderColor: '#dde8ec', flex: '1 1 0', minWidth: '0' }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'white', border: '1px solid #d0e9ef' }}>
+                      <i className="fas fa-indian-rupee-sign text-xs" style={{ color: '#2e6171' }}></i>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-widest font-bold mb-0.5" style={{ color: '#6b7280' }}>Price</p>
+                      <p className="text-sm font-bold whitespace-nowrap" style={{ color: '#011936' }}>
+                        ₹ {selectedVariant?.price ? formatPriceInINR(selectedVariant.price) : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ── Units Available ── */}
+                  <div className="flex items-center gap-3 px-5 py-4 border-r" style={{ borderColor: '#dde8ec', flex: '1 1 0', minWidth: '0' }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: selectedVariant?.quantity > 0 ? '#dcfce7' : '#fee2e2' }}>
+                      <i className={`fas ${selectedVariant?.quantity > 0 ? 'fa-check-circle' : 'fa-times-circle'} text-xs`}
+                        style={{ color: selectedVariant?.quantity > 0 ? '#15803d' : '#dc2626' }}></i>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-widest font-bold mb-0.5" style={{ color: '#6b7280' }}>Units Left</p>
+                      <p className="text-sm font-bold whitespace-nowrap"
+                        style={{ color: selectedVariant?.quantity > 0 ? '#15803d' : '#dc2626' }}>
+                        {selectedVariant?.quantity != null ? selectedVariant.quantity.toLocaleString('en-IN') : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ── WhatsApp CTA ── */}
+                  <div className="flex items-center px-4 py-3 flex-shrink-0">
+                    <motion.button
+                      whileHover={{ scale: 1.04, boxShadow: '0 10px 28px rgba(37,211,102,0.4)' }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={handleInterested}
+                      className="flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-white text-sm whitespace-nowrap"
+                      style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)', letterSpacing: '0.03em', boxShadow: '0 4px 16px rgba(37,211,102,0.3)' }}
+                    >
+                      <i className="fab fa-whatsapp text-lg"></i>
+                      I'm Interested
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </motion.section>
+          )}
+
+          {/* ── UNITS AVAILABLE (Plots/Commercial/Others) ── */}
+          {property.property_type !== 'Apartment' && property.property_type !== 'Villas' && property.quantity != null && (
             <motion.section
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}

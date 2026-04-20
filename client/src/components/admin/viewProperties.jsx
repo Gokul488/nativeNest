@@ -70,14 +70,14 @@ const ViewProperties = () => {
   }, [properties]);
 
   const getDisplayQuantity = (prop) => {
-    if (prop.property_type === "Apartment" && prop.variants && prop.variants.length > 0) {
+    if ((prop.property_type === "Apartment" || prop.property_type === "Villas") && prop.variants && prop.variants.length > 0) {
       return prop.variants.reduce((sum, v) => sum + (Number(v.quantity) || 0), 0);
     }
     return prop.quantity != null ? Number(prop.quantity) : 0;
   };
 
   const getDisplaySold = (prop) => {
-    if (prop.property_type === "Apartment" && prop.variants && prop.variants.length > 0) {
+    if ((prop.property_type === "Apartment" || prop.property_type === "Villas") && prop.variants && prop.variants.length > 0) {
       return prop.variants.reduce((sum, v) => sum + (Number(v.sold) || 0), 0);
     }
     return prop.sold != null ? Number(prop.sold) : 0;

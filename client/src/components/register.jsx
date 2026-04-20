@@ -34,7 +34,7 @@ const Register = () => {
       dob: formData.get("dob"),
       city: formData.get("city"),
       country: formData.get("country"),
-      photo: photoBase64 || null,
+      photo: formData.get("account_type") === "buyer" ? (photoBase64 || null) : null,
     };
 
     // Only include contact_person when builder is selected
@@ -155,6 +155,48 @@ const Register = () => {
               </div>
               <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Profile Identity</p>
             </div>
+            {/* Top Centered Photo Upload - Only for Buyers */}
+            {accountType === "buyer" && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center mb-6"
+              >
+                <div className="relative group">
+                  <div className="w-32 h-32 rounded-3xl bg-slate-100 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center transition-all group-hover:scale-[1.02] group-hover:shadow-blue-200/50">
+                    {photoBase64 ? (
+                      <img src={photoBase64} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center text-slate-400">
+                        <FiUser size={48} className="mb-1" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Photo</span>
+                      </div>
+                    )}
+                  </div>
+                  <label className="absolute -bottom-2 -right-2 p-3 bg-blue-600 text-white rounded-2xl shadow-lg cursor-pointer hover:bg-blue-700 hover:scale-110 transition-all active:scale-95 z-20">
+                    <FiUserPlus size={18} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          if (file.size > 2 * 1024 * 1024) {
+                            setError("Image size must be less than 2MB");
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => setPhotoBase64(reader.result);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Profile Identity</p>
+              </motion.div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Full Name */}
@@ -231,8 +273,12 @@ const Register = () => {
                     required
                     value={accountType}                    // ← controlled value (very important!)
                     onChange={(e) => {
-                      setAccountType(e.target.value);
-                      console.log("Account type changed to:", e.target.value); // ← debug
+                      const selectedType = e.target.value;
+                      setAccountType(selectedType);
+                      if (selectedType !== "buyer") {
+                        setPhotoBase64("");
+                      }
+                      console.log("Account type changed to:", selectedType);
                     }}
                     className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all appearance-none"
                   >

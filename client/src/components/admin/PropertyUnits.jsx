@@ -200,7 +200,7 @@ const PropertyUnits = () => {
             <div>
               <h1 className="text-[18px] font-bold text-slate-900 leading-snug">{property.title}</h1>
               <p className="text-[11px] text-slate-400 font-semibold mt-0.5 uppercase tracking-wider">
-                {property.property_type} &nbsp;·&nbsp; {subtitleLabel}
+                {property.property_type} &nbsp;·&nbsp; {property.property_type === 'Villas' && currentVariant?.facing ? `${currentVariant.facing} Facing` : subtitleLabel}
               </p>
             </div>
           </div>
@@ -272,9 +272,9 @@ const PropertyUnits = () => {
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200">
                         <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unit #</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Apartment Detail</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">{property.property_type === 'Villas' ? 'Villa Detail' : 'Apartment Detail'}</th>
                         <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sqft</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Block / Floor</th>
+                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">{property.property_type === 'Villas' ? 'Facing' : 'Block / Floor'}</th>
                         <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
                         <th className="px-6 py-4 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Action</th>
                       </tr>
@@ -295,7 +295,7 @@ const PropertyUnits = () => {
                                   <FaBuilding size={14} />
                                 </div>
                                 <span className="font-bold text-slate-900 text-sm">
-                                  {unitDetails.apartment_type ? `${unitDetails.apartment_type} Apartment` : property.title}
+                                  {unitDetails.apartment_type ? `${unitDetails.apartment_type} Apartment` : (unitDetails.facing ? `${unitDetails.facing} Facing Villa` : property.title)}
                                 </span>
                               </div>
                             </td>
@@ -309,7 +309,9 @@ const PropertyUnits = () => {
                             </td>
                             <td className="px-6 py-4">
                               <span className="text-xs text-slate-500 font-medium">
-                                Block {unitDetails.block_name || 'N/A'} · Floor {unitDetails.floor || 'N/A'}
+                                {property.property_type === 'Villas' 
+                                  ? (unitDetails.facing || 'N/A')
+                                  : `Block ${unitDetails.block_name || 'N/A'} · Floor ${unitDetails.floor || 'N/A'}`}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-center">
