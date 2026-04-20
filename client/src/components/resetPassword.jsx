@@ -1,48 +1,48 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { FiUser, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { motion } from "framer-motion";
 import API_BASE_URL from "../config.js";
-import { setAuthData } from "../utils/auth.js";
 
-const Login = () => {
+const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { token } = useParams();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     const formData = new FormData(e.target);
-    const identifier = formData.get("identifier");
-    const password = formData.get("password");
+    const newPassword = formData.get("newPassword");
+    const confirmPassword = formData.get("confirmPassword");
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ token, newPassword }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Login failed");
+      if (!response.ok) throw new Error(data.error || "Failed to reset password");
 
-      sessionStorage.setItem("activeRole", data.user.account_type);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      if (data.user.account_type === "admin") {
-        navigate("/admin-dashboard");
-      }
-       else if(data.user.account_type === "builder") {
-        navigate("/builder-dashboard");
-      }
-      else {
-        navigate("/buy");
-      }
+      setSuccess("Password has been successfully reset. Redirecting to login...");
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -51,10 +51,9 @@ const Login = () => {
   };
 
   return (
-    // Changed to min-h-screen and overflow-hidden to contain the background
     <div className="min-h-screen w-full relative flex items-center justify-center p-4 bg-[#f0f7f9] overflow-x-hidden">
       
-      {/* Background Graphic Pattern - Changed absolute to fixed and inset-0 */}
+      {/* Background Graphic Pattern */}
       <div className="fixed inset-0 z-0 opacity-40 pointer-events-none">
         <svg 
           viewBox="0 0 1440 800" 
@@ -74,46 +73,31 @@ const Login = () => {
         className="w-full max-w-md z-10"
       >
         <div className="bg-white/80 backdrop-blur-md rounded-4xl p-8 md:p-10 shadow-2xl border border-white/50 text-center">
-          {/* Top User Icon */}
+          
           <div className="flex justify-center mb-6">
             <div className="bg-[#0a2540] p-3 rounded-xl shadow-lg">
-              <FiUser className="text-white text-2xl" />
+              <FiLock className="text-white text-2xl" />
             </div>
           </div>
 
-          <h1 className="text-3xl font-extrabold text-[#0a2540] mb-2 tracking-tight">Welcome Back</h1>
-          <p className="text-slate-500 text-sm mb-8">Log in to your NativeNest account</p>
+          <h1 className="text-3xl font-extrabold text-[#0a2540] mb-2 tracking-tight">Reset Password</h1>
+          <p className="text-slate-500 text-sm mb-8">Create a new password for your account</p>
 
           {error && (
             <div className="p-3 rounded-lg mb-4 text-xs bg-red-50 text-red-600 border border-red-100">
               {error}
             </div>
           )}
-
-          <form onSubmit={handleLogin} className="space-y-6 text-left">
-            {/* Email Field */}
-            <div>
-              <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-2 ml-1">
-                Email or Mobile
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-                  <FiUser size={18} />
-                </span>
-                <input
-                  type="text"
-                  name="identifier"
-                  placeholder="Enter your email"
-                  required
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all placeholder:text-slate-400"
-                />
-              </div>
+          {success && (
+            <div className="p-3 rounded-lg mb-4 text-xs bg-green-50 text-green-600 border border-green-100">
+              {success}
             </div>
+          )}
 
-            {/* Password Field */}
+          <form onSubmit={handleReset} className="space-y-6 text-left">
             <div>
               <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-2 ml-1">
-                Password
+                New Password
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
@@ -121,7 +105,7 @@ const Login = () => {
                 </span>
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
+                  name="newPassword"
                   placeholder="••••••••"
                   required
                   className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
@@ -136,26 +120,44 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Sign In Button */}
+            <div>
+              <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-2 ml-1">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                  <FiLock size={18} />
+                </span>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  placeholder="••••••••"
+                  required
+                  className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+                >
+                  {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-[#0a2540] hover:bg-[#0d2e50] text-white py-4 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all disabled:opacity-70"
             >
-              {loading ? "Logging in..." : "Sign In"}
+              {loading ? "Resetting..." : "Reset Password"}
             </button>
-
-            <div className="text-center mt-4">
-              <Link to="/forgot" className="text-sm font-semibold text-slate-500 hover:text-[#2e6171] transition-colors">
-                Forgot Password?
-              </Link>
-            </div>
           </form>
 
           <div className="mt-8 text-sm text-slate-500">
-            Don't have an account?{" "}
-            <Link to="/register" className="font-bold text-[#2e6171] hover:underline">
-              Create Account
+            Remembered your password?{" "}
+            <Link to="/login" className="font-bold text-[#2e6171] hover:underline">
+              Sign In
             </Link>
           </div>
         </div>
@@ -164,4 +166,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ResetPassword;

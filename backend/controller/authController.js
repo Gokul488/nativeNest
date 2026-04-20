@@ -1,6 +1,8 @@
 const pool = require('../db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 /* ===================== REGISTER ===================== */
 const register = async (req, res) => {
@@ -244,4 +246,102 @@ const getAccountTypes = (req, res) => {
   res.json({ accountTypes: ['buyer', 'admin', 'builder'] });
 };
 
-module.exports = { register, login, getAccountTypes };
+/* ===================== FORGOT PASSWORD ===================== */
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    let user;
+    let table = '';
+    
+    let [rows] = await pool.query('SELECT id, email FROM buyers WHERE email = ?', [email]);
+    if (rows.length > 0) {
+      user = rows[0];
+      table = 'buyers';
+    } else {
+      [rows] = await pool.query('SELECT id, email FROM admins WHERE email = ?', [email]);
+      if (rows.length > 0) {
+        user = rows[0];
+        table = 'admins';
+      } else {
+        [rows] = await pool.query('SELECT id, email FROM builders WHERE email = ?', [email]);
+        if (rows.length > 0) {
+          user = rows[0];
+          table = 'builders';
+        }
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'User with this email does not exist' });
+    }
+
+    const resetToken = jwt.sign(
+      { userId: user.id, table },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+    
+    const clientUrl = req.headers.origin || 'http://localhost:5173';
+    const resetLink = `${clientUrl}/reset-password/${resetToken}`;
+
+    const transporter = nodemailer.createTransport({
+       host: process.env.EMAIL_HOST,
+       port: process.env.EMAIL_PORT,
+       secure: false,
+       auth: {
+           user: process.env.EMAIL_USER,
+           pass: process.env.EMAIL_PASS
+       }
+    });
+
+    const mailOptions = {
+      from: `"NativeNest Support" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: 'Password Reset Request',
+      text: `You requested a password reset. Please click the following link to reset your password: ${resetLink}\nIf you did not request this, please ignore this email.`,
+      html: `<h3>Password Reset</h3><p>You requested a password reset.</p><p><a href="${resetLink}">Click here to reset your password</a></p><p>If you did not request this, please ignore this email.</p>`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ message: 'A password reset link has been sent to your email.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Internal server error while sending email' });
+  }
+};
+
+/* ===================== RESET PASSWORD ===================== */
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+
+    const { userId, table } = decoded;
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await pool.query(`UPDATE ${table} SET password = ? WHERE id = ?`, [hashedPassword, userId]);
+
+    res.json({ message: 'Password has been successfully reset' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+module.exports = { register, login, getAccountTypes, forgotPassword, resetPassword };
