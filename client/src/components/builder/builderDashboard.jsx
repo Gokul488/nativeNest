@@ -122,7 +122,19 @@ const BuilderDashboard = () => {
 
   const activePage = (() => {
     const subMatch = subRouteLabels.find(r => r.match.test(location.pathname));
+    
+    // Check for specific exhibition name when viewing details
+    const eventDetailMatch = location.pathname.match(/\/events\/([^\/]+)$/);
+    if (eventDetailMatch && !location.pathname.endsWith('/events')) {
+      const eventId = eventDetailMatch[1];
+      const event = upcomingEvents.find(e => String(e.id) === String(eventId));
+      if (event) {
+        return { label: event.event_name, icon: <CalendarDays className="w-5 h-5" /> };
+      }
+    }
+    
     if (subMatch) return subMatch;
+
     return navLinks.find(link =>
       link.to === "/builder-dashboard/"
         ? location.pathname === "/builder-dashboard/"

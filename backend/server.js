@@ -5,8 +5,8 @@ const authRoutes = require('./routes/authRoutes');
 const propertiesRoutes = require('./routes/propertiesRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const viewPropertyRoutes = require('./routes/viewPropertyRoutes');
-const userRoutes = require('./routes/userRoutes'); 
-const blogRoutes = require('./routes/blogRoutes'); 
+const userRoutes = require('./routes/userRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const buyerEventRoutes = require('./routes/buyerEventRoutes');
@@ -31,14 +31,42 @@ app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertiesRoutes);
 app.use('/api/viewproperties', viewPropertyRoutes);
 app.use('/api/contact', contactRoutes);
-app.use('/api', userRoutes); 
-app.use('/api/blogs', blogRoutes); 
+app.use('/api', userRoutes);
+app.use('/api/blogs', blogRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', eventRoutes);
 app.use('/api', buyerEventRoutes);
 app.use('/api/bookmarks', bookmarksRoutes);
 app.use('/api', builderRoutes)
 app.use('/api/stalls', stallRoutes);
+
+app.get('/api/debug/my-photo', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.send('No header');
+    const token = authHeader.split(' ')[1];
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    const pool = require('./db');
+    const [rows] = await pool.query('SELECT photo FROM buyers WHERE id = ?', [decoded.userId]);
+    
+    if (rows.length === 0) return res.send('User not found');
+    const photo = rows[0].photo;
+    
+    if (!photo) return res.send('Photo is NULL in DB');
+    
+    res.json({
+      type: typeof photo,
+      isBuffer: Buffer.isBuffer(photo),
+      length: photo.length,
+      prefix: photo.slice(0, 20).toString('hex'),
+      asString: photo.toString().slice(0, 50) + '...'
+    });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
 
 // Health check endpoint
 app.get('/health-db', async (req, res) => {

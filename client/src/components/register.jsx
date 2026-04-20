@@ -118,7 +118,44 @@ const Register = () => {
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-4 text-left">
+          <form onSubmit={handleRegister} className="space-y-6 text-left">
+            {/* Top Centered Photo Upload */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative group">
+                <div className="w-32 h-32 rounded-3xl bg-slate-100 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center transition-all group-hover:scale-[1.02] group-hover:shadow-blue-200/50">
+                  {photoBase64 ? (
+                    <img src={photoBase64} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center text-slate-400">
+                      <FiUser size={48} className="mb-1" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest">Photo</span>
+                    </div>
+                  )}
+                </div>
+                <label className="absolute -bottom-2 -right-2 p-3 bg-blue-600 text-white rounded-2xl shadow-lg cursor-pointer hover:bg-blue-700 hover:scale-110 transition-all active:scale-95 z-20">
+                  <FiUserPlus size={18} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        if (file.size > 2 * 1024 * 1024) {
+                          setError("Image size must be less than 2MB");
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => setPhotoBase64(reader.result);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Profile Identity</p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Full Name */}
               <div>
@@ -238,13 +275,13 @@ const Register = () => {
 
               {/* Buyer Specific Fields */}
               {accountType === "buyer" && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100"
                 >
                   <div className="md:col-span-2">
-                     <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em] mb-4">Additional Information (Buyer)</p>
+                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em] mb-4">Additional Information (Buyer)</p>
                   </div>
 
                   {/* Gender */}
@@ -270,19 +307,19 @@ const Register = () => {
 
                   {/* Date of Birth */}
                   <div>
-                      <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
-                        Date of Birth
-                      </label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-                          <FiType size={16} />
-                        </span>
-                        <input
-                          type="date"
-                          name="dob"
-                          className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
-                        />
-                      </div>
+                    <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
+                      Date of Birth
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                        <FiType size={16} />
+                      </span>
+                      <input
+                        type="date"
+                        name="dob"
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                      />
+                    </div>
                   </div>
 
                   {/* City */}
@@ -319,35 +356,6 @@ const Register = () => {
                         className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
                       />
                     </div>
-                  </div>
-
-                  {/* Photo Upload */}
-                  <div className="md:col-span-2">
-                     <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
-                        Profile Photo (Optional)
-                      </label>
-                      <div className="flex items-center gap-4 p-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-300">
-                        {photoBase64 ? (
-                          <img src={photoBase64} alt="Preview" className="w-12 h-12 rounded-full object-cover border border-white shadow-sm" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
-                             <FiUser size={24} />
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => setPhotoBase64(reader.result);
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer"
-                        />
-                      </div>
                   </div>
                 </motion.div>
               )}

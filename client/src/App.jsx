@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Home from "./components/home";
 import Login from "./components/login";
+import Forgot from "./components/forgot";
+import ResetPassword from "./components/resetPassword";
 import Register from "./components/register";
 import AboutUs from "./components/aboutUs";
 import FAQ from "./components/faq's";
@@ -31,6 +33,8 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot" element={<Forgot />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/faq's" element={<FAQ />} />

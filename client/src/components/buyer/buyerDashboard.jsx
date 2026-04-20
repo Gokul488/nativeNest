@@ -144,8 +144,8 @@ const BuyerDashboard = () => {
                 to={link.to}
                 onClick={closeSidebar}
                 className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${active
-                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   }`}
               >
                 <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{link.icon}</span>
@@ -198,7 +198,7 @@ const BuyerDashboard = () => {
           </div>
         </header>
 
-        <main className="p-6 md:p-8 max-w-[1600px] w-full mx-auto flex-1">
+        <main className="p-4 md:p-8 max-w-[1600px] w-full mx-auto flex-1">
           <Routes>
             <Route
               path="/"

@@ -170,16 +170,16 @@ const ViewProperties = () => {
 
       setProperties(prev => prev.map(p => {
         if (p.id === property.id) {
-            return {
-              ...p,
-              quantity: p.quantity - 1,
-              sold: p.sold + 1,
-              variants: p.variants.map(v =>
-                v.variant_id === property.variants[0].variant_id // This logic might need refinement if selling from total count
-                  ? { ...v, quantity: v.quantity - 1, sold: v.sold + 1 }
-                  : v
-              )
-            };
+          return {
+            ...p,
+            quantity: p.quantity - 1,
+            sold: p.sold + 1,
+            variants: p.variants.map(v =>
+              v.variant_id === property.variants[0].variant_id // This logic might need refinement if selling from total count
+                ? { ...v, quantity: v.quantity - 1, sold: v.sold + 1 }
+                : v
+            )
+          };
         }
         return p;
       }));
@@ -353,7 +353,7 @@ const ViewProperties = () => {
                           {String(globalIndex).padStart(2, '0')}
                         </td>
                         <td className="px-4 py-2.5">
-                          <Link 
+                          <Link
                             to={`/admin-dashboard/property-preview/${property.id}`}
                             className="font-bold text-slate-900 text-sm leading-tight hover:text-indigo-600 transition-colors"
                           >
@@ -374,7 +374,7 @@ const ViewProperties = () => {
 
                         {/* QUANTITY COLUMN */}
                         <td className="px-4 py-2.5 text-center">
-                          <Link 
+                          <Link
                             to={`/admin-dashboard/manage-properties/units/${property.id}`}
                             className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50/50 border border-amber-100 rounded-lg text-xs font-bold text-amber-700 hover:bg-amber-100 hover:text-amber-800 transition-all cursor-pointer shadow-sm active:scale-95"
                             title="View Units"
@@ -420,7 +420,7 @@ const ViewProperties = () => {
                         <div className="bg-indigo-50 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">
                           {globalIndex}
                         </div>
-                        <Link 
+                        <Link
                           to={`/admin-dashboard/property-preview/${property.id}`}
                           className="font-bold text-slate-900 hover:text-indigo-600 transition-colors text-[13px]"
                         >
@@ -433,18 +433,18 @@ const ViewProperties = () => {
                       <div className="flex items-center gap-2">
                         <FaUserTie className="text-slate-400 text-xs" />
                         {/* Tapping builder name on mobile sets the filter */}
-                          <button
-                            onClick={() => setBuilderFilter(property.builder_name || '')}
-                            className="text-indigo-600 font-bold hover:underline transition text-xs"
-                          >
-                            {property.builder_name || 'N/A'}
-                          </button>
+                        <button
+                          onClick={() => setBuilderFilter(property.builder_name || '')}
+                          className="text-indigo-600 font-bold hover:underline transition text-xs"
+                        >
+                          {property.builder_name || 'N/A'}
+                        </button>
                       </div>
 
                       {/* Quantity */}
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500 text-xs font-medium">Quantity</span>
-                        <Link 
+                        <Link
                           to={`/admin-dashboard/manage-properties/units/${property.id}`}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-50/50 text-amber-700 border border-amber-100 shadow-sm hover:bg-amber-100 transition-all active:scale-95"
                         >

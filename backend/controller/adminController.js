@@ -150,7 +150,7 @@ const getAllUsers = async (req, res) => {
     }
 
     const [buyers] = await pool.query(
-      `SELECT id, name, mobile_number, email, created_at
+      `SELECT id, name, mobile_number, email, gender, dob, city, country, photo, created_at
        FROM buyers
        ORDER BY created_at DESC`
     );
@@ -259,6 +259,60 @@ const getAllBuilders = async (req, res) => {
 };
 
 /* =========================
+   ADMIN: UPDATE A SPECIFIC USER
+========================= */
+const adminUpdateUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { userId } = req.params;
+    const { name, email, mobile_number, gender, dob, city, country, photo, password } = req.body;
+
+    if (!name || !email || !mobile_number) {
+      return res.status(400).json({ error: "Name, email and mobile number are required" });
+    }
+
+    // Check for duplicate mobile or email (excluding this user)
+    const [existing] = await pool.query(
+      `SELECT id FROM buyers WHERE (mobile_number = ? OR email = ?) AND id != ?`,
+      [mobile_number, email, userId]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: "Mobile number or email already in use" });
+    }
+
+    let query = `
+      UPDATE buyers 
+      SET name = ?, email = ?, mobile_number = ?, gender = ?, dob = ?, city = ?, country = ?, photo = ?
+    `;
+    let params = [name, email, mobile_number, gender || null, dob || null, city || null, country || null, photo || null];
+
+    if (password && password.trim() !== "") {
+      const hashedPassword = await bcrypt.hash(password.trim(), 10);
+      query += ", password = ?";
+      params.push(hashedPassword);
+    }
+
+    query += " WHERE id = ?";
+    params.push(userId);
+
+    await pool.query(query, params);
+    res.json({ message: "User updated successfully" });
+
+  } catch (error) {
+    console.error("Admin: Update user error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/* =========================
    GET DASHBOARD STATISTICS
 ========================= */
 const getDashboardStats = async (req, res) => {
@@ -314,5 +368,6 @@ module.exports = {
   getAllEvents,
   getEventParticipants,
   getAllBuilders,
+  adminUpdateUser,
   getDashboardStats
 };
