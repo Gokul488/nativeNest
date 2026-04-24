@@ -347,12 +347,46 @@ const getPropertyById = async (req, res) => {
   const propertyId = parseInt(id, 10);
   if (isNaN(propertyId) || propertyId <= 0) return res.status(400).json({ error: 'Invalid property ID' });
 
+  const guestId = req.query.guestId || null;
+  let buyerId = null;
+
+  const token = req.headers.authorization?.split(' ')[1];
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.account_type === 'buyer') {
+        buyerId = decoded.userId;
+      }
+    } catch (err) {
+      // Ignore token errors for view tracking
+    }
+  }
+
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
 
+    try {
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const userAgent = req.headers['user-agent'];
+      if (buyerId) {
+        const [existing] = await connection.query('SELECT id FROM property_views WHERE property_id = ? AND buyer_id = ?', [propertyId, buyerId]);
+        if (existing.length === 0) {
+          await connection.query('INSERT INTO property_views (property_id, buyer_id, ip_address, user_agent) VALUES (?, ?, ?, ?)', [propertyId, buyerId, ipAddress, userAgent]);
+        }
+      } else if (guestId) {
+        const [existing] = await connection.query('SELECT id FROM property_views WHERE property_id = ? AND guest_id = ?', [propertyId, guestId]);
+        if (existing.length === 0) {
+          await connection.query('INSERT INTO property_views (property_id, guest_id, ip_address, user_agent) VALUES (?, ?, ?, ?)', [propertyId, guestId, ipAddress, userAgent]);
+        }
+      }
+    } catch (err) {
+      console.error('Error tracking view:', err);
+    }
+
     const [properties] = await connection.query(
-      `SELECT p.*, b.name AS builderName, b.mobile_number, b.email
+      `SELECT p.*, b.name AS builderName, b.mobile_number, b.email,
+              (SELECT COUNT(*) FROM property_views WHERE property_id = p.property_id) AS views
        FROM properties p
        LEFT JOIN builders b ON p.builder_id = b.id
        WHERE p.property_id = ?`,

@@ -33,6 +33,8 @@ import PropertyPreview from "../common/PropertyPreview";
 import EventDetails from "../buyer/EventDetails";
 import PropertyUnits from "./PropertyUnits";
 import LogoutDialog from "../LogoutDialog";
+import CreateAdmin from "./CreateAdmin";
+import ManageAdmins from "./ManageAdmins";
 
 // Lucide Icons
 import {
@@ -63,7 +65,7 @@ const StatCounter = ({ targetValue, duration = 1500 }) => {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || {});
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -72,7 +74,23 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchAdminDetails();
   }, []);
+
+  const fetchAdminDetails = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const res = await axios.get(`${API_BASE_URL}/api/admin`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const updatedUser = { ...user, ...res.data };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    } catch (err) {
+      console.error("Error fetching admin details", err);
+    }
+  };
 
   const fetchDashboardStats = async () => {
     try {
@@ -96,11 +114,8 @@ const AdminDashboard = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     sessionStorage.removeItem("activeRole");
-    navigate("/", { replace: true });
+    navigate("/login");
   };
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const closeSidebar = () => setIsSidebarOpen(false);
 
   const isActive = (path) =>
     location.pathname === path || (path !== "/admin-dashboard/" && location.pathname.startsWith(path));
@@ -132,6 +147,7 @@ const AdminDashboard = () => {
     { to: "/admin-dashboard/manage-blogs", label: "Manage Blogs", icon: <Newspaper className="w-5 h-5" /> },
     { to: "/admin-dashboard/analytics/most-viewed", label: "Analytics", icon: <BarChart3 className="w-5 h-5" /> },
     { to: "/admin-dashboard/enquiries", label: "View Enquiries", icon: <MessageSquare className="w-5 h-5" /> },
+    ...(user.admin_type === "SuperAdmin" ? [{ to: "/admin-dashboard/manage-admins", label: "Manage Admins", icon: <User className="w-5 h-5" /> }] : []),
     { to: "/admin-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
   ];
 
@@ -151,6 +167,7 @@ const AdminDashboard = () => {
     { match: /\/property\/.*\/viewers/, label: "Property Viewers", icon: <Building2 className="w-5 h-5" /> },
     { match: /\/property-preview\//, label: "Property Preview", icon: <Building2 className="w-5 h-5" /> },
     { match: /\/manage-users\/edit\//, label: "Edit Buyer", icon: <Users className="w-5 h-5" /> },
+    { match: /\/manage-admins\/create/, label: "Add Admin", icon: <User className="w-5 h-5" /> },
     { match: /\/sold-properties/, label: "Sold Properties", icon: <Briefcase className="w-5 h-5" /> },
   ];
 
@@ -159,264 +176,221 @@ const AdminDashboard = () => {
     if (subMatch) return subMatch;
     return navLinks.find(link =>
       link.to === "/admin-dashboard/"
-        ? location.pathname === "/admin-dashboard/"
+        ? location.pathname === link.to
         : location.pathname.startsWith(link.to)
     ) || navLinks[0];
   })();
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-50 flex relative text-slate-500" style={{ fontFamily: '"Inter", sans-serif' }}>
-
-      {/* ================= SIDEBAR ================= */}
-      <div
-        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 ease-in-out transform md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } bg-gradient-to-b from-slate-800 to-slate-900 shadow-[0_4px_24px_rgba(15,23,42,0.15)] z-50`}
-      >
-        <div className="p-8 pb-6 border-b border-slate-700/50">
-          <h1 className="text-3xl font-bold text-white tracking-[-1px]">NativeNest</h1>
-          <p className="text-[11px] text-sky-400 mt-1 uppercase tracking-widest font-semibold">Admin Portal</p>
-        </div>
-
-        <nav className="flex-1 px-4 py-6 overflow-y-auto scrollbar-hide hover:scrollbar-show transition-all">
-          <div className="space-y-1">
-            {navLinks.map((link) => {
-              const active = isActive(link.to);
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={closeSidebar}
-                  className={`flex items-center gap-3 py-3 px-4 rounded-[14px] text-sm font-medium transition-all duration-200 group ${active
-                    ? "bg-sky-500 text-white shadow-md shadow-sky-500/20"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                    }`}
-                >
-                  <span className={`${active ? "text-white" : "text-slate-400 group-hover:text-white"} transition-colors`}>{link.icon}</span>
-                  <span className="truncate">{link.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-
-        <div className="px-4 py-8 mt-auto">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full py-3 px-4 rounded-[14px] text-sm font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group border border-transparent hover:border-red-500/20"
-          >
-            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Backdrop for mobile */}
+    <div className="flex h-screen bg-[#F8FAFC]">
+      {/* Sidebar Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
-          onClick={closeSidebar}
-        ></div>
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden transition-all duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
       )}
 
-      {/* ================= MAIN CONTENT ================= */}
-      <div className="flex-1 md:ml-[280px] w-full min-w-0 transition-all duration-300 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 p-4 px-6 flex justify-between items-center sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <button onClick={toggleSidebar} className="text-slate-500 hover:text-sky-500 transition-colors md:hidden">
-              <Menu className="w-6 h-6" />
-            </button>
-            <div className="hidden md:flex items-center gap-2 text-slate-500">
-              {activePage.icon}
-              <h2 className="text-xl font-bold text-slate-900">{activePage.label}</h2>
+      {/* Sidebar */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-300 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        flex flex-col shadow-2xl
+      `}>
+        {/* Sidebar Header */}
+        <div className="p-8 border-b border-slate-800/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-sky-500 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20">
+              <Building2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white tracking-tight">NativeNest</h1>
+              <p className="text-[10px] font-bold text-sky-500 uppercase tracking-widest">Admin Portal</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-slate-600 font-medium text-sm hidden sm:block">
-              Welcome, <span className="text-slate-900">{user.name || "Admin"}</span>
-            </span>
-            <div className="w-10 h-10 rounded-full bg-sky-50 flex items-center justify-center border border-sky-100 shadow-sm text-sky-500">
-              <User className="w-5 h-5" />
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-scrollbar">
+          {navLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={() => setIsSidebarOpen(false)}
+              className={`
+                flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group
+                ${isActive(link.to)
+                  ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20"
+                  : "hover:bg-slate-800 hover:text-white"
+                }
+              `}
+            >
+              <span className={`${isActive(link.to) ? "text-white" : "text-slate-400 group-hover:text-sky-400"} transition-colors`}>
+                {link.icon}
+              </span>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Logout Section */}
+        <div className="p-6 border-t border-slate-800/50">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200 group"
+          >
+            <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Header */}
+        <header className="h-20 bg-white border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between shrink-0 z-30">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 lg:hidden text-slate-500 hover:bg-slate-100 rounded-lg"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex p-2 bg-sky-50 text-sky-500 rounded-lg">
+                {activePage.icon}
+              </div>
+              <h2 className="text-lg font-bold text-slate-800">{activePage.label}</h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex flex-col items-end mr-2">
+              <span className="text-sm font-bold text-slate-700 leading-none">Welcome, {user.name}</span>
+              <span className="text-[10px] font-bold text-sky-500 uppercase tracking-tighter mt-1">{user.admin_type || 'Administrator'}</span>
+            </div>
+            <div className="w-10 h-10 bg-sky-50 rounded-full border-2 border-sky-100 flex items-center justify-center text-sky-500 shadow-sm">
+              <User className="w-6 h-6" />
             </div>
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="p-6 md:p-8 max-w-[1600px] w-full mx-auto flex-1 overflow-y-auto">
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
           <Routes>
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">
-
-
-
-                {/* Statistics Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
                   {[
-                    {
-                      label: "Total Properties",
-                      val: totalProperties,
-                      icon: <Home className="w-5 h-5" />,
-                      color: "text-sky-500",
-                      bg: "bg-sky-50",
-                      path: "/admin-dashboard/manage-properties"
-                    },
-                    {
-                      label: "Active Users",
-                      val: totalUsers,
-                      icon: <Users className="w-5 h-5" />,
-                      color: "text-indigo-500",
-                      bg: "bg-indigo-50",
-                      path: "/admin-dashboard/manage-users"
-                    },
-                    {
-                      label: "Registered Builders",
-                      val: activeBuilders,
-                      icon: <Building2 className="w-5 h-5" />,
-                      color: "text-teal-500",
-                      bg: "bg-teal-50",
-                      path: "/admin-dashboard/manage-builders"
-                    },
-                    {
-                      label: "Published Blogs",
-                      val: publishedBlogs,
-                      icon: <FileText className="w-5 h-5" />,
-                      color: "text-amber-500",
-                      bg: "bg-amber-50",
-                      path: "/admin-dashboard/manage-blogs"
-                    },
-                    {
-                      label: "Total Events",
-                      val: totalEvents,
-                      icon: <CalendarDays className="w-5 h-5" />,
-                      color: "text-purple-500",
-                      bg: "bg-purple-50",
-                      path: "/admin-dashboard/manage-events"
-                    },
-                  ].map((card, idx) => (
-                    <Link
-                      key={idx}
-                      to={card.path}
-                      className="bg-white p-5 rounded-[22px] shadow-sm border border-slate-100 flex flex-col justify-between transition-all duration-300 hover:border-emerald-200 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:scale-[1.02] group"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-3">{card.label}</p>
-                          <h4 className="text-[28px] font-bold text-slate-900 leading-none h-7">
-                            {loadingStats ? (
-                              <Loader2 className="animate-spin w-5 h-5 text-slate-400" />
-                            ) : (
-                              <StatCounter targetValue={card.val} />
-                            )}
-                          </h4>
-                        </div>
-                        <div className={`${card.bg} ${card.color} w-12 h-12 rounded-[14px] flex items-center justify-center transition-transform duration-300 group-hover:bg-opacity-80`}>
-                          {card.icon}
-                        </div>
+                    { label: "Total Properties", value: totalProperties, icon: <Building2 />, color: "sky" },
+                    { label: "Total Users", value: totalUsers, icon: <Users />, color: "indigo" },
+                    { label: "Active Builders", value: activeBuilders, icon: <HardHat />, color: "amber" },
+                    { label: "Published Blogs", value: publishedBlogs, icon: <Newspaper />, color: "emerald" },
+                    { label: "Total Events", value: totalEvents, icon: <CalendarDays />, color: "violet" },
+                  ].map((stat, i) => (
+                    <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+                      <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 text-${stat.color}-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                        {stat.icon}
                       </div>
-                      <div className="mt-6 flex items-center gap-1.5 text-emerald-500 text-[12px] font-bold tracking-tight opacity-90 group-hover:opacity-100 transition-opacity">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                        <span>View details</span>
-                      </div>
-                    </Link>
+                      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">{stat.label}</p>
+                      <h3 className="text-2xl font-black text-slate-800 mt-1">
+                        <StatCounter targetValue={stat.value} />
+                      </h3>
+                    </div>
                   ))}
                 </div>
 
-                {/* 2-Column Dashboard Below */}
+                {/* Main Dashboard Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                  {/* Left Column: Chart */}
-                  <div className="lg:col-span-2 bg-white p-6 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200 flex flex-col">
-                    {/* Chart Header */}
-                    <div className="flex justify-between items-center mb-4">
+                  {/* Chart Card */}
+                  <div className="lg:col-span-2 bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
                       <div>
-                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-sky-500" />
-                          Registration Growth
-                        </h3>
-                        <p className="text-[11px] text-slate-400 font-medium mt-0.5 ml-6">Last 6 months</p>
+                        <h3 className="text-xl font-bold text-slate-800">Growth Overview</h3>
+                        <p className="text-sm text-slate-400 mt-1">Properties & user growth trends</p>
                       </div>
-                      {/* Legend pills */}
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block" />
-                          <span className="text-[11px] font-semibold text-slate-500">Properties</span>
+                      <div className="flex gap-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-sky-500" />
+                          <span className="text-xs font-bold text-slate-500 uppercase">Properties</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />
-                          <span className="text-[11px] font-semibold text-slate-500">Users</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-indigo-400" />
+                          <span className="text-xs font-bold text-slate-500 uppercase">Buyers</span>
                         </div>
                       </div>
                     </div>
-
-                    <div className="w-full h-[200px]">
-                      {loadingStats ? (
-                        <div className="h-full flex items-center justify-center">
-                          <Loader2 className="animate-spin text-sky-500 w-7 h-7" />
-                        </div>
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={chartData} margin={{ top: 5, right: 5, left: -28, bottom: 0 }} barGap={4}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                            <XAxis
-                              dataKey="month"
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
-                              dy={10}
-                              interval={0}
-                            />
-                            <YAxis
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 600 }}
-                              dx={-4}
-                            />
-                            <Tooltip
-                              cursor={{ fill: '#F8FAFC', radius: 8 }}
-                              contentStyle={{
-                                borderRadius: '10px',
-                                border: '1px solid #E2E8F0',
-                                boxShadow: '0 8px 24px rgba(15,23,42,0.08)',
-                                color: '#0F172A',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                padding: '8px 12px',
-                                fontFamily: '"Inter", sans-serif'
-                              }}
-                            />
-                            <Bar dataKey="properties" name="Properties" fill="#0EA5E9" radius={[5, 5, 0, 0]} barSize={14} />
-                            <Bar dataKey="buyers" name="Users" fill="#6366F1" radius={[5, 5, 0, 0]} barSize={14} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      )}
+                    <div className="h-[350px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                          <defs>
+                            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#0ea5e9" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.6} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis
+                            dataKey="month"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }}
+                            dy={10}
+                          />
+                          <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }}
+                          />
+                          <Tooltip
+                            cursor={{ fill: '#f8fafc' }}
+                            contentStyle={{
+                              borderRadius: '16px',
+                              border: 'none',
+                              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                              padding: '12px'
+                            }}
+                          />
+                          <Bar
+                            dataKey="properties"
+                            fill="url(#barGradient)"
+                            radius={[6, 6, 0, 0]}
+                            barSize={30}
+                          />
+                          <Bar
+                            dataKey="buyers"
+                            fill="#818cf8"
+                            radius={[6, 6, 0, 0]}
+                            barSize={30}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
 
-                  {/* Right Column: Quick Actions & Tip */}
-                  <div className="space-y-6 flex flex-col">
-
-                    {/* Quick Actions Card */}
-                    <div className="bg-white p-7 rounded-[20px] shadow-[0_4px_12px_rgba(15,23,42,0.06)] border border-slate-200">
-                      <h3 className="text-lg font-bold text-slate-900 mb-5">Quick Actions</h3>
-                      <div className="grid gap-3">
-                        <Link to="/admin-dashboard/manage-properties/add" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-sky-50 border border-transparent hover:border-sky-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-sky-50 p-2.5 rounded-xl shadow-sm text-sky-500 group-hover:scale-110 transition-all duration-300">
-                            <PlusCircle className="w-5 h-5" />
-                          </div>
-                          <span className="text-sm font-bold text-slate-700 group-hover:text-sky-700">Add New Property</span>
-                        </Link>
-                        <Link to="/admin-dashboard/create-property-event" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-indigo-50 p-2.5 rounded-xl shadow-sm text-indigo-500 group-hover:scale-110 transition-all duration-300">
-                            <CalendarDays className="w-5 h-5" />
-                          </div>
-                          <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Create Property Event</span>
-                        </Link>
-                        <Link to="/admin-dashboard/manage-blogs/add" className="flex items-center gap-4 p-4 rounded-[16px] bg-slate-50 hover:bg-amber-50 border border-transparent hover:border-amber-100 transition-all duration-200 group cursor-pointer">
-                          <div className="bg-amber-50 p-2.5 rounded-xl shadow-sm text-amber-600 group-hover:scale-110 transition-all duration-300">
-                            <PenTool className="w-5 h-5" />
-                          </div>
-                          <span className="text-sm font-bold text-slate-700 group-hover:text-amber-700">Write New Blog</span>
-                        </Link>
+                  {/* Quick Actions / Recent Activity Placeholder */}
+                  <div className="space-y-6">
+                    <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm h-full">
+                      <h3 className="text-xl font-bold text-slate-800 mb-6">Quick Actions</h3>
+                      <div className="grid grid-cols-1 gap-4">
+                        {[
+                          { label: "Post New Property", icon: <PlusCircle />, path: "/admin-dashboard/manage-properties/add", color: "sky" },
+                          { label: "Write Blog Post", icon: <PenTool />, path: "/admin-dashboard/manage-blogs/add", color: "indigo" },
+                          { label: "Create New Event", icon: <CalendarDays />, path: "/admin-dashboard/create-property-event", color: "emerald" },
+                          { label: "View Enquiries", icon: <MessageSquare />, path: "/admin-dashboard/enquiries", color: "amber" },
+                        ].map((action, i) => (
+                          <button
+                            key={i}
+                            onClick={() => navigate(action.path)}
+                            className="flex items-center gap-4 p-4 rounded-2xl border border-slate-50 hover:border-sky-100 hover:bg-sky-50 transition-all duration-200 group w-full text-left"
+                          >
+                            <div className={`w-10 h-10 rounded-xl bg-${action.color}-50 text-${action.color}-500 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                              {action.icon}
+                            </div>
+                            <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -424,47 +398,42 @@ const AdminDashboard = () => {
               </div>
             } />
 
-            {/* Sub-Routes Mapping */}
+            {/* Content Routes */}
+            <Route path="/profile-settings" element={<AdminProfileSettings />} />
+            <Route path="/manage-blogs/add" element={<AddBlog />} />
+            <Route path="/manage-blogs" element={<ViewBlogs />} />
+            <Route path="/manage-blogs/edit/:id" element={<EditBlog />} />
+            <Route path="/manage-properties/add" element={<PostProperty />} />
+            <Route path="/manage-properties" element={<ViewProperties />} />
+            <Route path="/manage-properties/edit/:id" element={<EditProperty />} />
+            <Route path="/create-property-event" element={<CreatePropertyEvent />} />
+            <Route path="/manage-events" element={<ViewEvents />} />
+            <Route path="/manage-events/edit/:id" element={<EditPropertyEvent />} />
+            <Route path="/analytics/most-viewed" element={<MostViewedProperties />} />
+            <Route path="/property/:id/viewers" element={<PropertyViewers />} />
             <Route path="/manage-users" element={<ManageUsers />} />
             <Route path="/manage-users/edit/:userId" element={<EditBuyer />} />
             <Route path="/events/:eventId/participants" element={<EventParticipants />} />
-            <Route path="/events/:id" element={<EventDetails />} />
-            <Route path="/manage-builders" element={<ManageBuilders />} />
-            <Route path="/manage-properties">
-              <Route index element={<ViewProperties />} />
-              <Route path="add" element={<PostProperty />} />
-              <Route path="edit/:id" element={<EditProperty />} />
-              <Route path="units/:propertyId" element={<PropertyUnits />} />
-              <Route path="units/:propertyId/:sqft" element={<PropertyUnits />} />
-            </Route>
-            <Route path="/sold-properties" element={<SoldProperties />} />
-            <Route path="/manage-blogs">
-              <Route index element={<ViewBlogs />} />
-              <Route path="add" element={<AddBlog />} />
-              <Route path="edit/:id" element={<EditBlog />} />
-            </Route>
-            <Route path="/manage-events">
-              <Route index element={<ViewEvents />} />
-              <Route path="edit/:id" element={<EditPropertyEvent />} />
-            </Route>
-            <Route path="/event-bookings/:eventId" element={<EventStallBookings />} />
-            <Route path="/create-property-event" element={<CreatePropertyEvent />} />
-            <Route path="/manage-stall-types/:eventId" element={<ManageStallTypes />} />
-            <Route path="/manage-stall-types/:eventId/add" element={<AddEditStallType />} />
-            <Route path="/manage-stall-types/:eventId/edit/:typeId" element={<AddEditStallType />} />
-            <Route path="/analytics/most-viewed" element={<MostViewedProperties />} />
-            <Route path="/property/:propertyId/viewers" element={<PropertyViewers />} />
-            <Route path="/property-preview/:id" element={<PropertyPreview />} />
             <Route path="/enquiries" element={<ViewEnquiries />} />
-            <Route path="/profile-settings" element={<AdminProfileSettings />} />
+            <Route path="/manage-stall-types/:eventId" element={<ManageStallTypes />} />
+            <Route path="/event-bookings/:eventId" element={<EventStallBookings />} />
+            <Route path="/manage-builders" element={<ManageBuilders />} />
+            <Route path="/manage-stall-types/:eventId/add" element={<AddEditStallType />} />
+            <Route path="/manage-stall-types/:eventId/edit/:stallId" element={<AddEditStallType />} />
+            <Route path="/sold-properties" element={<SoldProperties />} />
+            <Route path="/property-preview/:id" element={<PropertyPreview />} />
+            <Route path="/events/:id" element={<EventDetails />} />
+            <Route path="/manage-properties/units/:id" element={<PropertyUnits />} />
+            <Route path="/manage-admins" element={<ManageAdmins />} />
+            <Route path="/manage-admins/create" element={<CreateAdmin />} />
           </Routes>
-        </main>
-      </div>
+        </div>
+      </main>
 
       <LogoutDialog
         isOpen={isLogoutDialogOpen}
+        onClose={() => setIsLogoutDialogOpen(false)}
         onConfirm={confirmLogout}
-        onCancel={() => setIsLogoutDialogOpen(false)}
       />
     </div>
   );

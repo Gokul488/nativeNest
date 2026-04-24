@@ -150,7 +150,7 @@ const getAllUsers = async (req, res) => {
     }
 
     const [buyers] = await pool.query(
-      `SELECT id, name, mobile_number, email, gender, dob, city, country, photo, created_at
+      `SELECT id, name, mobile_number, email, gender, dob, city, country, photo, created_at, is_approved
        FROM buyers
        ORDER BY created_at DESC`
     );
@@ -243,11 +243,11 @@ const getAllBuilders = async (req, res) => {
 
     const [builders] = await pool.query(
       `SELECT 
-        b.id, b.name, b.mobile_number, b.email, b.created_at,
+        b.id, b.name, b.mobile_number, b.email, b.created_at, b.is_approved,
         COUNT(p.property_id) AS total_properties
        FROM builders b
        LEFT JOIN properties p ON p.builder_id = b.id
-       GROUP BY b.id, b.name, b.mobile_number, b.email, b.created_at
+       GROUP BY b.id, b.name, b.mobile_number, b.email, b.created_at, b.is_approved
        ORDER BY b.created_at DESC`
     );
 
@@ -360,6 +360,122 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
+/* =========================
+   ADMIN: CREATE NEW ADMIN
+========================= */
+const createAdmin = async (req, res) => {
+  try {
+    const { name, mobile_number, email, password } = req.body;
+
+    if (!name || !mobile_number || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const [existing] = await pool.query(
+      "SELECT id FROM admins WHERE mobile_number = ? OR email = ?",
+      [mobile_number, email]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: "Admin with this email/mobile already exists" });
+    }
+
+    await pool.query(
+      "INSERT INTO admins (name, mobile_number, email, password, created_at) VALUES (?, ?, ?, ?, NOW())",
+      [name, mobile_number, email, hashedPassword]
+    );
+
+    res.status(201).json({ message: "Admin created successfully" });
+  } catch (error) {
+    console.error("Create admin error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/* =========================
+   ADMIN: APPROVE USER/BUILDER
+========================= */
+const approveAccount = async (req, res) => {
+  try {
+    const { id, type } = req.params; // type: 'buyer' or 'builder'
+    const table = type === 'builder' ? 'builders' : 'buyers';
+
+    await pool.query(`UPDATE ${table} SET is_approved = 1 WHERE id = ?`, [id]);
+    res.json({ message: `${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully` });
+  } catch (error) {
+    console.error("Approval error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/* =========================
+   ADMIN: GET ALL ADMINS
+========================= */
+const getAllAdmins = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    // Check if the current requester is a SuperAdmin
+    const [requester] = await pool.query("SELECT admin_type FROM admins WHERE id = ?", [decoded.userId]);
+    if (!requester.length || requester[0].admin_type !== "SuperAdmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const [admins] = await pool.query(
+      "SELECT id, name, mobile_number, email, admin_type, created_at FROM admins ORDER BY created_at DESC"
+    );
+
+    res.json(admins);
+  } catch (error) {
+    console.error("Get all admins error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/* =========================
+   ADMIN: DELETE ADMIN
+========================= */
+const deleteAdmin = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    // Check if the current requester is a SuperAdmin
+    const [requester] = await pool.query("SELECT admin_type FROM admins WHERE id = ?", [decoded.userId]);
+    if (!requester.length || requester[0].admin_type !== "SuperAdmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { adminId } = req.params;
+
+    // Prevent deleting self
+    if (parseInt(adminId) === decoded.userId) {
+      return res.status(400).json({ error: "You cannot delete yourself" });
+    }
+
+    await pool.query("DELETE FROM admins WHERE id = ?", [adminId]);
+
+    res.json({ message: "Admin deleted successfully" });
+  } catch (error) {
+    console.error("Delete admin error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getAdminDetails,
   updateAdminDetails,
@@ -369,5 +485,9 @@ module.exports = {
   getEventParticipants,
   getAllBuilders,
   adminUpdateUser,
-  getDashboardStats
+  getDashboardStats,
+  createAdmin,
+  approveAccount,
+  getAllAdmins,
+  deleteAdmin
 };

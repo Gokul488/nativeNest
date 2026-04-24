@@ -15,6 +15,9 @@ import {
   Phone,
   Mail,
   HardHat,
+  CheckCircle,
+  Clock,
+  UserCheck
 } from "lucide-react";
 
 const ManageBuilders = () => {
@@ -45,6 +48,18 @@ const ManageBuilders = () => {
     };
     fetchBuilders();
   }, [navigate]);
+
+  const handleApprove = async (builderId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API_BASE_URL}/api/admin/admin/approve/builder/${builderId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBuilders(builders.map(b => b.id === builderId ? { ...b, is_approved: 1 } : b));
+    } catch (err) {
+      alert("Failed to approve builder");
+    }
+  };
 
   const filteredAndSortedBuilders = useMemo(() => {
     let result = [...builders];
@@ -178,6 +193,8 @@ const ManageBuilders = () => {
                     >
                       <span className="inline-flex items-center justify-center">Registered {getSortIcon("created_at")}</span>
                     </th>
+                    <th className="px-6 py-2.5 text-center">Status</th>
+                    <th className="px-6 py-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -234,7 +251,6 @@ const ManageBuilders = () => {
                           </span>
                         </td>
 
-                        {/* Registered */}
                         <td className="px-6 py-2.5 text-center">
                           <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100">
                             {new Date(builder.created_at).toLocaleDateString("en-IN", {
@@ -243,6 +259,32 @@ const ManageBuilders = () => {
                               year: "numeric",
                             }).toUpperCase()}
                           </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-2.5 text-center">
+                          {builder.is_approved ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">
+                              <CheckCircle className="w-3 h-3" /> APPROVED
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-bold border border-amber-100">
+                              <Clock className="w-3 h-3" /> PENDING
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-2.5 text-right">
+                          {!builder.is_approved && (
+                            <button
+                              onClick={() => handleApprove(builder.id)}
+                              className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                              title="Approve Builder"
+                            >
+                              <UserCheck className="w-4 h-4" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );

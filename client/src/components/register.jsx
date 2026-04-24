@@ -14,7 +14,7 @@ const Register = () => {
   const [photoBase64, setPhotoBase64] = useState("");
   const navigate = useNavigate();
 
-  const accountTypes = ["buyer", "admin", "builder"];
+  const accountTypes = ["buyer", "builder"];
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -58,6 +58,12 @@ const Register = () => {
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Registration failed");
+
+      if (data.requiresApproval) {
+        alert(data.message);
+        navigate("/login");
+        return;
+      }
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));

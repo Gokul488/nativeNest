@@ -21,7 +21,7 @@ const register = async (req, res) => {
     }
 
     // Updated: Add 'builder' to valid types
-    if (!['buyer', 'admin', 'builder'].includes(account_type)) {
+    if (!['buyer', 'builder'].includes(account_type)) {
       return res.status(400).json({ error: 'Invalid account type' });
     }
 
@@ -61,7 +61,7 @@ const register = async (req, res) => {
       );
 
       const [newUser] = await pool.query(
-        'SELECT id, name, mobile_number, email, gender, dob, city, country, photo FROM buyers WHERE id = ?',
+        'SELECT id, name, mobile_number, email, gender, dob, city, country, photo, is_approved FROM buyers WHERE id = ?',
         [result.insertId]
       );
 
@@ -74,30 +74,7 @@ const register = async (req, res) => {
       };
     }
 
-    /* -------- ADMIN REGISTER -------- */
-    if (account_type === 'admin') {
-      const [existing] = await pool.query(
-        'SELECT id FROM admins WHERE mobile_number = ? OR email = ?',
-        [mobile_number, email || null]
-      );
-
-      if (existing.length > 0) {
-        return res.status(400).json({ error: 'Admin already exists' });
-      }
-
-      [result] = await pool.query(
-        'INSERT INTO admins (name, mobile_number, email, password, created_at) VALUES (?, ?, ?, ?, NOW())',
-        [name, mobile_number, email || null, hashedPassword]
-      );
-
-      user = {
-        id: result.insertId,
-        name,
-        mobile_number,
-        email,
-        account_type: 'admin'
-      };
-    }
+    /* ADMIN REGISTER logic removed for security - Admin creation is handled via Superadmin dashboard */
 
     // New: Builder Register
     if (account_type === 'builder') {
@@ -122,14 +99,29 @@ const register = async (req, res) => {
         [name, contact_person, mobile_number, email || null, hashedPassword]
       );
 
+      const [newUser] = await pool.query(
+        'SELECT id, name, contact_person, mobile_number, email, is_approved FROM builders WHERE id = ?',
+        [result.insertId]
+      );
+
       user = {
-        id: result.insertId,
-        name,
-        contact_person,
-        mobile_number,
-        email,
+        ...newUser[0],
         account_type: 'builder'
       };
+    }
+
+    // If user needs approval, don't send token yet
+    if (user.is_approved === 0) {
+      return res.status(201).json({
+        message: 'Registration successful! Your account is pending approval from the Superadmin.',
+        requiresApproval: true,
+        user: {
+          id: user.id,
+          name: user.name,
+          account_type: user.account_type,
+          is_approved: 0
+        }
+      });
     }
 
     const token = jwt.sign(
@@ -163,7 +155,7 @@ const login = async (req, res) => {
 
     /* -------- BUYER LOGIN -------- */
     let [rows] = await pool.query(
-      `SELECT id, name, mobile_number, email, password, gender, dob, city, country, photo
+      `SELECT id, name, mobile_number, email, password, gender, dob, city, country, photo, is_approved
        FROM buyers
        WHERE mobile_number = ? OR email = ?`,
       [identifier, identifier]
@@ -175,7 +167,7 @@ const login = async (req, res) => {
     } else {
       /* -------- ADMIN LOGIN -------- */
       [rows] = await pool.query(
-        `SELECT id, name, mobile_number, email, password
+        `SELECT id, name, mobile_number, email, password, admin_type
          FROM admins
          WHERE mobile_number = ? OR email = ?`,
         [identifier, identifier]
@@ -187,7 +179,7 @@ const login = async (req, res) => {
       } else {
         // New: Builder Login
         [rows] = await pool.query(
-          `SELECT id, name, mobile_number, email, password
+          `SELECT id, name, mobile_number, email, password, is_approved
            FROM builders
            WHERE mobile_number = ? OR email = ?`,
           [identifier, identifier]
@@ -207,6 +199,11 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check for approval
+    if ((account_type === 'buyer' || account_type === 'builder') && user.is_approved === 0) {
+      return res.status(403).json({ error: 'Your account is pending approval from the Superadmin.' });
     }
 
     const token = jwt.sign(
@@ -230,7 +227,8 @@ const login = async (req, res) => {
         city: user.city,
         country: user.country,
         photo: photoBase,
-        account_type
+        account_type,
+        admin_type: user.admin_type || null
       }
     });
 
@@ -242,8 +240,7 @@ const login = async (req, res) => {
 
 /* ===================== ACCOUNT TYPES ===================== */
 const getAccountTypes = (req, res) => {
-  // Updated: Add 'builder' to account types
-  res.json({ accountTypes: ['buyer', 'admin', 'builder'] });
+  res.json({ accountTypes: ['buyer', 'builder'] });
 };
 
 /* ===================== FORGOT PASSWORD ===================== */
@@ -256,7 +253,7 @@ const forgotPassword = async (req, res) => {
 
     let user;
     let table = '';
-    
+
     let [rows] = await pool.query('SELECT id, email FROM buyers WHERE email = ?', [email]);
     if (rows.length > 0) {
       user = rows[0];
@@ -284,18 +281,18 @@ const forgotPassword = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
-    
+
     const clientUrl = req.headers.origin || 'http://localhost:5173';
     const resetLink = `${clientUrl}/reset-password/${resetToken}`;
 
     const transporter = nodemailer.createTransport({
-       host: process.env.EMAIL_HOST,
-       port: process.env.EMAIL_PORT,
-       secure: false,
-       auth: {
-           user: process.env.EMAIL_USER,
-           pass: process.env.EMAIL_PASS
-       }
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
     });
 
     const mailOptions = {

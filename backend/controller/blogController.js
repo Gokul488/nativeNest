@@ -26,11 +26,8 @@ const createBlog = async (req, res) => {
 
 const getBlogs = async (req, res) => {
   try {
-    const adminId = req.user.userId;
-
     const [blogs] = await pool.query(
-      'SELECT id, title, created_at FROM blogs WHERE admin_id = ? ORDER BY created_at DESC',
-      [adminId]
+      'SELECT id, title, created_at FROM blogs ORDER BY created_at DESC'
     );
 
     res.json({ blogs });

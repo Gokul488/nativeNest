@@ -31,9 +31,8 @@ const getProperties = async (req, res) => {
         FROM property_images
         GROUP BY property_id
       ) pi ON p.property_id = pi.property_id
-      WHERE p.admin_id = ?
       ORDER BY p.created_at DESC
-    `, [userId]);
+    `);
 
     // Attach variants (apartment_type = BHK value, block_name = block)
     if (properties.length > 0) {
