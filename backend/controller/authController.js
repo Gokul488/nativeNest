@@ -61,7 +61,7 @@ const register = async (req, res) => {
       );
 
       const [newUser] = await pool.query(
-        'SELECT id, name, mobile_number, email, gender, dob, city, country, photo, is_approved FROM buyers WHERE id = ?',
+        'SELECT id, name, mobile_number, email, gender, dob, city, country, photo FROM buyers WHERE id = ?',
         [result.insertId]
       );
 
@@ -100,7 +100,7 @@ const register = async (req, res) => {
       );
 
       const [newUser] = await pool.query(
-        'SELECT id, name, contact_person, mobile_number, email, is_approved FROM builders WHERE id = ?',
+        'SELECT id, name, contact_person, mobile_number, email FROM builders WHERE id = ?',
         [result.insertId]
       );
 
@@ -110,19 +110,7 @@ const register = async (req, res) => {
       };
     }
 
-    // If user needs approval, don't send token yet
-    if (user.is_approved === 0) {
-      return res.status(201).json({
-        message: 'Registration successful! Your account is pending approval from the Superadmin.',
-        requiresApproval: true,
-        user: {
-          id: user.id,
-          name: user.name,
-          account_type: user.account_type,
-          is_approved: 0
-        }
-      });
-    }
+
 
     const token = jwt.sign(
       { userId: user.id, account_type: user.account_type },
@@ -155,7 +143,7 @@ const login = async (req, res) => {
 
     /* -------- BUYER LOGIN -------- */
     let [rows] = await pool.query(
-      `SELECT id, name, mobile_number, email, password, gender, dob, city, country, photo, is_approved
+      `SELECT id, name, mobile_number, email, password, gender, dob, city, country, photo
        FROM buyers
        WHERE mobile_number = ? OR email = ?`,
       [identifier, identifier]
@@ -179,7 +167,7 @@ const login = async (req, res) => {
       } else {
         // New: Builder Login
         [rows] = await pool.query(
-          `SELECT id, name, mobile_number, email, password, is_approved
+          `SELECT id, name, mobile_number, email, password
            FROM builders
            WHERE mobile_number = ? OR email = ?`,
           [identifier, identifier]
@@ -201,10 +189,7 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Check for approval
-    if ((account_type === 'buyer' || account_type === 'builder') && user.is_approved === 0) {
-      return res.status(403).json({ error: 'Your account is pending approval from the Superadmin.' });
-    }
+
 
     const token = jwt.sign(
       { userId: user.id, account_type },

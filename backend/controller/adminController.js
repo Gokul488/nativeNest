@@ -150,7 +150,7 @@ const getAllUsers = async (req, res) => {
     }
 
     const [buyers] = await pool.query(
-      `SELECT id, name, mobile_number, email, gender, dob, city, country, photo, created_at, is_approved
+      `SELECT id, name, mobile_number, email, gender, dob, city, country, photo, created_at
        FROM buyers
        ORDER BY created_at DESC`
     );
@@ -243,11 +243,11 @@ const getAllBuilders = async (req, res) => {
 
     const [builders] = await pool.query(
       `SELECT 
-        b.id, b.name, b.mobile_number, b.email, b.created_at, b.is_approved,
+        b.id, b.name, b.mobile_number, b.email, b.created_at,
         COUNT(p.property_id) AS total_properties
        FROM builders b
        LEFT JOIN properties p ON p.builder_id = b.id
-       GROUP BY b.id, b.name, b.mobile_number, b.email, b.created_at, b.is_approved
+       GROUP BY b.id, b.name, b.mobile_number, b.email, b.created_at
        ORDER BY b.created_at DESC`
     );
 
@@ -395,21 +395,7 @@ const createAdmin = async (req, res) => {
   }
 };
 
-/* =========================
-   ADMIN: APPROVE USER/BUILDER
-========================= */
-const approveAccount = async (req, res) => {
-  try {
-    const { id, type } = req.params; // type: 'buyer' or 'builder'
-    const table = type === 'builder' ? 'builders' : 'buyers';
 
-    await pool.query(`UPDATE ${table} SET is_approved = 1 WHERE id = ?`, [id]);
-    res.json({ message: `${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully` });
-  } catch (error) {
-    console.error("Approval error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
 
 /* =========================
    ADMIN: GET ALL ADMINS
@@ -487,7 +473,6 @@ module.exports = {
   adminUpdateUser,
   getDashboardStats,
   createAdmin,
-  approveAccount,
   getAllAdmins,
   deleteAdmin
 };

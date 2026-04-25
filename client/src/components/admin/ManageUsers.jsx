@@ -49,17 +49,7 @@ const ManageUsers = () => {
     fetchUsers();
   }, [navigate]);
 
-  const handleApprove = async (userId) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.put(`${API_BASE_URL}/api/admin/admin/approve/buyer/${userId}`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsers(users.map(u => u.id === userId ? { ...u, is_approved: 1 } : u));
-    } catch (err) {
-      alert("Failed to approve user");
-    }
-  };
+
 
   const filteredAndSortedUsers = useMemo(() => {
     let result = [...users];
@@ -187,7 +177,7 @@ const ManageUsers = () => {
                     >
                       <span className="inline-flex items-center justify-center">Registration {getSortIcon("created_at")}</span>
                     </th>
-                    <th className="px-6 py-2.5 text-center">Status</th>
+
                     <th className="px-6 py-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -239,30 +229,12 @@ const ManageUsers = () => {
                           </span>
                         </td>
 
-                          <td className="px-6 py-2.5 text-center">
-                            {user.is_approved ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">
-                                <CheckCircle className="w-3 h-3" /> APPROVED
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-bold border border-amber-100">
-                                <Clock className="w-3 h-3" /> PENDING
-                              </span>
-                            )}
-                          </td>
+
 
                           {/* Actions */}
                           <td className="px-6 py-2.5 text-right">
                             <div className="flex justify-end gap-2">
-                              {!user.is_approved && (
-                                <button
-                                  onClick={() => handleApprove(user.id)}
-                                  className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
-                                  title="Approve User"
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                </button>
-                              )}
+
                               <button
                                 onClick={() => navigate(`/admin-dashboard/manage-users/edit/${user.id}`)}
                                 className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
