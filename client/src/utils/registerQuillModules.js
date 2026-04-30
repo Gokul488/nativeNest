@@ -3,7 +3,9 @@
 // Import this file in any component that uses Quill before calling useQuill().
 
 import Quill from "quill";
-import QuillTableBetter from "quill-table-better";
+import QuillTableBetterModule from "quill-table-better";
+
+const QuillTableBetter = QuillTableBetterModule.default || QuillTableBetterModule;
 
 // Guard: only register if not already registered to prevent the
 // "Overwriting modules/table-better" console warning.

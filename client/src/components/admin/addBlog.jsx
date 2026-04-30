@@ -80,7 +80,7 @@ const AddBlog = () => {
           },
         },
       },
-      keyboard: { bindings: QuillTableBetter.keyboardBindings },
+      keyboard: { bindings: QuillTableBetter?.keyboardBindings || {} },
     },
     formats: ['header', 'bold', 'italic', 'underline', 'list', 'link', 'align', 'color', 'background', 'table'],
   });
