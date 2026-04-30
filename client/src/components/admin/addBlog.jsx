@@ -1,5 +1,5 @@
 // src/components/AddBlog.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
@@ -25,6 +25,29 @@ const Section = ({ icon, title, children }) => (
     <div className="space-y-3">{children}</div>
   </div>
 );
+
+// ─── Error Boundary ───────────────────────────────────────────────────────────
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center text-red-500">
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Something went wrong.</h2>
+          <p className="text-sm bg-red-50 p-4 rounded-lg">{this.state.error?.toString()}</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const AddBlog = () => {
@@ -92,7 +115,7 @@ const AddBlog = () => {
     e.preventDefault();
     setError(''); setSuccess(''); setIsSubmitting(true);
 
-    if (!title.trim() || !content.trim() || content === '<p><br></p>') {
+    if (!title?.trim() || !content?.trim() || content === '<p><br></p>') {
       setError('Title and content are required');
       setIsSubmitting(false);
       return;
@@ -126,7 +149,8 @@ const AddBlog = () => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col" style={{ fontFamily: '"Inter", sans-serif' }}>
+    <ErrorBoundary>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col" style={{ fontFamily: '"Inter", sans-serif' }}>
 
       {/* ── Header ── */}
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -234,6 +258,7 @@ const AddBlog = () => {
         </form>
       </div>
     </div>
+    </ErrorBoundary>
   );
 };
 
