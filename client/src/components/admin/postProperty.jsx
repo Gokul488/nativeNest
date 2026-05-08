@@ -305,6 +305,12 @@ const PostProperty = () => {
       return;
     }
 
+    if (accountType !== "builder" && !selectedBuilderId) {
+      setError("Please select a builder.");
+      setIsSubmitting(false);
+      return;
+    }
+
     // Basic fields validation (excluding price/sqft since they vary by type)
     if (!formData.title || !formData.address || !formData.city || !formData.state || !formData.country || !formData.pincode) {
       setError("Please fill all required basic fields (title, address, city, state, country, pincode)");

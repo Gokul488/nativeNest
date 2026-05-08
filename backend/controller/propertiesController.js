@@ -18,6 +18,9 @@ const createProperty = async (req, res) => {
       variants   // JSON string
     } = req.body;
 
+    console.log("createProperty called with body:", req.body);
+    console.log("createProperty called with files:", req.files ? Object.keys(req.files) : "No files");
+
     let amenities = req.body.amenities || req.body['amenities[]'] || [];
     if (!Array.isArray(amenities)) amenities = [amenities].filter(Boolean);
 
