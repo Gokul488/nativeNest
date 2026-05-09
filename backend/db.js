@@ -18,4 +18,8 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
+pool.query("ALTER TABLE builders ADD COLUMN builder_type VARCHAR(50) DEFAULT 'Builder'").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding builder_type:', e);
+});
+
 module.exports = pool;

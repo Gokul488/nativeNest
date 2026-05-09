@@ -424,6 +424,102 @@ const getBuilderDashboardStats = async (req, res) => {
   }
 };
 
+const createBuilder = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "builder") return res.status(403).json({ error: "Access denied: Builders only" });
+    
+    // Ensure the token builder is a BuilderAdmin
+    const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
+    if (!requester.length || requester[0].builder_type !== "BuilderAdmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { name, contact_person, mobile_number, email, password } = req.body;
+
+    if (!name || !contact_person || !mobile_number || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const [existing] = await pool.query(
+      "SELECT id FROM builders WHERE mobile_number = ? OR email = ?",
+      [mobile_number, email]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: "Builder with this email/mobile already exists" });
+    }
+
+    await pool.query(
+      "INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type, created_at) VALUES (?, ?, ?, ?, ?, 'Builder', NOW())",
+      [name, contact_person, mobile_number, email, hashedPassword]
+    );
+
+    res.status(201).json({ message: "Builder created successfully" });
+  } catch (error) {
+    console.error("Create builder error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const getAllBuilders = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "builder") return res.status(403).json({ error: "Access denied" });
+
+    // Check if the current requester is a BuilderAdmin
+    const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
+    if (!requester.length || requester[0].builder_type !== "BuilderAdmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const [builders] = await pool.query(
+      "SELECT id, name, contact_person, mobile_number, email, builder_type, created_at FROM builders ORDER BY created_at DESC"
+    );
+
+    res.json(builders);
+  } catch (error) {
+    console.error("Get all builders error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const deleteBuilderByAdmin = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "builder") return res.status(403).json({ error: "Access denied" });
+
+    // Check if the current requester is a BuilderAdmin
+    const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
+    if (!requester.length || requester[0].builder_type !== "BuilderAdmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { builderId } = req.params;
+
+    // Prevent deleting self
+    if (parseInt(builderId) === decoded.userId) {
+      return res.status(400).json({ error: "You cannot delete yourself" });
+    }
+
+    await pool.query("DELETE FROM builders WHERE id = ?", [builderId]);
+
+    res.json({ message: "Builder deleted successfully" });
+  } catch (error) {
+    console.error("Delete builder error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getBuilderDetails,
   updateBuilderDetails,
@@ -432,5 +528,8 @@ module.exports = {
   deleteBuilderProperty,
   getBuilderStallInterests,
   getBuilderBookedStallsCount,
-  getBuilderDashboardStats
+  getBuilderDashboardStats,
+  createBuilder,
+  getAllBuilders,
+  deleteBuilderByAdmin
 };

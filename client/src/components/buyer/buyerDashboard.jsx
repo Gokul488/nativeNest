@@ -190,11 +190,14 @@ const BuyerDashboard = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-sky-50 py-1.5 px-4 rounded-full border border-sky-100">
-            <User className="text-sky-600 w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-sky-900 font-bold text-xs sm:text-sm uppercase truncate max-w-[100px] sm:max-w-none">
-              Welcome, {user.name || "Buyer"}
-            </span>
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex flex-col items-end mr-2">
+              <span className="text-sm font-bold text-slate-700 leading-none">Welcome, {user.name || "Buyer"}</span>
+              <span className="text-[10px] font-bold text-sky-500 uppercase tracking-tighter mt-1">Buyer</span>
+            </div>
+            <div className="w-10 h-10 bg-sky-50 rounded-full border-2 border-sky-100 flex items-center justify-center text-sky-500 shadow-sm">
+              <User className="w-6 h-6" />
+            </div>
           </div>
         </header>
 

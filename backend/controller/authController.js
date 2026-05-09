@@ -167,7 +167,7 @@ const login = async (req, res) => {
       } else {
         // New: Builder Login
         [rows] = await pool.query(
-          `SELECT id, name, mobile_number, email, password
+          `SELECT id, name, mobile_number, email, password, builder_type
            FROM builders
            WHERE mobile_number = ? OR email = ?`,
           [identifier, identifier]
@@ -213,7 +213,8 @@ const login = async (req, res) => {
         country: user.country,
         photo: photoBase,
         account_type,
-        admin_type: user.admin_type || null
+        admin_type: user.admin_type || null,
+        builder_type: user.builder_type || null
       }
     });
 

@@ -10,7 +10,10 @@ const {
   deleteBuilderProperty,
   getBuilderStallInterests,
   getBuilderBookedStallsCount,
-  getBuilderDashboardStats
+  getBuilderDashboardStats,
+  createBuilder,
+  getAllBuilders,
+  deleteBuilderByAdmin
 } = require("../controller/builderController");
 
 router.get("/builder", getBuilderDetails);
@@ -21,5 +24,8 @@ router.delete("/builder/my-properties/:id", deleteBuilderProperty);
 router.get("/builder/stall-interests", getBuilderStallInterests);
 router.get("/builder/booked-stalls-count", getBuilderBookedStallsCount);
 router.get("/builder/dashboard-stats", getBuilderDashboardStats);
+router.post("/builder/create", createBuilder);
+router.get("/builder/all", getAllBuilders);
+router.delete("/builder/:builderId", deleteBuilderByAdmin);
 
 module.exports = router;
