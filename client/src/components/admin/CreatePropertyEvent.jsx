@@ -70,6 +70,8 @@ const CreatePropertyEvent = () => {
     event_name: "",
     event_type: "Property Sale Mela",
     event_location: "",
+    address: "",
+    pincode: "",
     city: "",
     state: "",
     start_date: "",
@@ -221,16 +223,24 @@ const CreatePropertyEvent = () => {
           {/* ── Location ── */}
           <div className="border-t border-slate-100" />
           <Section icon={<MapPin className="w-3.5 h-3.5 text-sky-500" />} title="Location Details">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>Venue <span className="text-red-400">*</span></label>
                 <input type="text" name="event_location" value={formData.event_location} onChange={handleChange} required placeholder="e.g. Convention Center" className={inputCls} />
               </div>
               <div>
+                <label className={labelCls}>Address <span className="text-red-400">*</span></label>
+                <input type="text" name="address" value={formData.address} onChange={handleChange} required placeholder="e.g. 123, Anna Salai" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Pincode <span className="text-red-400">*</span></label>
+                <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} required placeholder="e.g. 600001" className={inputCls} />
+              </div>
+              <div>
                 <label className={labelCls}>City <span className="text-red-400">*</span></label>
                 <input type="text" name="city" value={formData.city} onChange={handleChange} required placeholder="e.g. Chennai" className={inputCls} />
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className={labelCls}>State <span className="text-red-400">*</span></label>
                 <input type="text" name="state" value={formData.state} onChange={handleChange} required placeholder="e.g. Tamil Nadu" className={inputCls} />
               </div>
@@ -297,14 +307,14 @@ const CreatePropertyEvent = () => {
           <Section icon={<Image className="w-3.5 h-3.5 text-sky-500" />} title="Event Banner Image">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group">
-                <CloudUpload className="w-8 h-8 text-slate-300 group-hover:text-sky-400 mb-2 transition-colors" />
+                <CloudUpload className="w-4 h-4 text-slate-300 group-hover:text-sky-400 mb-2 transition-colors" />
                 <p className="text-xs font-semibold text-slate-600 group-hover:text-sky-600">Click to upload banner</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">Recommended: 1200×600 · Max 5MB</p>
                 <input type="file" className="hidden" accept="image/*" onChange={handleBannerImageChange} />
               </label>
               {previewUrl ? (
-                <div className="relative rounded-xl overflow-hidden shadow-sm border border-slate-200 h-36 group">
-                  <img src={previewUrl} alt="Banner Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="relative rounded-xl overflow-hidden shadow-sm border border-slate-200 h-36 group bg-slate-50">
+                  <img src={previewUrl} alt="Banner Preview" className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><Image className="w-3.5 h-3.5" /> Banner Preview</span>
                   </div>

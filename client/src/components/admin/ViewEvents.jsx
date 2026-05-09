@@ -88,7 +88,9 @@ const ViewEvents = () => {
     if (searchQuery) {
       result = result.filter(e =>
         e.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.city.toLowerCase().includes(searchQuery.toLowerCase())
+        e.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (e.address && e.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (e.pincode && e.pincode.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
     if (sortConfig.key) {
@@ -309,9 +311,14 @@ const ViewEvents = () => {
                                 {event.event_name}
                               </Link>
                               {event.city && (
-                                <div className="flex items-center gap-1 mt-0.5">
-                                  <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
-                                  <span className="text-xs text-slate-400 font-medium">{event.city}</span>
+                                <div className="flex flex-col gap-0.5 mt-0.5">
+                                  <div className="flex items-center gap-1">
+                                    <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
+                                    <span className="text-[10px] text-slate-400 font-medium">{event.city}</span>
+                                  </div>
+                                  {event.address && (
+                                    <span className="text-[9px] text-slate-400 font-medium truncate max-w-[200px]" title={event.address}>{event.address}</span>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -422,9 +429,14 @@ const ViewEvents = () => {
                           >
                             {event.event_name}
                           </Link>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
-                            <span className="text-xs text-indigo-500 font-semibold">{event.city}</span>
+                          <div className="flex flex-col gap-0.5 mt-0.5">
+                            <div className="flex items-center gap-1">
+                              <FaMapMarkerAlt className="text-slate-300 text-[9px]" />
+                              <span className="text-xs text-indigo-500 font-semibold">{event.city}</span>
+                            </div>
+                            {event.address && (
+                              <span className="text-[10px] text-slate-400 font-medium">{event.address}</span>
+                            )}
                           </div>
                         </div>
                       </div>

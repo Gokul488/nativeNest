@@ -23,11 +23,11 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'video/mp4', 'video/mpeg', 'video/webm'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/mpeg', 'video/webm'];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG, MP4, MPEG, and WebM are allowed.'));
+      cb(new Error(`Invalid file type (${file.mimetype}). Only JPEG, PNG, WEBP, MP4, MPEG, and WebM are allowed.`));
     }
   }
 });
@@ -50,14 +50,23 @@ router.get('/cities', getCities);
 router.get('/most-viewed', authMiddleware, getMostViewedProperties);
 router.get('/:propertyId/viewers', authMiddleware, getPropertyViewers);
 
+const uploadMiddleware = upload.fields([
+  { name: 'cover_image', maxCount: 1 },
+  { name: 'images[]', maxCount: 10 },
+  { name: 'video', maxCount: 1 }
+]);
+
 router.post(
   '/',
   authMiddleware,
-  upload.fields([
-    { name: 'cover_image', maxCount: 1 },
-    { name: 'images[]', maxCount: 10 },
-    { name: 'video', maxCount: 1 }
-  ]),
+  (req, res, next) => {
+    uploadMiddleware(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message || 'File upload error' });
+      }
+      next();
+    });
+  },
   createProperty
 );
 

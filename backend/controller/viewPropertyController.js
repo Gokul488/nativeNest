@@ -198,9 +198,14 @@ const updateProperty = async (req, res) => {
     }
 
     // ── Authorization ────────────────────────────────────────────────────────
-    const [propCheck] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
+    const [propCheck] = await pool.query('SELECT admin_id, builder_id FROM properties WHERE property_id = ?', [id]);
     if (propCheck.length === 0) return res.status(404).json({ error: 'Property not found' });
-    if (propCheck[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    
+    if (decoded.account_type === 'builder') {
+      if (propCheck[0].builder_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    } else if (decoded.account_type !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
 
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
     const video = req.files?.['video']?.[0]?.buffer || null;
@@ -337,9 +342,14 @@ const deleteProperty = async (req, res) => {
     const userId = decoded.userId;
     const { id } = req.params;
 
-    const [properties] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
+    const [properties] = await pool.query('SELECT admin_id, builder_id FROM properties WHERE property_id = ?', [id]);
     if (properties.length === 0) return res.status(404).json({ error: 'Property not found' });
-    if (properties[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    
+    if (decoded.account_type === 'builder') {
+      if (properties[0].builder_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    } else if (decoded.account_type !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
 
     const connection = await pool.getConnection();
     try {

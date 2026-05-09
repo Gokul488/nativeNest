@@ -232,7 +232,7 @@ const EditProperty = () => {
       }
     };
     fetchData();
-  }, [id, navigate, quill]);
+  }, [id, navigate]);
 
   // ── Handlers ──────────────────────────────────────────────────
   const handleInputChange = (e) => {
