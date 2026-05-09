@@ -363,27 +363,44 @@ const markAttendance = async (req, res) => {
       return res.status(400).json({ error: 'Event ID and Mobile Number are required' });
     }
 
-    // Check if user is registered for this event
+    // 1. Check if user is already registered for this event
     const [registration] = await pool.query(
       `SELECT id FROM event_participants 
        WHERE event_id = ? AND phone = ?`,
       [eventId, mobile_number]
     );
 
-    if (registration.length === 0) {
-      return res.status(404).json({
-        error: 'Registration not found. Please ensure you registered for this event with this mobile number.'
-      });
+    if (registration.length > 0) {
+      // Update attendance status for already registered user
+      await pool.query(
+        `UPDATE event_participants SET is_attended = 1 
+         WHERE event_id = ? AND phone = ?`,
+        [eventId, mobile_number]
+      );
+      return res.json({ message: 'Attendance marked successfully! Welcome to the event.' });
     }
 
-    // Update attendance status
-    await pool.query(
-      `UPDATE event_participants SET is_attended = 1 
-       WHERE event_id = ? AND phone = ?`,
-      [eventId, mobile_number]
+    // 2. If not in participants, check if they are a registered buyer in the system
+    const [buyerRows] = await pool.query(
+      'SELECT id, name, email FROM buyers WHERE mobile_number = ?',
+      [mobile_number]
     );
 
-    res.json({ message: 'Attendance marked successfully! Welcome to the event.' });
+    if (buyerRows.length > 0) {
+      const buyer = buyerRows[0];
+      // Auto-register them for the event since they are at the venue scanning the QR
+      await pool.query(
+        `INSERT INTO event_participants (event_id, buyer_id, name, phone, email, is_attended)
+         VALUES (?, ?, ?, ?, ?, 1)`,
+        [eventId, buyer.id, buyer.name, mobile_number, buyer.email]
+      );
+      return res.json({ message: 'Welcome! Your registration has been processed and attendance marked.' });
+    }
+
+    // 3. If not found in either table
+    return res.status(404).json({
+      error: 'Registration not found. Please ensure you are a registered user of NativeNest with this mobile number.'
+    });
   } catch (err) {
     console.error('Attendance Error:', err);
     res.status(500).json({ error: 'Failed to mark attendance' });

@@ -106,10 +106,12 @@ const generateEventInvitationPDF = (event, recipientType = null) => {
     doc.fillColor('#2563EB').fontSize(9).text('Click here to open registration portal', 250, 750, { link: ctaLink, underline: true });
 
     // 7. LOCATION BLOCK (Bottom Left)
-    doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica-Bold').text('WHERE', 45, 730);
-    doc.fillColor('#CBD5E1').font('Helvetica').fontSize(9)
-       .text(event.event_location || 'Grand Plaza Mall', 45, 745)
-       .text(`${event.city || 'Dubai'}, ${event.state || 'UAE'}`, 45, 758);
+    doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica-Bold').text('WHERE', 45, 710);
+    doc.fillColor('#CBD5E1').font('Helvetica').fontSize(8.5)
+       .text(event.event_location || 'Grand Plaza Mall', 45, 725, { width: 180 })
+       .text(event.address || '', 45, 738, { width: 180 })
+       .text(`${event.city || 'Chennai'} - ${event.pincode || ''}`, 45, 751)
+       .text(event.state || 'Tamil Nadu', 45, 764);
 
     // 8. MINIMAL FOOTER
     doc.rect(0, 820, 595.28, 22).fill(colors.deepNavy);

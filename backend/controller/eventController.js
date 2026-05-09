@@ -28,6 +28,8 @@ const createEvent = async (req, res) => {
       contact_name,
       contact_phone,
       stall_count,
+      address,
+      pincode,
       notify_builders,
       notify_buyers,
       selected_builders,
@@ -56,15 +58,17 @@ const createEvent = async (req, res) => {
     // Insert the event
     const [result] = await pool.query(
       `INSERT INTO property_events
-      (admin_id, event_name, event_type, event_location, city, state,
+      (admin_id, event_name, event_type, event_location, address, pincode, city, state,
        start_date, end_date, start_time, end_time, description,
        contact_name, contact_phone, stall_count, banner_image)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
       [
         decoded.userId,
         event_name,
         event_type,
         event_location,
+        address,
+        pincode,
         city,
         state,
         start_date,
@@ -86,6 +90,8 @@ const createEvent = async (req, res) => {
       event_name,
       event_type,
       event_location,
+      address,
+      pincode,
       city,
       state,
       start_date,
@@ -152,7 +158,7 @@ const createEvent = async (req, res) => {
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
               <tr><td style="padding: 8px 0; font-weight: bold; width: 140px;">Event Name:</td><td>${event_name}</td></tr>
               <tr><td style="padding: 8px 0; font-weight: bold;">Type:</td><td>${event_type}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${city}, ${state}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${address}, ${city} - ${pincode}, ${state}</td></tr>
               <tr><td style="padding: 8px 0; font-weight: bold;">Date:</td><td>${eventDateStr}</td></tr>
               <tr><td style="padding: 8px 0; font-weight: bold;">Time:</td><td>${formatTime(start_time)} – ${formatTime(end_time)}</td></tr>
               ${description ? `<tr><td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Description:</td><td>${description.replace(/\n/g, '<br>')}</td></tr>` : ''}
@@ -225,7 +231,7 @@ const createEvent = async (req, res) => {
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
               <tr><td style="padding: 8px 0; font-weight: bold; width: 140px;">Event Name:</td><td>${event_name}</td></tr>
               <tr><td style="padding: 8px 0; font-weight: bold;">Type:</td><td>${event_type}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${city}, ${state}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${address}, ${city} - ${pincode}, ${state}</td></tr>
               <tr><td style="padding: 8px 0; font-weight: bold;">Date:</td><td>${eventDateStr}</td></tr>
               <tr><td style="padding: 8px 0; font-weight: bold;">Time:</td><td>${formatTime(start_time)} – ${formatTime(end_time)}</td></tr>
               ${description ? `<tr><td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Description:</td><td>${description.replace(/\n/g, '<br>')}</td></tr>` : ''}
@@ -289,7 +295,7 @@ const getAllEvents = async (req, res) => {
     const [rows] = await pool.query(
       `SELECT id, event_name, event_type, event_location, city, state,
               start_date, end_date, start_time, end_time, description,
-              contact_name, contact_phone, stall_count,
+              contact_name, contact_phone, stall_count, address, pincode,
               (SELECT COUNT(*) FROM stall WHERE event_id = property_events.id AND builder_id IS NOT NULL) AS booked_count
        FROM property_events
        ORDER BY start_date DESC`
@@ -348,7 +354,7 @@ const updateEvent = async (req, res) => {
     const {
       event_name, event_type, event_location, city, state,
       start_date, end_date, start_time, end_time, description,
-      contact_name, contact_phone, stall_count,
+      contact_name, contact_phone, stall_count, address, pincode,
       notify_builders, notify_buyers, selected_builders, selected_buyers
     } = req.body;
 
@@ -373,13 +379,13 @@ const updateEvent = async (req, res) => {
 
     const [result] = await pool.query(
       `UPDATE property_events
-       SET event_name = ?, event_type = ?, event_location = ?, city = ?, state = ?,
+       SET event_name = ?, event_type = ?, event_location = ?, address = ?, pincode = ?, city = ?, state = ?,
            start_date = ?, end_date = ?, start_time = ?, end_time = ?, description = ?,
            contact_name = ?, contact_phone = ?, stall_count = ?,
            banner_image = COALESCE(?, banner_image)
        WHERE id = ?`,
       [
-        event_name, event_type, event_location, city, state,
+        event_name, event_type, event_location, address, pincode, city, state,
         start_date, end_date, start_time, end_time, description,
         contact_name, contact_phone, stall_count || 0,
         bannerImage, id
@@ -442,7 +448,7 @@ const updateEvent = async (req, res) => {
               <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                 <tr><td style="padding: 8px 0; font-weight: bold; width: 140px;">Event Name:</td><td>${event_name}</td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold;">Type:</td><td>${event_type}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${city}, ${state}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${address}, ${city} - ${pincode}, ${state}</td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold;">Date:</td><td>${eventDateStr}</td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold;">Time:</td><td>${formatTime(start_time)} – ${formatTime(end_time)}</td></tr>
                 ${description ? `<tr><td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Description:</td><td>${description.replace(/\n/g, '<br>')}</td></tr>` : ''}
@@ -493,7 +499,7 @@ const updateEvent = async (req, res) => {
               <p>There has been an update to an upcoming property event:</p>
               <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                 <tr><td style="padding: 8px 0; font-weight: bold; width: 140px;">Event Name:</td><td>${event_name}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${city}, ${state}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Location:</td><td>${event_location}, ${address}, ${city} - ${pincode}, ${state}</td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold;">Date:</td><td>${eventDateStr}</td></tr>
               </table>
               <p style="text-align: center; margin: 30px 0;">

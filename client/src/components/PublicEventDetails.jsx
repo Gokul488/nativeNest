@@ -200,7 +200,8 @@ const PublicEventDetails = () => {
                                     </div>
                                     <div>
                                         <p className="text-slate-900 font-bold text-xl mb-1">{event.event_location}</p>
-                                        <p className="text-slate-500 font-semibold">{event.city}, {event.state || 'India'}</p>
+                                        <p className="text-slate-500 font-semibold">{event.address}</p>
+                                        <p className="text-slate-500 font-semibold">{event.city} - {event.pincode}, {event.state || 'India'}</p>
                                         <div className="mt-4 inline-flex items-center gap-2 text-[#2e6171] font-bold text-sm hover:underline cursor-pointer">
                                             Open in Google Maps <FaChevronRight size={10} />
                                         </div>
