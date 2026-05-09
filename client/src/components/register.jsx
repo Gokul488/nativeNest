@@ -10,7 +10,9 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [photoBase64, setPhotoBase64] = useState("");
   const accountType = "buyer";
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
