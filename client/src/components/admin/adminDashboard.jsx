@@ -283,13 +283,17 @@ const AdminDashboard = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
                   {[
-                    { label: "Total Properties", value: totalProperties, icon: <Building2 />, color: "sky" },
-                    { label: "Total Users", value: totalUsers, icon: <Users />, color: "indigo" },
-                    { label: "Active Builders", value: activeBuilders, icon: <HardHat />, color: "amber" },
-                    { label: "Published Blogs", value: publishedBlogs, icon: <Newspaper />, color: "emerald" },
-                    { label: "Total Events", value: totalEvents, icon: <CalendarDays />, color: "violet" },
+                    { label: "Total Properties", value: totalProperties, icon: <Building2 />, color: "sky", path: "/admin-dashboard/manage-properties" },
+                    { label: "Total Users", value: totalUsers, icon: <Users />, color: "indigo", path: "/admin-dashboard/manage-users" },
+                    { label: "Active Builders", value: activeBuilders, icon: <HardHat />, color: "amber", path: "/admin-dashboard/manage-builders" },
+                    { label: "Published Blogs", value: publishedBlogs, icon: <Newspaper />, color: "emerald", path: "/admin-dashboard/manage-blogs" },
+                    { label: "Total Events", value: totalEvents, icon: <CalendarDays />, color: "violet", path: "/admin-dashboard/manage-events" },
                   ].map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+                    <div 
+                      key={i} 
+                      onClick={() => navigate(stat.path)}
+                      className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-200 transition-all duration-300 group cursor-pointer active:scale-95"
+                    >
                       <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 text-${stat.color}-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                         {stat.icon}
                       </div>

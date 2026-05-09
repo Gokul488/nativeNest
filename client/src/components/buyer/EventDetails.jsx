@@ -236,8 +236,23 @@ const EventDetails = () => {
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm mb-0.5" style={{ color: '#011936' }}>{event.event_location}</p>
-                                    <p className="text-sm" style={{ color: '#6b7280' }}>{event.city}</p>
+                                    <p className="text-sm" style={{ color: '#6b7280' }}>{event.address ? `${event.address}, ` : ""}{event.city} {event.pincode || ""}</p>
                                 </div>
+                            </div>
+
+                            {/* ── MAP INTEGRATION ── */}
+                            <div className="mt-8 rounded-2xl overflow-hidden border border-slate-100 shadow-inner h-[300px] bg-slate-50 relative group">
+                                <iframe
+                                    title="Venue Location Map"
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0, filter: 'grayscale(0.2) contrast(1.1) brightness(0.95)' }}
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(`${event.event_location || ""}, ${event.address || ""}, ${event.city || ""}, ${event.pincode || ""}`)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                    allowFullScreen
+                                    loading="lazy"
+                                ></iframe>
+                                {/* Map Overlay Decoration */}
+                                <div className="absolute inset-0 pointer-events-none border-[8px] border-white/10 rounded-2xl" />
                             </div>
                         </div>
                     </div>
