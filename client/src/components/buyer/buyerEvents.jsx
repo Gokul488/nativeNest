@@ -62,7 +62,12 @@ const BuyerEvents = () => {
   }, [token]);
 
   const filteredAndSortedEvents = useMemo(() => {
-    let result = [...events];
+    let result = events.filter(e => {
+      if (!e.end_date) return true;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return new Date(e.end_date) >= today;
+    });
     if (searchQuery) {
       result = result.filter(
         (e) =>

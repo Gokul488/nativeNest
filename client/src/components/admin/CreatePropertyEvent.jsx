@@ -81,7 +81,7 @@ const CreatePropertyEvent = () => {
     description: "",
     contact_name: "",
     contact_phone: "",
-    stall_count: 0,
+    stall_count: "",
     notify_builders: true,
     notify_buyers: true,
   });
@@ -119,7 +119,7 @@ const CreatePropertyEvent = () => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : name === "stall_count" ? parseInt(value) || 0 : value,
+      [name]: type === "checkbox" ? checked : name === "stall_count" ? (value === "" ? "" : parseInt(value)) : value,
     }));
   };
 
@@ -257,7 +257,7 @@ const CreatePropertyEvent = () => {
               </div>
               <div>
                 <label className={labelCls}>End Date <span className="text-red-400">*</span></label>
-                <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className={inputCls} />
+                <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required min={formData.start_date} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Start Time</label>
@@ -265,7 +265,14 @@ const CreatePropertyEvent = () => {
               </div>
               <div>
                 <label className={labelCls}>End Time</label>
-                <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} className={inputCls} />
+                <input 
+                  type="time" 
+                  name="end_time" 
+                  value={formData.end_time} 
+                  onChange={handleChange} 
+                  min={formData.start_date === formData.end_date ? formData.start_time : ""}
+                  className={inputCls} 
+                />
               </div>
             </div>
           </Section>
@@ -305,22 +312,21 @@ const CreatePropertyEvent = () => {
           {/* ── Banner Image ── */}
           <div className="border-t border-slate-100" />
           <Section icon={<Image className="w-3.5 h-3.5 text-sky-500" />} title="Event Banner Image">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group">
-                <CloudUpload className="w-4 h-4 text-slate-300 group-hover:text-sky-400 mb-2 transition-colors" />
-                <p className="text-xs font-semibold text-slate-600 group-hover:text-sky-600">Click to upload banner</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Recommended: 1200×600 · Max 5MB</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center justify-center gap-2 px-4 h-10 border border-slate-200 rounded-lg cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group shrink-0 shadow-sm">
+                <CloudUpload className="w-4 h-4 text-slate-400 group-hover:text-sky-500 transition-colors" />
+                <span className="text-[11px] font-bold text-slate-600 group-hover:text-sky-600">Upload Banner</span>
                 <input type="file" className="hidden" accept="image/*" onChange={handleBannerImageChange} />
               </label>
               {previewUrl ? (
-                <div className="relative rounded-xl overflow-hidden shadow-sm border border-slate-200 h-36 group bg-slate-50">
-                  <img src={previewUrl} alt="Banner Preview" className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><Image className="w-3.5 h-3.5" /> Banner Preview</span>
+                <div className="relative rounded-xl overflow-hidden shadow-md border border-slate-200 w-full max-w-[500px] h-32 group bg-slate-950 shrink-0">
+                  <img src={previewUrl} alt="Banner Preview" className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]" />
+                  <div className="absolute top-2 right-2 bg-slate-900/60 backdrop-blur-md px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <span className="text-white text-[9px] font-bold uppercase tracking-wider flex items-center gap-1"><Image className="w-3 h-3" /> Full Preview</span>
                   </div>
                 </div>
               ) : (
-                <div className="h-36 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-xs italic bg-white/50">No banner selected</div>
+                <div className="w-full max-w-[400px] h-32 rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-[10px] italic bg-slate-50/50 shrink-0">No banner selected</div>
               )}
             </div>
           </Section>
