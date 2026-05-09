@@ -24,6 +24,8 @@ import LogoutDialog from "../../components/LogoutDialog";
 import EventDetails from "../buyer/EventDetails";
 import EventBookedStalls from "./EventBookedStalls";
 import PropertyPreview from "../common/PropertyPreview";
+import ManageBuilders from "./ManageBuilders";
+import CreateBuilder from "./CreateBuilder";
 
 /**
  * Animated Stat Counter Component
@@ -107,6 +109,7 @@ const BuilderDashboard = () => {
     { to: "/builder-dashboard/", label: "Summary", icon: <LayoutDashboard className="w-5 h-5" /> },
     { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <Building2 className="w-5 h-5" /> },
     { to: "/builder-dashboard/events", label: "Event Stalls", icon: <CalendarDays className="w-5 h-5" /> },
+    ...(user.builder_type === "BuilderAdmin" ? [{ to: "/builder-dashboard/manage-builders", label: "Manage Builders", icon: <User className="w-5 h-5" /> }] : []),
     { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
   ];
 
@@ -118,6 +121,8 @@ const BuilderDashboard = () => {
     { match: /\/event-bookings\//, label: "Booked Stalls", icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/interests/, label: "Stall Interests", icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/property-preview\//, label: "Property Preview", icon: <Building2 className="w-5 h-5" /> },
+    { match: /\/manage-builders\/create/, label: "Create Builder", icon: <User className="w-5 h-5" /> },
+    { match: /\/manage-builders/, label: "Manage Builders", icon: <User className="w-5 h-5" /> },
   ];
 
   const activePage = (() => {
@@ -218,12 +223,13 @@ const BuilderDashboard = () => {
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">{activePage.label}</h2>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-slate-600 font-medium text-sm hidden sm:block">
-              Welcome, <span className="text-slate-900">{user.name || "Builder"}</span>
-            </span>
-            <div className="w-10 h-10 rounded-full bg-sky-50 flex items-center justify-center border border-sky-100 shadow-sm text-sky-500">
-              <User className="w-5 h-5" />
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex flex-col items-end mr-2">
+              <span className="text-sm font-bold text-slate-700 leading-none">Welcome, {user.name || "Builder"}</span>
+              <span className="text-[10px] font-bold text-sky-500 uppercase tracking-tighter mt-1">{user.builder_type || 'Builder'}</span>
+            </div>
+            <div className="w-10 h-10 bg-sky-50 rounded-full border-2 border-sky-100 flex items-center justify-center text-sky-500 shadow-sm">
+              <User className="w-6 h-6" />
             </div>
           </div>
         </header>
@@ -376,6 +382,8 @@ const BuilderDashboard = () => {
             <Route path="/post-property" element={<PostProperty />} />
             <Route path="/edit-property/:id" element={<EditProperty />} />
             <Route path="/property-preview/:id" element={<PropertyPreview />} />
+            <Route path="/manage-builders" element={<ManageBuilders />} />
+            <Route path="/manage-builders/create" element={<CreateBuilder />} />
           </Routes>
         </main>
       </div>
