@@ -91,19 +91,19 @@ const updateBlog = async (req, res) => {
     const image = req.files?.['image']?.[0]?.buffer || null;
 
     const [existing] = await pool.query(
-      'SELECT id FROM blogs WHERE id = ? AND admin_id = ?',
-      [id, adminId]
+      'SELECT id FROM blogs WHERE id = ?',
+      [id]
     );
     if (existing.length === 0) {
-      return res.status(404).json({ error: 'Blog not found or unauthorized' });
+      return res.status(404).json({ error: 'Blog not found' });
     }
 
     const updateFields = image ? 'title = ?, content = ?, image = ?' : 'title = ?, content = ?';
     const updateValues = image ? [title, content, image, id] : [title, content, id];
 
     await pool.query(
-      `UPDATE blogs SET ${updateFields} WHERE id = ? AND admin_id = ?`,
-      [...updateValues, adminId]
+      `UPDATE blogs SET ${updateFields} WHERE id = ?`,
+      updateValues
     );
 
     res.status(200).json({ message: 'Blog updated successfully' });
@@ -119,14 +119,14 @@ const deleteBlog = async (req, res) => {
     const { id } = req.params;
 
     const [existing] = await pool.query(
-      'SELECT id FROM blogs WHERE id = ? AND admin_id = ?',
-      [id, adminId]
+      'SELECT id FROM blogs WHERE id = ?',
+      [id]
     );
     if (existing.length === 0) {
-      return res.status(404).json({ error: 'Blog not found or unauthorized' });
+      return res.status(404).json({ error: 'Blog not found' });
     }
 
-    await pool.query('DELETE FROM blogs WHERE id = ? AND admin_id = ?', [id, adminId]);
+    await pool.query('DELETE FROM blogs WHERE id = ?', [id]);
 
     res.status(200).json({ message: 'Blog deleted successfully' });
   } catch (error) {
