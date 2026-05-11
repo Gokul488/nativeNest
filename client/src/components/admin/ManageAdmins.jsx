@@ -16,7 +16,8 @@ import {
   Shield,
   Trash2,
   PlusCircle,
-  Lock
+  Lock,
+  Pencil
 } from "lucide-react";
 
 const ManageAdmins = () => {
@@ -66,7 +67,7 @@ const ManageAdmins = () => {
     
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${API_BASE_URL}/api/admin/admin/${adminId}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/manage/${adminId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAdmins(admins.filter(a => a.id !== adminId));
@@ -229,14 +230,23 @@ const ManageAdmins = () => {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <button
-                        onClick={() => handleDelete(admin.id)}
-                        disabled={admin.id === currentUser.id}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
-                        title={admin.id === currentUser.id ? "Cannot delete yourself" : "Delete Admin"}
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => navigate(`/admin-dashboard/manage-admins/edit/${admin.id}`)}
+                          className="p-2 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-xl transition-all"
+                          title="Edit Admin"
+                        >
+                          <Pencil className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(admin.id)}
+                          disabled={admin.id === currentUser.id}
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                          title={admin.id === currentUser.id ? "Cannot delete yourself" : "Delete Admin"}
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
