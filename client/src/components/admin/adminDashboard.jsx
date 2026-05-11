@@ -35,6 +35,7 @@ import PropertyUnits from "./PropertyUnits";
 import LogoutDialog from "../LogoutDialog";
 import CreateAdmin from "./CreateAdmin";
 import ManageAdmins from "./ManageAdmins";
+import EditAdmin from "./EditAdmin";
 
 // Lucide Icons
 import {
@@ -168,6 +169,7 @@ const AdminDashboard = () => {
     { match: /\/property-preview\//, label: "Property Preview", icon: <Building2 className="w-5 h-5" /> },
     { match: /\/manage-users\/edit\//, label: "Edit Buyer", icon: <Users className="w-5 h-5" /> },
     { match: /\/manage-admins\/create/, label: "Add Admin", icon: <User className="w-5 h-5" /> },
+    { match: /\/manage-admins\/edit\//, label: "Edit Admin", icon: <User className="w-5 h-5" /> },
     { match: /\/sold-properties/, label: "Sold Properties", icon: <Briefcase className="w-5 h-5" /> },
   ];
 
@@ -430,6 +432,7 @@ const AdminDashboard = () => {
             <Route path="/manage-properties/units/:id" element={<PropertyUnits />} />
             <Route path="/manage-admins" element={<ManageAdmins />} />
             <Route path="/manage-admins/create" element={<CreateAdmin />} />
+            <Route path="/manage-admins/edit/:adminId" element={<EditAdmin />} />
           </Routes>
         </div>
       </main>

@@ -88,7 +88,7 @@ const EditBuyer = () => {
       });
 
       setSuccess("User profile updated successfully!");
-      setTimeout(() => navigate("/manage-users"), 2000);
+      setTimeout(() => navigate("/admin-dashboard/manage-users"), 2000);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to update user");
     } finally {
@@ -112,15 +112,6 @@ const EditBuyer = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      <div className="mb-6 flex items-center justify-between">
-        <button
-          onClick={() => navigate("/manage-users")}
-          className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-sm transition-colors"
-        >
-          <FiArrowLeft /> Back to Users
-        </button>
-        <h2 className="text-xl font-extrabold text-slate-800">Edit Buyer Profile</h2>
-      </div>
 
       <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
         <div className="px-8 py-8">
