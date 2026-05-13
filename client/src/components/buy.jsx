@@ -108,19 +108,22 @@ const Buy = () => {
 
   const fetchPropertyTypes = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/properties/types`);
-      if (!response.ok) throw new Error(`Failed to fetch property types`);
+      const url = `${API_BASE_URL}/api/properties/types`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Property types fetch failed: ${response.status}`);
       const data = await response.json();
       setPropertyTypes(['All', ...(data.propertyTypes || [])]);
     } catch (err) {
       console.error('Property types error:', err.message);
+      setPropertyError(prev => prev || "Note: Filter options couldn't be loaded.");
     }
   }, []);
 
   const fetchBuilders = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/properties/builders`);
-      if (!response.ok) throw new Error(`Failed to fetch builders`);
+      const url = `${API_BASE_URL}/api/properties/builders`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Builders fetch failed: ${response.status}`);
       const data = await response.json();
       setBuilders(['All', ...(data.builders || [])]);
     } catch (err) {
@@ -130,12 +133,16 @@ const Buy = () => {
 
   const fetchCities = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/properties/cities`);
-      if (!response.ok) throw new Error(`Failed to fetch cities`);
+      const url = `${API_BASE_URL}/api/properties/cities`;
+      console.log('Fetching cities from:', url);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Cities fetch failed: ${response.status}`);
       const data = await response.json();
+      console.log('Cities received:', data.cities);
       setCities(['All', ...(data.cities || [])]);
     } catch (err) {
       console.error('Cities error:', err.message);
+      setPropertyError(prev => prev || "Note: Some filter options couldn't be loaded from the server.");
     }
   }, []);
 
