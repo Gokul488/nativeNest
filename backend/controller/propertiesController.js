@@ -496,7 +496,12 @@ const getCities = async (req, res) => {
     res.json({ cities });
   } catch (error) {
     console.error('Error fetching cities:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    // Return the actual error message to the client for debugging on live
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      details: error.message,
+      code: error.code 
+    });
   }
 };
 
