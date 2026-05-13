@@ -77,6 +77,16 @@ app.get('/api/debug/my-photo', async (req, res) => {
   }
 });
 
+app.get('/api/debug/tables', async (req, res) => {
+  try {
+    const pool = require('./db');
+    const [rows] = await pool.query('SHOW TABLES');
+    res.json({ tables: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Health check endpoint
 app.get('/health-db', async (req, res) => {
   try {

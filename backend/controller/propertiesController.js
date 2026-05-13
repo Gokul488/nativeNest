@@ -491,15 +491,19 @@ const getAllBuilders = async (req, res) => {
 
 const getCities = async (req, res) => {
   try {
+    // Simple test first
+    await pool.query('SELECT 1');
+    
     const [rows] = await pool.query('SELECT DISTINCT city FROM properties WHERE city IS NOT NULL AND city != "" ORDER BY city ASC');
     const cities = rows.map(row => row.city);
     res.json({ cities });
   } catch (error) {
     console.error('Error fetching cities:', error);
-    // Return the actual error message to the client for debugging on live
     res.status(500).json({ 
-      error: 'Internal server error', 
-      details: error.message,
+      error: 'Database Query Failed', 
+      message: error.message,
+      database: process.env.DB_NAME, // Verify if it's the right DB
+      host: process.env.DB_HOST,
       code: error.code 
     });
   }
