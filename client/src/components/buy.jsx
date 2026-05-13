@@ -136,13 +136,16 @@ const Buy = () => {
       const url = `${API_BASE_URL}/api/properties/cities`;
       console.log('Fetching cities from:', url);
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`Cities fetch failed: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Server Error ${response.status}`);
+      }
       const data = await response.json();
       console.log('Cities received:', data.cities);
       setCities(['All', ...(data.cities || [])]);
     } catch (err) {
       console.error('Cities error:', err.message);
-      setPropertyError(prev => prev || "Note: Some filter options couldn't be loaded from the server.");
+      setPropertyError(`Backend Error: ${err.message}`);
     }
   }, []);
 
@@ -163,7 +166,7 @@ const Buy = () => {
     setPropertyError('');
     try {
       const queryParams = new URLSearchParams();
-      if (filters.location) queryParams.append('location', filters.location);
+      if (filters.location && filters.location !== 'All') queryParams.append('location', filters.location);
       if (filters.minPrice > 0 || (maxPrice > 0 && filters.maxPrice < maxPrice)) {
         queryParams.append('priceRange', `${filters.minPrice}-${filters.maxPrice}`);
       }
@@ -174,12 +177,15 @@ const Buy = () => {
 
       const url = `${API_BASE_URL}/api/properties/featured?${queryParams.toString()}`;
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`Failed to fetch properties`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to load properties (${response.status})`);
+      }
       const data = await response.json();
       setProperties(data.properties || []);
       if (data.pagination) setPagination(data.pagination);
     } catch (err) {
-      setPropertyError(`Unable to load properties: ${err.message}.`);
+      setPropertyError(`Server Error: ${err.message}`);
       setProperties([]);
     }
   }, [maxPrice]);
@@ -646,14 +652,20 @@ const Buy = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 border border-red-200 text-red-700 p-5 rounded-xl mb-8 text-center shadow-md"
+              className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl mb-8 text-center shadow-xl max-w-2xl mx-auto"
             >
-              <p className="mb-3">{propertyError}</p>
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <i className="fa-solid fa-triangle-exclamation text-2xl text-red-500"></i>
+                <h2 className="text-xl font-bold">Connection Issue</h2>
+              </div>
+              <p className="mb-4 text-sm font-medium opacity-90">{propertyError}</p>
+              
+              {/* This will show the exact backend error details if available */}
               <button
-                onClick={applyFilters}
-                className="bg-[#2e6171] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#011936] transition duration-300 shadow-md"
+                onClick={() => window.location.reload()}
+                className="bg-[#2e6171] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#011936] transition duration-300 shadow-lg transform hover:scale-105"
               >
-                Retry
+                Refresh Page
               </button>
             </motion.div>
           )}
