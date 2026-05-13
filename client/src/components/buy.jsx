@@ -251,12 +251,13 @@ const Buy = () => {
     };
     fetchProperties(combined, 1);
     const queryParams = new URLSearchParams();
-    if (combined.location) queryParams.append('location', combined.location);
+    if (combined.location && combined.location !== 'All') queryParams.append('location', combined.location);
     if (combined.minPrice > 0 || combined.maxPrice < maxPrice) queryParams.append('priceRange', `${combined.minPrice}-${combined.maxPrice}`);
     if (combined.propertyType !== 'All') queryParams.append('propertyType', combined.propertyType);
     if (combined.builder !== 'All') queryParams.append('builder', combined.builder);
     queryParams.append('page', '1');
     navigate(`/buy?${queryParams.toString()}`);
+    setIsSidebarOpen(false);
   }, [searchLocation, selectedMinPrice, selectedMaxPrice, selectedPropertyType, selectedBuilder, maxPrice, fetchProperties, navigate]);
 
   const clearLocation = () => { setSearchLocation('All'); updateFiltersAndNavigate({ location: 'All' }); };
@@ -286,8 +287,22 @@ const Buy = () => {
     setSelectedMaxPrice(Math.min(maxPrice, Math.max(val, selectedMinPrice, 0)));
   };
 
-  const handleMinPriceBlur = () => { if (selectedMinPrice > selectedMaxPrice) setSelectedMinPrice(selectedMaxPrice); };
-  const handleMaxPriceBlur = () => { if (selectedMaxPrice < selectedMinPrice) setSelectedMaxPrice(selectedMinPrice); };
+  const handleMinPriceBlur = () => { 
+    if (selectedMinPrice > selectedMaxPrice) {
+      setSelectedMinPrice(selectedMaxPrice);
+      updateFiltersAndNavigate({ minPrice: selectedMaxPrice });
+    } else {
+      updateFiltersAndNavigate({ minPrice: selectedMinPrice });
+    }
+  };
+  const handleMaxPriceBlur = () => { 
+    if (selectedMaxPrice < selectedMinPrice) {
+      setSelectedMaxPrice(selectedMinPrice);
+      updateFiltersAndNavigate({ maxPrice: selectedMinPrice });
+    } else {
+      updateFiltersAndNavigate({ maxPrice: selectedMaxPrice });
+    }
+  };
 
   const handlePageChange = (page) => {
     if (page < 1 || page > pagination.totalPages) return;
@@ -353,7 +368,11 @@ const Buy = () => {
                     <select
                       className="h-12 border border-gray-300 pr-10 pl-4 rounded-xl w-full text-base focus:outline-none focus:ring-2 focus:ring-[#2e6171] focus:border-[#2e6171] transition-all duration-300 shadow-sm bg-gray-50/70 cursor-pointer appearance-none"
                       value={searchLocation}
-                      onChange={(e) => setSearchLocation(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSearchLocation(val);
+                        updateFiltersAndNavigate({ location: val });
+                      }}
                     >
                       <option value="All">All Cities</option>
                       {cities.filter(city => city !== 'All').map((city, index) => (
@@ -367,7 +386,11 @@ const Buy = () => {
                     <select
                       className="h-12 border border-gray-300 pr-10 pl-4 rounded-xl w-full text-base focus:outline-none focus:ring-2 focus:ring-[#2e6171] focus:border-[#2e6171] transition-all duration-300 shadow-sm bg-gray-50/70 cursor-pointer appearance-none"
                       value={selectedPropertyType}
-                      onChange={(e) => setSelectedPropertyType(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedPropertyType(val);
+                        updateFiltersAndNavigate({ propertyType: val });
+                      }}
                     >
                       <option value="All">All Types</option>
                       {propertyTypes.filter(type => type !== 'All').map((type, index) => (
@@ -381,7 +404,11 @@ const Buy = () => {
                     <select
                       className="h-12 border border-gray-300 pr-10 pl-4 rounded-xl w-full text-base focus:outline-none focus:ring-2 focus:ring-[#2e6171] focus:border-[#2e6171] transition-all duration-300 shadow-sm bg-gray-50/70 cursor-pointer appearance-none"
                       value={selectedBuilder}
-                      onChange={(e) => setSelectedBuilder(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedBuilder(val);
+                        updateFiltersAndNavigate({ builder: val });
+                      }}
                     >
                       <option value="All">All Builders</option>
                       {builders.filter(b => b !== 'All').map((builder, index) => (
@@ -411,6 +438,8 @@ const Buy = () => {
                         step={1000}
                         value={selectedMinPrice}
                         onChange={handleMinPriceChange}
+                        onMouseUp={() => updateFiltersAndNavigate({ minPrice: selectedMinPrice })}
+                        onTouchEnd={() => updateFiltersAndNavigate({ minPrice: selectedMinPrice })}
                         className="absolute top-0 left-0 w-full h-2 bg-transparent appearance-none cursor-pointer price-range-slider"
                         style={{ zIndex: 3 }}
                         aria-label="Minimum price"
@@ -422,6 +451,8 @@ const Buy = () => {
                         step={1000}
                         value={selectedMaxPrice}
                         onChange={handleMaxPriceChange}
+                        onMouseUp={() => updateFiltersAndNavigate({ maxPrice: selectedMaxPrice })}
+                        onTouchEnd={() => updateFiltersAndNavigate({ maxPrice: selectedMaxPrice })}
                         className="absolute top-0 left-0 w-full h-2 bg-transparent appearance-none cursor-pointer price-range-slider"
                         style={{ zIndex: 2 }}
                         aria-label="Maximum price"
@@ -447,20 +478,14 @@ const Buy = () => {
                       />
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                    className="bg-gray-100 text-[#011936] h-12 w-12 rounded-xl font-semibold hover:bg-gray-200 transition duration-300 shadow-sm flex items-center justify-center text-sm shrink-0"
-                    aria-label="Reset all filters"
-                  >
-                    <i className="fa-solid fa-rotate-right text-lg"></i>
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-[#2e6171] text-white h-12 px-6 rounded-xl font-bold text-base hover:bg-[#011936] transition duration-300 shadow-lg flex items-center justify-center transform hover:scale-[1.01] w-auto shrink-0"
-                  >
-                    Apply
-                  </button>
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="bg-gray-100 text-[#011936] h-12 w-12 rounded-xl font-semibold hover:bg-gray-200 transition duration-300 shadow-sm flex items-center justify-center text-sm shrink-0"
+                      aria-label="Reset all filters"
+                    >
+                      <i className="fa-solid fa-rotate-right text-lg"></i>
+                    </button>
                 </div>
               </div>
             </form>
@@ -490,7 +515,12 @@ const Buy = () => {
                   <select
                     className="h-11 w-full border border-gray-300 rounded-xl pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#2e6171] appearance-none"
                     value={searchLocation}
-                    onChange={(e) => setSearchLocation(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSearchLocation(val);
+                      updateFiltersAndNavigate({ location: val });
+                      toggleSidebar();
+                    }}
                   >
                     <option value="All">All Cities</option>
                     {cities.filter(city => city !== 'All').map((city, i) => (
@@ -504,7 +534,12 @@ const Buy = () => {
                   <select
                     className="h-11 w-full border border-gray-300 rounded-xl pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#2e6171] appearance-none"
                     value={selectedPropertyType}
-                    onChange={(e) => setSelectedPropertyType(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedPropertyType(val);
+                      updateFiltersAndNavigate({ propertyType: val });
+                      toggleSidebar();
+                    }}
                   >
                     <option value="All">All Types</option>
                     {propertyTypes.filter(t => t !== 'All').map((t, i) => (
@@ -518,7 +553,12 @@ const Buy = () => {
                   <select
                     className="h-11 w-full border border-gray-300 rounded-xl pl-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#2e6171] appearance-none"
                     value={selectedBuilder}
-                    onChange={(e) => setSelectedBuilder(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedBuilder(val);
+                      updateFiltersAndNavigate({ builder: val });
+                      toggleSidebar();
+                    }}
                   >
                     <option value="All">All Builders</option>
                     {builders.filter(b => b !== 'All').map((builder, i) => (
@@ -545,6 +585,8 @@ const Buy = () => {
                       step={1000}
                       value={selectedMinPrice}
                       onChange={handleMinPriceChange}
+                      onMouseUp={() => updateFiltersAndNavigate({ minPrice: selectedMinPrice })}
+                      onTouchEnd={() => updateFiltersAndNavigate({ minPrice: selectedMinPrice })}
                       className="absolute inset-0 w-full price-range-slider"
                     />
                     <input
@@ -554,6 +596,8 @@ const Buy = () => {
                       step={1000}
                       value={selectedMaxPrice}
                       onChange={handleMaxPriceChange}
+                      onMouseUp={() => updateFiltersAndNavigate({ maxPrice: selectedMaxPrice })}
+                      onTouchEnd={() => updateFiltersAndNavigate({ maxPrice: selectedMaxPrice })}
                       className="absolute inset-0 w-full price-range-slider"
                     />
                   </div>
@@ -584,13 +628,6 @@ const Buy = () => {
                     className="flex-1 bg-gray-100 text-[#011936] h-10 rounded-lg flex items-center justify-center text-sm font-medium hover:bg-gray-200"
                   >
                     <i className="fa-solid fa-rotate-right mr-1"></i> Reset
-                  </button>
-                  <button
-                    type="submit"
-                    onClick={handleSearch}
-                    className="flex-1 bg-[#2e6171] text-white h-10 rounded-lg font-medium text-sm hover:bg-[#011936]"
-                  >
-                    Apply
                   </button>
                 </div>
               </div>
