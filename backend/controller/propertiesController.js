@@ -494,7 +494,7 @@ const getCities = async (req, res) => {
     // Simple test first
     await pool.query('SELECT 1');
     
-    const [rows] = await pool.query('SELECT DISTINCT city FROM properties WHERE city IS NOT NULL AND city != "" ORDER BY city ASC');
+    const [rows] = await pool.query("SELECT DISTINCT city FROM properties WHERE city IS NOT NULL AND city != '' ORDER BY city ASC");
     const cities = rows.map(row => row.city);
     res.json({ cities });
   } catch (error) {
