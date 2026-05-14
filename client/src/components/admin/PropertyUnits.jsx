@@ -8,7 +8,7 @@ import { BadgeCheck, Loader2, ChevronRight, Building2, Layers, LayoutGrid, X } f
 import API_BASE_URL from '../../config.js';
 
 const PropertyUnits = () => {
-  const { propertyId, sqft } = useParams();
+  const { id: propertyId, sqft } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
