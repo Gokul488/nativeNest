@@ -1,6 +1,7 @@
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
+const { getMobileVariations } = require('../utils/phoneUtils');
 
 /* ================= BUYER: GET ALL EVENTS ================= */
 const getPublicEvents = async (req, res) => {
@@ -363,27 +364,30 @@ const markAttendance = async (req, res) => {
       return res.status(400).json({ error: 'Event ID and Mobile Number are required' });
     }
 
+    const mobileVariations = getMobileVariations(mobile_number);
+
     // 1. Check if user is already registered for this event
     const [registration] = await pool.query(
-      `SELECT id FROM event_participants 
-       WHERE event_id = ? AND phone = ?`,
-      [eventId, mobile_number]
+      `SELECT id, phone FROM event_participants 
+       WHERE event_id = ? AND phone IN (?)`,
+      [eventId, mobileVariations]
     );
 
     if (registration.length > 0) {
+      const matchedPhone = registration[0].phone;
       // Update attendance status for already registered user
       await pool.query(
         `UPDATE event_participants SET is_attended = 1 
          WHERE event_id = ? AND phone = ?`,
-        [eventId, mobile_number]
+        [eventId, matchedPhone]
       );
       return res.json({ message: 'Attendance marked successfully! Welcome to the event.' });
     }
 
     // 2. If not in participants, check if they are a registered buyer in the system
     const [buyerRows] = await pool.query(
-      'SELECT id, name, email FROM buyers WHERE mobile_number = ?',
-      [mobile_number]
+      'SELECT id, name, mobile_number, email FROM buyers WHERE mobile_number IN (?)',
+      [mobileVariations]
     );
 
     if (buyerRows.length > 0) {
@@ -392,7 +396,7 @@ const markAttendance = async (req, res) => {
       await pool.query(
         `INSERT INTO event_participants (event_id, buyer_id, name, phone, email, is_attended)
          VALUES (?, ?, ?, ?, ?, 1)`,
-        [eventId, buyer.id, buyer.name, mobile_number, buyer.email]
+        [eventId, buyer.id, buyer.name, buyer.mobile_number, buyer.email]
       );
       return res.json({ message: 'Welcome! Your registration has been processed and attendance marked.' });
     }
@@ -416,8 +420,10 @@ const markStallAttendance = async (req, res) => {
       return res.status(400).json({ error: 'Event ID, Stall ID, and Mobile Number are required' });
     }
 
+    const mobileVariations = getMobileVariations(mobile_number);
+
     // 1. Find the buyer
-    const [buyer] = await pool.query("SELECT id FROM buyers WHERE mobile_number = ?", [mobile_number]);
+    const [buyer] = await pool.query("SELECT id FROM buyers WHERE mobile_number IN (?)", [mobileVariations]);
     if (buyer.length === 0) {
       return res.status(404).json({ error: 'Buyer not found.' });
     }
