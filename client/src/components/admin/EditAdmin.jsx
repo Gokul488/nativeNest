@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiLock, FiEye, FiEyeOff, FiCheckCircle, FiShield } from "react-icons/fi";
 import { Loader2 } from "lucide-react";
 import API_BASE_URL from "../../config.js";
+import CountryCodeDropdown, { countryCodes } from "../common/CountryCodeDropdown.jsx";
 
 const EditAdmin = () => {
   const { adminId } = useParams();
@@ -16,6 +17,7 @@ const EditAdmin = () => {
     confirm_password: "",
     admin_type: "Admin",
   });
+  const [countryCode, setCountryCode] = useState("+91");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -37,11 +39,17 @@ const EditAdmin = () => {
         const res = await axios.get(`${API_BASE_URL}/api/admin/manage/${adminId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        const adminData = res.data;
+        const fullMobile = adminData.mobile_number || "";
+        const matchedCode = countryCodes.find(c => fullMobile.startsWith(c.code));
+        
         setFormData({
-          ...res.data,
+          ...adminData,
+          mobile_number: matchedCode ? fullMobile.slice(matchedCode.code.length) : fullMobile,
           password: "",
           confirm_password: "",
         });
+        if (matchedCode) setCountryCode(matchedCode.code);
       } catch (err) {
         setError("Failed to fetch admin details.");
       } finally {
@@ -69,7 +77,11 @@ const EditAdmin = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${API_BASE_URL}/api/admin/manage/${adminId}`, formData, {
+      const payload = { 
+        ...formData, 
+        mobile_number: `${countryCode}${formData.mobile_number}` 
+      };
+      await axios.put(`${API_BASE_URL}/api/admin/manage/${adminId}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSuccess("Admin updated successfully!");
@@ -144,17 +156,20 @@ const EditAdmin = () => {
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Mobile Number</label>
-            <div className="relative group">
-              <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+            <div className="flex">
+              <CountryCodeDropdown
+                selectedCode={countryCode}
+                onChange={setCountryCode}
+              />
               <input
                 type="tel"
                 name="mobile_number"
                 value={formData.mobile_number}
                 onChange={handleChange}
                 required
-                maxLength={10}
-                placeholder="10-digit number"
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all"
+                maxLength={12}
+                placeholder="Number"
+                className="flex-1 px-4 py-3 bg-slate-50 border border-l-0 border-slate-200 rounded-r-2xl text-sm focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all"
               />
             </div>
           </div>

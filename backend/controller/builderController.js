@@ -2,6 +2,7 @@
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { getMobileVariations } = require('../utils/phoneUtils');
 
 const getBuilderDetails = async (req, res) => {
   try {
@@ -50,20 +51,21 @@ const updateBuilderDetails = async (req, res) => {
       });
     }
 
-    if (!/^\d{10}$/.test(mobile_number)) {
-      return res.status(400).json({ error: 'Mobile number must be 10 digits' });
+    if (!/^\+?\d{10,15}$/.test(mobile_number)) {
+      return res.status(400).json({ error: 'Mobile number must be between 10 and 15 digits' });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
+    const mobileVariations = getMobileVariations(mobile_number);
     const [existing] = await pool.query(
       `SELECT id 
        FROM builders 
-       WHERE (mobile_number = ? OR email = ?) 
+       WHERE (mobile_number IN (?) OR (email IS NOT NULL AND email = ?)) 
        AND id != ?`,
-      [mobile_number, email, builderId]
+      [mobileVariations, email, builderId]
     );
 
     if (existing.length > 0) {
@@ -446,9 +448,10 @@ const createBuilder = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const mobileVariations = getMobileVariations(mobile_number);
     const [existing] = await pool.query(
-      "SELECT id FROM builders WHERE mobile_number = ? OR email = ?",
-      [mobile_number, email]
+      "SELECT id FROM builders WHERE mobile_number IN (?) OR (email IS NOT NULL AND email = ?)",
+      [mobileVariations, email]
     );
 
     if (existing.length > 0) {

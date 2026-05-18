@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiLock, FiType, FiEye, FiEyeOff, FiUserPlus } from "react-icons/fi";
 import { motion } from "framer-motion";
 import API_BASE_URL from "../config.js";
+import CountryCodeDropdown from "./common/CountryCodeDropdown.jsx";
 
 const Register = () => {
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -12,6 +13,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [photoBase64, setPhotoBase64] = useState("");
   const accountType = "buyer";
+  const [countryCode, setCountryCode] = useState("+91");
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
@@ -23,7 +25,7 @@ const Register = () => {
     const payload = {
       name: formData.get("name"),
       email: formData.get("email"),
-      mobile_number: formData.get("mobile_number"),
+      mobile_number: `${countryCode}${formData.get("mobile_number")}`,
       password: formData.get("password"),
       confirm_password: formData.get("confirm_password"),
       account_type: "buyer",
@@ -193,19 +195,20 @@ const Register = () => {
                 <label className="block text-[11px] font-bold text-[#4a6b8a] uppercase tracking-wider mb-1.5 ml-1">
                   Mobile Number *
                 </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-4 flex items-center text-slate-400">
-                    <FiPhone size={16} />
-                  </span>
+                <div className="flex">
+                  <CountryCodeDropdown
+                    selectedCode={countryCode}
+                    onChange={setCountryCode}
+                  />
                   <input
                     type="tel"
                     name="mobile_number"
                     placeholder="9876543210"
                     required
-                    pattern="\d{10}"
-                    maxLength={10}
+                    pattern="\d{10,12}"
+                    maxLength={12}
                     onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
-                    className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
+                    className="flex-1 px-4 py-2.5 rounded-r-xl border border-l-0 border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all"
                   />
                 </div>
               </div>

@@ -3,11 +3,13 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from "../../config.js";
 import { FaCheckCircle, FaStoreAlt, FaInfoCircle } from "react-icons/fa";
+import CountryCodeDropdown from "../common/CountryCodeDropdown.jsx";
 
 const StallCheckIn = () => {
   const { eventId, stallId } = useParams();
   const [stallInfo, setStallInfo] = useState(null); // To store fetched names
   const [mobile, setMobile] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
   const [status, setStatus] = useState("loading"); // Start with loading
   const [message, setMessage] = useState("");
 
@@ -33,7 +35,7 @@ const StallCheckIn = () => {
       const response = await axios.post(`${API_BASE_URL}/api/events/mark-stall-attendance`, {
         eventId,
         stallId,
-        mobile_number: mobile
+        mobile_number: `${countryCode}${mobile}`
       });
       setMessage(response.data.message);
       setStatus("success");
@@ -85,14 +87,20 @@ const StallCheckIn = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase ml-1">Your Registered Mobile</label>
-          <input
-            type="tel"
-            required
-            placeholder="Enter Mobile Number"
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-          />
+          <div className="flex">
+            <CountryCodeDropdown
+              selectedCode={countryCode}
+              onChange={setCountryCode}
+            />
+            <input
+              type="tel"
+              required
+              placeholder="Enter Mobile Number"
+              className="flex-1 px-4 py-3 border border-l-0 border-gray-300 rounded-r-xl outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+            />
+          </div>
         </div>
 
         {status === "error" && (

@@ -3,10 +3,12 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from "../../config.js";
 import { FaCheckCircle, FaUserCheck } from "react-icons/fa";
+import CountryCodeDropdown from "../common/CountryCodeDropdown.jsx";
 
 const EventCheckIn = () => {
   const { eventId } = useParams();
   const [mobile, setMobile] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
   const [status, setStatus] = useState("idle"); // idle, loading, success, error
   const [message, setMessage] = useState("");
 
@@ -16,7 +18,7 @@ const EventCheckIn = () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/events/mark-attendance`, {
         eventId,
-        mobile_number: mobile
+        mobile_number: `${countryCode}${mobile}`
       });
       setMessage(response.data.message);
       setStatus("success");
@@ -49,14 +51,20 @@ const EventCheckIn = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Mobile Number</label>
-          <input
-            type="tel"
-            required
-            placeholder="e.g. 9876543210"
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-          />
+          <div className="flex">
+            <CountryCodeDropdown
+              selectedCode={countryCode}
+              onChange={setCountryCode}
+            />
+            <input
+              type="tel"
+              required
+              placeholder="e.g. 9876543210"
+              className="flex-1 px-4 py-3 border border-l-0 border-gray-300 rounded-r-xl focus:ring-2 focus:ring-teal-500 outline-none transition"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+            />
+          </div>
         </div>
 
         {status === "error" && (

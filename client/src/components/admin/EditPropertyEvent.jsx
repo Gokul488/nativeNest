@@ -7,6 +7,7 @@ import {
   ArrowLeft, PencilLine, AlertTriangle, CheckCircle2,
   CloudUpload, Image, MapPin, Phone, User, Bell, Search, Loader2, Home,
 } from "lucide-react";
+import CountryCodeDropdown, { countryCodes } from "../common/CountryCodeDropdown.jsx";
 
 // ─── Shared style constants ───────────────────────────────────────────────────
 const inputCls = "w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm text-slate-700 placeholder:text-slate-400";
@@ -86,6 +87,7 @@ const EditPropertyEvent = () => {
     notify_builders: false,
     notify_buyers: false,
   });
+  const [countryCode, setCountryCode] = useState("+91");
 
   const [allBuilders, setAllBuilders] = useState([]);
   const [allBuyers, setAllBuyers] = useState([]);
@@ -117,6 +119,12 @@ const EditPropertyEvent = () => {
           address: event.address || "",
           pincode: event.pincode || "",
         });
+        const fullPhone = event.contact_phone || "";
+        const matchedCode = countryCodes.find(c => fullPhone.startsWith(c.code));
+        if (matchedCode) {
+          setCountryCode(matchedCode.code);
+          setFormData(prev => ({ ...prev, contact_phone: fullPhone.slice(matchedCode.code.length) }));
+        }
         setCurrentBanner(event.banner_image);
       } catch (err) {
         setError(err.response?.data?.error || "Failed to load event data.");
@@ -170,7 +178,14 @@ const EditPropertyEvent = () => {
       const token = localStorage.getItem("token");
       if (!token) { navigate("/login"); return; }
       const data = new FormData();
-      for (const key in formData) { if (key === "banner_image") continue; data.append(key, formData[key]); }
+      for (const key in formData) { 
+        if (key === "banner_image") continue; 
+        if (key === "contact_phone") {
+          data.append(key, `${countryCode}${formData[key]}`);
+          continue;
+        }
+        data.append(key, formData[key]); 
+      }
       data.append("selected_builders", JSON.stringify(selectedBuilderIds));
       data.append("selected_buyers", JSON.stringify(selectedBuyerIds));
       if (bannerImage) data.append("banner_image", bannerImage);
@@ -327,7 +342,19 @@ const EditPropertyEvent = () => {
               </div>
               <div>
                 <label className={labelCls}><span className="flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</span></label>
-                <input type="text" name="contact_phone" value={formData.contact_phone} onChange={handleChange} className={inputCls} />
+                <div className="flex">
+                  <CountryCodeDropdown
+                    selectedCode={countryCode}
+                    onChange={setCountryCode}
+                  />
+                  <input
+                    type="text"
+                    name="contact_phone"
+                    value={formData.contact_phone}
+                    onChange={handleChange}
+                    className="flex-1 px-3 py-2 border border-l-0 border-slate-200 rounded-lg rounded-l-none bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm text-slate-700 placeholder:text-slate-400"
+                  />
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Stall Count</label>

@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { getMobileVariations } = require('../utils/phoneUtils');
 
 /* ===================== REGISTER ===================== */
 const register = async (req, res) => {
@@ -25,8 +26,8 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Invalid account type' });
     }
 
-    if (!/^\d{10}$/.test(mobile_number)) {
-      return res.status(400).json({ error: 'Mobile number must be 10 digits' });
+    if (!/^\+?\d{10,15}$/.test(mobile_number)) {
+      return res.status(400).json({ error: 'Invalid mobile number format' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -36,9 +37,10 @@ const register = async (req, res) => {
 
     /* -------- BUYER REGISTER -------- */
     if (account_type === 'buyer') {
+      const mobileVariations = getMobileVariations(mobile_number);
       const [existing] = await pool.query(
-        'SELECT id FROM buyers WHERE mobile_number = ? OR email = ?',
-        [mobile_number, email || null]
+        'SELECT id FROM buyers WHERE mobile_number IN (?) OR (email IS NOT NULL AND email = ?)',
+        [mobileVariations, email || null]
       );
 
       if (existing.length > 0) {
@@ -85,9 +87,10 @@ const register = async (req, res) => {
         return res.status(400).json({ error: 'Contact person is required for builders' });
       }
 
+      const mobileVariations = getMobileVariations(mobile_number);
       const [existing] = await pool.query(
-        'SELECT id FROM builders WHERE mobile_number = ? OR email = ?',
-        [mobile_number, email || null]
+        'SELECT id FROM builders WHERE mobile_number IN (?) OR (email IS NOT NULL AND email = ?)',
+        [mobileVariations, email || null]
       );
 
       if (existing.length > 0) {
@@ -140,13 +143,14 @@ const login = async (req, res) => {
     }
 
     let user, account_type;
+    const mobileVariations = getMobileVariations(identifier);
 
     /* -------- BUYER LOGIN -------- */
     let [rows] = await pool.query(
       `SELECT id, name, mobile_number, email, password, gender, dob, city, country, photo
        FROM buyers
-       WHERE mobile_number = ? OR email = ?`,
-      [identifier, identifier]
+       WHERE mobile_number IN (?) OR email = ?`,
+      [mobileVariations, identifier]
     );
 
     if (rows.length > 0) {
@@ -157,8 +161,8 @@ const login = async (req, res) => {
       [rows] = await pool.query(
         `SELECT id, name, mobile_number, email, password, admin_type
          FROM admins
-         WHERE mobile_number = ? OR email = ?`,
-        [identifier, identifier]
+         WHERE mobile_number IN (?) OR email = ?`,
+        [mobileVariations, identifier]
       );
 
       if (rows.length > 0) {
@@ -169,8 +173,8 @@ const login = async (req, res) => {
         [rows] = await pool.query(
           `SELECT id, name, mobile_number, email, password, builder_type
            FROM builders
-           WHERE mobile_number = ? OR email = ?`,
-          [identifier, identifier]
+           WHERE mobile_number IN (?) OR email = ?`,
+          [mobileVariations, identifier]
         );
 
         if (rows.length > 0) {

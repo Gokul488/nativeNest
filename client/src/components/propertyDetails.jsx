@@ -19,6 +19,7 @@ const PropertyDetails = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [allImages, setAllImages] = useState([]);
   const [videoError, setVideoError] = useState('');
+  const [adminWhatsapp, setAdminWhatsapp] = useState(null);
   const navigate = useNavigate();
 
   // Click-outside handler to close all dropdowns
@@ -138,6 +139,18 @@ const PropertyDetails = () => {
 
   useEffect(() => {
     fetchPropertyDetails();
+    const fetchAdminWhatsapp = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/public/admin-whatsapp`);
+        if (response.ok) {
+          const data = await response.json();
+          setAdminWhatsapp(data.mobile_number);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch admin whatsapp");
+      }
+    };
+    fetchAdminWhatsapp();
   }, [id]);
 
   // Lightbox
@@ -172,13 +185,21 @@ const PropertyDetails = () => {
 
   // Handle Interested Button Click
   const handleInterested = () => {
-    if (!property.mobile_number) {
-      alert("No contact number available for this property.");
+    const targetMobile = adminWhatsapp || property.mobile_number;
+    
+    if (!targetMobile) {
+      alert("No contact number available.");
       return;
     }
 
     const message = encodeURIComponent(`Hello, I'm interested in ${property.title}.`);
-    window.open(`https://wa.me/+91${property.mobile_number}?text=${message}`, '_blank');
+    // Remove any non-digits from targetMobile for the URL
+    const cleanMobile = targetMobile.replace(/\D/g, '');
+    
+    // If it starts with 91 and has 12 digits, use it as is, else prepend 91
+    const finalMobile = cleanMobile.length === 10 ? `91${cleanMobile}` : cleanMobile;
+    
+    window.open(`https://wa.me/${finalMobile}?text=${message}`, '_blank');
   };
 
   // Build full address string safely

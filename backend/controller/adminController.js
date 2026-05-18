@@ -1,6 +1,7 @@
 const pool = require("../db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const { getMobileVariations } = require("../utils/phoneUtils");
 
 /* =========================
    GET ADMIN DETAILS
@@ -61,16 +62,17 @@ const updateAdminDetails = async (req, res) => {
         .json({ error: "Name, mobile number and email are required" });
     }
 
-    if (mobile_number.length !== 10 || !/^\d+$/.test(mobile_number)) {
+    if (!/^\+?\d{10,15}$/.test(mobile_number)) {
       return res
         .status(400)
-        .json({ error: "Mobile number must be exactly 10 digits" });
+        .json({ error: "Mobile number must be between 10 and 15 digits" });
     }
 
     /* Check duplicate email / mobile */
+    const mobileVariations = getMobileVariations(mobile_number);
     const [existing] = await pool.query(
-      "SELECT id FROM admins WHERE (mobile_number = ? OR email = ?) AND id != ?",
-      [mobile_number, email, decoded.userId]
+      "SELECT id FROM admins WHERE (mobile_number IN (?) OR (email IS NOT NULL AND email = ?)) AND id != ?",
+      [mobileVariations, email, decoded.userId]
     );
 
     if (existing.length > 0) {
@@ -155,7 +157,14 @@ const getAllUsers = async (req, res) => {
        ORDER BY created_at DESC`
     );
 
-    res.json(buyers);
+    const formattedBuyers = buyers.map(buyer => {
+      if (buyer.photo) {
+        buyer.photo = Buffer.from(buyer.photo).toString('base64');
+      }
+      return buyer;
+    });
+
+    res.json(formattedBuyers);
   } catch (error) {
     console.error("Get buyers error:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -279,20 +288,27 @@ const adminUpdateUser = async (req, res) => {
     }
 
     // Check for duplicate mobile or email (excluding this user)
+    const mobileVariations = getMobileVariations(mobile_number);
     const [existing] = await pool.query(
-      `SELECT id FROM buyers WHERE (mobile_number = ? OR email = ?) AND id != ?`,
-      [mobile_number, email, userId]
+      `SELECT id FROM buyers WHERE (mobile_number IN (?) OR (email IS NOT NULL AND email = ?)) AND id != ?`,
+      [mobileVariations, email, userId]
     );
 
     if (existing.length > 0) {
       return res.status(400).json({ error: "Mobile number or email already in use" });
     }
 
+    let photoBuffer = null;
+    if (photo) {
+      const cleanBase64 = photo.includes(',') ? photo.split(',')[1] : photo;
+      photoBuffer = Buffer.from(cleanBase64, 'base64');
+    }
+
     let query = `
       UPDATE buyers 
       SET name = ?, email = ?, mobile_number = ?, gender = ?, dob = ?, city = ?, country = ?, photo = ?
     `;
-    let params = [name, email, mobile_number, gender || null, dob || null, city || null, country || null, photo || null];
+    let params = [name, email, mobile_number, gender || null, dob || null, city || null, country || null, photoBuffer];
 
     if (password && password.trim() !== "") {
       const hashedPassword = await bcrypt.hash(password.trim(), 10);
@@ -374,9 +390,10 @@ const createAdmin = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const mobileVariations = getMobileVariations(mobile_number);
     const [existing] = await pool.query(
-      "SELECT id FROM admins WHERE mobile_number = ? OR email = ?",
-      [mobile_number, email]
+      "SELECT id FROM admins WHERE mobile_number IN (?) OR (email IS NOT NULL AND email = ?)",
+      [mobileVariations, email]
     );
 
     if (existing.length > 0) {
@@ -520,9 +537,10 @@ const updateSpecificAdmin = async (req, res) => {
     }
 
     // Check for duplicate mobile or email (excluding this admin)
+    const mobileVariations = getMobileVariations(mobile_number);
     const [existing] = await pool.query(
-      `SELECT id FROM admins WHERE (mobile_number = ? OR email = ?) AND id != ?`,
-      [mobile_number, email, adminId]
+      `SELECT id FROM admins WHERE (mobile_number IN (?) OR (email IS NOT NULL AND email = ?)) AND id != ?`,
+      [mobileVariations, email, adminId]
     );
 
     if (existing.length > 0) {
