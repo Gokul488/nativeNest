@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiLock, FiEye, FiEyeOff, FiCheckCircle, FiShield } from "react-icons/fi";
 import { Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
 import API_BASE_URL from "../../config.js";
 
-const CreateAdmin = () => {
+const EditAdmin = () => {
+  const { adminId } = useParams();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -18,6 +18,7 @@ const CreateAdmin = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -27,8 +28,29 @@ const CreateAdmin = () => {
     // If not SuperAdmin, don't allow access
     if (currentUser.admin_type !== "SuperAdmin") {
       navigate("/admin-dashboard");
+      return;
     }
-  }, [navigate, currentUser.admin_type]);
+
+    const fetchAdmin = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${API_BASE_URL}/api/admin/manage/${adminId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setFormData({
+          ...res.data,
+          password: "",
+          confirm_password: "",
+        });
+      } catch (err) {
+        setError("Failed to fetch admin details.");
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchAdmin();
+  }, [adminId, navigate, currentUser.admin_type]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -39,7 +61,7 @@ const CreateAdmin = () => {
     setError("");
     setSuccess("");
 
-    if (formData.password !== formData.confirm_password) {
+    if (formData.password && formData.password !== formData.confirm_password) {
       setError("Passwords do not match");
       return;
     }
@@ -47,14 +69,13 @@ const CreateAdmin = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.post(`${API_BASE_URL}/api/admin/admin/create`, formData, {
+      await axios.put(`${API_BASE_URL}/api/admin/manage/${adminId}`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSuccess("Admin created successfully!");
-      setFormData({ name: "", email: "", mobile_number: "", password: "", confirm_password: "", admin_type: "Admin" });
+      setSuccess("Admin updated successfully!");
       setTimeout(() => navigate("/admin-dashboard/manage-admins"), 2000);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to create admin");
+      setError(err.response?.data?.error || "Failed to update admin");
     } finally {
       setLoading(false);
     }
@@ -62,12 +83,16 @@ const CreateAdmin = () => {
 
   if (currentUser.admin_type !== "SuperAdmin") return null;
 
+  if (fetching) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-3xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-900">Create New Admin</h2>
-        <p className="text-sm text-slate-500 mt-1">Add a new administrator to the system.</p>
-      </div>
 
       {error && (
         <div className="p-4 mb-6 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium flex items-center gap-3">
@@ -135,45 +160,6 @@ const CreateAdmin = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
-            <div className="relative group">
-              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                placeholder="••••••••"
-                className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm Password</label>
-            <div className="relative group">
-              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
-              <input
-                type="password"
-                name="confirm_password"
-                value={formData.confirm_password}
-                onChange={handleChange}
-                required
-                placeholder="••••••••"
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Admin Category</label>
             <div className="relative group">
               <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
@@ -188,6 +174,43 @@ const CreateAdmin = () => {
                 <option value="SuperAdmin">SuperAdmin</option>
                 <option value="builderAdmin">builderAdmin</option>
               </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">New Password (Optional)</label>
+            <div className="relative group">
+              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Leave blank to keep current"
+                className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm New Password</label>
+            <div className="relative group">
+              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+              <input
+                type="password"
+                name="confirm_password"
+                value={formData.confirm_password}
+                onChange={handleChange}
+                placeholder="Confirm new password"
+                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all"
+              />
             </div>
           </div>
         </div>
@@ -208,7 +231,7 @@ const CreateAdmin = () => {
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              "Create Admin"
+              "Update Admin"
             )}
           </button>
         </div>
@@ -217,4 +240,4 @@ const CreateAdmin = () => {
   );
 };
 
-export default CreateAdmin;
+export default EditAdmin;
