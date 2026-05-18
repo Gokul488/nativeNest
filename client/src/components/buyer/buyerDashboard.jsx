@@ -184,6 +184,14 @@ const BuyerDashboard = () => {
             >
               <Menu className="w-6 h-6" />
             </button>
+            <Link 
+              to="/" 
+              className="flex items-center gap-2 text-slate-500 hover:text-sky-500 transition-colors group"
+              title="Go to Home"
+            >
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="hidden sm:inline text-sm font-bold">Home</span>
+            </Link>
             <div className="hidden md:flex items-center gap-2 text-slate-500">
               {activePage.icon}
               <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">{activePage.label}</h2>

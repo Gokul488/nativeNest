@@ -586,4 +586,4 @@ module.exports = {
   deleteAdmin,
   getSpecificAdmin,
   updateSpecificAdmin
-};
+};
