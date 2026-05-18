@@ -309,7 +309,7 @@ const PropertyUnits = () => {
                             </td>
                             <td className="px-6 py-4">
                               <span className="text-xs text-slate-500 font-medium">
-                                {property.property_type === 'Villas' 
+                                {property.property_type === 'Villas'
                                   ? (unitDetails.facing || 'N/A')
                                   : `Block ${unitDetails.block_name || 'N/A'} · Floor ${unitDetails.floor || 'N/A'}`}
                               </span>

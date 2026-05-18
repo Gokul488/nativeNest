@@ -195,6 +195,7 @@ const CreateAdmin = () => {
               >
                 <option value="Admin">Admin</option>
                 <option value="SuperAdmin">SuperAdmin</option>
+                <option value="builderAdmin">builderAdmin</option>
               </select>
             </div>
           </div>
