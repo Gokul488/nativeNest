@@ -7,6 +7,7 @@ import {
   ArrowLeft, CalendarDays, AlertTriangle, CheckCircle2,
   CloudUpload, Image, MapPin, Phone, User, Bell, Search, Loader2,
 } from "lucide-react";
+import CountryCodeDropdown from "../common/CountryCodeDropdown.jsx";
 
 // ─── Shared style constants ───────────────────────────────────────────────────
 const inputCls = "w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm text-slate-700 placeholder:text-slate-400";
@@ -85,6 +86,7 @@ const CreatePropertyEvent = () => {
     notify_builders: true,
     notify_buyers: true,
   });
+  const [countryCode, setCountryCode] = useState("+91");
 
   const [bannerImage, setBannerImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -142,7 +144,13 @@ const CreatePropertyEvent = () => {
       const token = localStorage.getItem("token");
       if (!token) { navigate("/login"); return; }
       const data = new FormData();
-      for (const key in formData) data.append(key, formData[key]);
+      for (const key in formData) { 
+        if (key === "contact_phone") {
+          data.append(key, `${countryCode}${formData[key]}`);
+          continue;
+        }
+        data.append(key, formData[key]); 
+      }
       data.append("selected_builders", JSON.stringify(selectedBuilderIds));
       data.append("selected_buyers", JSON.stringify(selectedBuyerIds));
       if (bannerImage) data.append("banner_image", bannerImage);
@@ -287,7 +295,19 @@ const CreatePropertyEvent = () => {
               </div>
               <div>
                 <label className={labelCls}><span className="flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</span></label>
-                <input type="text" name="contact_phone" value={formData.contact_phone} onChange={handleChange} placeholder="e.g. 9876543210" className={inputCls} />
+                <div className="flex">
+                  <CountryCodeDropdown
+                    selectedCode={countryCode}
+                    onChange={setCountryCode}
+                  />
+                  <input
+                    type="text"
+                    name="contact_phone"
+                    value={formData.contact_phone}
+                    onChange={handleChange}
+                    className="flex-1 px-3 py-2 border border-l-0 border-slate-200 rounded-r-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm text-slate-700 placeholder:text-slate-400"
+                  />
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Stall Count</label>

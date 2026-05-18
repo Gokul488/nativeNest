@@ -2,6 +2,7 @@
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { getMobileVariations } = require('../utils/phoneUtils');
 
 const getUserDetails = async (req, res) => {
   try {
@@ -60,8 +61,8 @@ const updateUserDetails = async (req, res) => {
       });
     }
 
-    if (!/^\d{10}$/.test(mobile_number)) {
-      return res.status(400).json({ error: 'Mobile number must be 10 digits' });
+    if (!/^\+?\d{10,15}$/.test(mobile_number)) {
+      return res.status(400).json({ error: 'Mobile number must be between 10 and 15 digits' });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -69,12 +70,13 @@ const updateUserDetails = async (req, res) => {
     }
 
     // Check for duplicate mobile or email (excluding current user)
+    const mobileVariations = getMobileVariations(mobile_number);
     const [existing] = await pool.query(
       `SELECT id 
        FROM buyers 
-       WHERE (mobile_number = ? OR email = ?) 
+       WHERE (mobile_number IN (?) OR (email IS NOT NULL AND email = ?)) 
        AND id != ?`,
-      [mobile_number, email, userId]
+      [mobileVariations, email, userId]
     );
 
     if (existing.length > 0) {
