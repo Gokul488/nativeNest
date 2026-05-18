@@ -282,7 +282,7 @@ const ViewEvents = () => {
                     >
                       <span className="inline-flex items-center justify-center">Event Date {getSortIcon("start_date")}</span>
                     </th>
-                    <th className="w-32 px-4 py-4 text-center">Quantity</th>
+                    <th className="w-32 px-4 py-4 text-center">Stalls</th>
                     <th className="w-32 px-4 py-4 text-center">Bookings</th>
                     <th className="w-28 px-4 py-4 text-center">People</th>
                     <th className="w-40 px-6 py-4 text-center">Actions</th>
@@ -348,7 +348,7 @@ const ViewEvents = () => {
                         <td className="px-4 py-3 text-center">
                           <div className="flex justify-center">
                             <Link
-                              to={`/admin-dashboard/manage-properties/units/${event.id}`}
+                              to={`/admin-dashboard/manage-stall-types/${event.id}`}
                               className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${isCompleted 
                                 ? "bg-slate-100 text-slate-500 cursor-not-allowed opacity-60" 
                                 : "bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-600 hover:text-white hover:border-amber-600 hover:shadow-md active:scale-95"
@@ -365,7 +365,7 @@ const ViewEvents = () => {
                         <td className="px-4 py-3 text-center">
                           <div className="flex justify-center">
                             <Link
-                              to={`/admin-dashboard/manage-properties/units/${event.id}`}
+                              to={`/admin-dashboard/event-bookings/${event.id}`}
                               className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${isCompleted 
                                 ? "bg-slate-100 text-slate-500 cursor-not-allowed opacity-60" 
                                 : "bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 hover:shadow-md active:scale-95"
@@ -483,15 +483,15 @@ const ViewEvents = () => {
                     {/* Stats grid */}
                     <div className="grid grid-cols-3 gap-2">
                       <Link
-                        to={`/admin-dashboard/manage-properties/units/${event.id}`}
+                        to={`/admin-dashboard/manage-stall-types/${event.id}`}
                         className={`flex flex-col items-center justify-center gap-1 p-3 bg-slate-50 rounded-xl border border-slate-200 hover:shadow-sm transition-all group ${isCompleted ? "hover:border-emerald-400" : "hover:border-sky-400"}`}
                       >
                         <FaStore className={`${isCompleted ? "text-emerald-500" : "text-sky-500"} group-hover:scale-110 transition-transform text-sm`} />
                         <span className="text-xs font-bold text-slate-800">{event.stall_count || 0}</span>
-                        <span className="text-[9px] text-slate-400 uppercase tracking-tight">Quantity</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-tight">Stalls</span>
                       </Link>
                       <Link
-                        to={`/admin-dashboard/manage-properties/units/${event.id}`}
+                        to={`/admin-dashboard/event-bookings/${event.id}`}
                         className={`flex flex-col items-center justify-center gap-1 p-3 bg-slate-50 rounded-xl border border-slate-200 hover:shadow-sm transition-all group ${isCompleted ? "hover:border-emerald-400" : "hover:border-sky-400"}`}
                       >
                         <FaTicketAlt className={`${isCompleted ? "text-emerald-600" : "text-sky-600"} group-hover:scale-110 transition-transform text-sm`} />
