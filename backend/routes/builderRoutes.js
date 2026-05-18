@@ -13,7 +13,8 @@ const {
   getBuilderDashboardStats,
   createBuilder,
   getAllBuilders,
-  deleteBuilderByAdmin
+  deleteBuilderByAdmin,
+  updateBuilderByAdmin
 } = require("../controller/builderController");
 
 router.get("/builder", getBuilderDetails);
@@ -27,5 +28,6 @@ router.get("/builder/dashboard-stats", getBuilderDashboardStats);
 router.post("/builder/create", createBuilder);
 router.get("/builder/all", getAllBuilders);
 router.delete("/builder/:builderId", deleteBuilderByAdmin);
+router.put("/builder/:builderId", updateBuilderByAdmin);
 
 module.exports = router;
