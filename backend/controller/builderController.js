@@ -439,7 +439,7 @@ const createBuilder = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    const { name, contact_person, mobile_number, email, password } = req.body;
+    const { name, contact_person, mobile_number, email, password, team_members } = req.body;
 
     if (!name || !contact_person || !mobile_number || !email || !password) {
       return res.status(400).json({ error: "All fields are required" });
@@ -458,9 +458,11 @@ const createBuilder = async (req, res) => {
       return res.status(400).json({ error: "Builder with this email/mobile already exists" });
     }
 
+    const teamMembersStr = team_members ? JSON.stringify(team_members) : null;
+
     await pool.query(
-      "INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type, created_at) VALUES (?, ?, ?, ?, ?, 'Builder', NOW())",
-      [name, contact_person, mobile_number, email, hashedPassword]
+      "INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type, team_members, created_at) VALUES (?, ?, ?, ?, ?, 'Builder', ?, NOW())",
+      [name, contact_person, mobile_number, email, hashedPassword, teamMembersStr]
     );
 
     res.status(201).json({ message: "Builder created successfully" });
@@ -484,7 +486,7 @@ const getAllBuilders = async (req, res) => {
     }
 
     const [builders] = await pool.query(
-      "SELECT id, name, contact_person, mobile_number, email, builder_type, created_at FROM builders ORDER BY created_at DESC"
+      "SELECT id, name, contact_person, mobile_number, email, builder_type, team_members, created_at FROM builders ORDER BY created_at DESC"
     );
 
     res.json(builders);
@@ -523,6 +525,58 @@ const deleteBuilderByAdmin = async (req, res) => {
   }
 };
 
+const updateBuilderByAdmin = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check if requester is either a super admin OR a BuilderAdmin
+    let isAuthorized = false;
+    if (decoded.account_type === "admin") {
+      isAuthorized = true;
+    } else if (decoded.account_type === "builder") {
+      const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
+      if (requester.length && requester[0].builder_type === "BuilderAdmin") {
+        isAuthorized = true;
+      }
+    }
+    
+    if (!isAuthorized) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { builderId } = req.params;
+    const { name, contact_person, mobile_number, email, team_members } = req.body;
+
+    if (!name || !contact_person || !mobile_number || !email) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const mobileVariations = getMobileVariations(mobile_number);
+    const [existing] = await pool.query(
+      "SELECT id FROM builders WHERE (mobile_number IN (?) OR email = ?) AND id != ?",
+      [mobileVariations, email, builderId]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: "Builder with this email/mobile already exists" });
+    }
+
+    const teamMembersStr = team_members ? JSON.stringify(team_members) : null;
+
+    await pool.query(
+      "UPDATE builders SET name = ?, contact_person = ?, mobile_number = ?, email = ?, team_members = ? WHERE id = ?",
+      [name, contact_person, mobile_number, email, teamMembersStr, builderId]
+    );
+
+    res.json({ message: "Builder updated successfully" });
+  } catch (error) {
+    console.error("Update builder error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getBuilderDetails,
   updateBuilderDetails,
@@ -534,5 +588,6 @@ module.exports = {
   getBuilderDashboardStats,
   createBuilder,
   getAllBuilders,
-  deleteBuilderByAdmin
+  deleteBuilderByAdmin,
+  updateBuilderByAdmin
 };

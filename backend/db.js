@@ -22,4 +22,8 @@ pool.query("ALTER TABLE builders ADD COLUMN builder_type VARCHAR(50) DEFAULT 'Bu
   if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding builder_type:', e);
 });
 
+pool.query("ALTER TABLE builders ADD COLUMN team_members TEXT DEFAULT NULL").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding team_members:', e);
+});
+
 module.exports = pool;

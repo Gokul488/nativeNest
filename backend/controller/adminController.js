@@ -252,11 +252,11 @@ const getAllBuilders = async (req, res) => {
 
     const [builders] = await pool.query(
       `SELECT 
-        b.id, b.name, b.mobile_number, b.email, b.created_at,
+        b.id, b.name, b.mobile_number, b.email, b.created_at, b.team_members,
         COUNT(p.property_id) AS total_properties
        FROM builders b
        LEFT JOIN properties p ON p.builder_id = b.id
-       GROUP BY b.id, b.name, b.mobile_number, b.email, b.created_at
+       GROUP BY b.id, b.name, b.mobile_number, b.email, b.team_members, b.created_at
        ORDER BY b.created_at DESC`
     );
 
