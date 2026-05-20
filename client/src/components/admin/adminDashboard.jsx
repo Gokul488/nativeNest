@@ -36,6 +36,7 @@ import LogoutDialog from "../LogoutDialog";
 import CreateAdmin from "./CreateAdmin";
 import ManageAdmins from "./ManageAdmins";
 import EditAdmin from "./EditAdmin";
+import AdminSettings from "./adminSettings";
 
 // Lucide Icons
 import {
@@ -148,8 +149,11 @@ const AdminDashboard = () => {
     { to: "/admin-dashboard/manage-blogs", label: "Manage Blogs", icon: <Newspaper className="w-5 h-5" /> },
     { to: "/admin-dashboard/analytics/most-viewed", label: "Analytics", icon: <BarChart3 className="w-5 h-5" /> },
     { to: "/admin-dashboard/enquiries", label: "View Enquiries", icon: <MessageSquare className="w-5 h-5" /> },
-    ...(user.admin_type === "SuperAdmin" ? [{ to: "/admin-dashboard/manage-admins", label: "Manage Admins", icon: <User className="w-5 h-5" /> }] : []),
-    { to: "/admin-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
+    ...(user.admin_type === "SuperAdmin" ? [
+      { to: "/admin-dashboard/manage-admins", label: "Manage Admins", icon: <User className="w-5 h-5" /> },
+      { to: "/admin-dashboard/settings", label: "Settings", icon: <Settings className="w-5 h-5" /> }
+    ] : []),
+    { to: "/admin-dashboard/profile-settings", label: "Profile Settings", icon: <User className="w-5 h-5" /> },
   ];
 
   const subRouteLabels = [
@@ -433,6 +437,7 @@ const AdminDashboard = () => {
             <Route path="/manage-admins" element={<ManageAdmins />} />
             <Route path="/manage-admins/create" element={<CreateAdmin />} />
             <Route path="/manage-admins/edit/:adminId" element={<EditAdmin />} />
+            <Route path="/settings" element={<AdminSettings />} />
           </Routes>
         </div>
       </main>

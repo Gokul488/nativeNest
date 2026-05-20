@@ -26,4 +26,16 @@ pool.query("ALTER TABLE builders ADD COLUMN team_members TEXT DEFAULT NULL").cat
   if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding team_members:', e);
 });
 
+pool.query(`
+  CREATE TABLE IF NOT EXISTS settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value TEXT
+  )
+`).then(() => {
+  pool.query(`
+    INSERT IGNORE INTO settings (setting_key, setting_value) 
+    VALUES ('whatsapp_send_to_builder', 'false')
+  `).catch(e => console.error('Error seeding settings table:', e));
+}).catch(e => console.error('Error creating settings table:', e));
+
 module.exports = pool;
