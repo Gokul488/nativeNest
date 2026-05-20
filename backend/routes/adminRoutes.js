@@ -1,6 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { getAdminDetails, updateAdminDetails, getWhatsappAdmin,  getAllUsers, getAllEvents, getEventParticipants, getAllBuilders, getDashboardStats, adminUpdateUser, createAdmin, getAllAdmins, deleteAdmin, getSpecificAdmin, updateSpecificAdmin} = require('../controller/adminController');
+const { 
+  getAdminDetails, 
+  updateAdminDetails, 
+  getWhatsappAdmin,  
+  getAllUsers, 
+  getAllEvents, 
+  getEventParticipants, 
+  getAllBuilders, 
+  getDashboardStats, 
+  adminUpdateUser, 
+  createAdmin, 
+  getAllAdmins, 
+  deleteAdmin, 
+  getSpecificAdmin, 
+  updateSpecificAdmin,
+  getSettings,
+  updateSettings
+} = require('../controller/adminController');
 
 router.get('/admin', getAdminDetails);
 router.put('/admin', updateAdminDetails);
@@ -16,5 +33,7 @@ router.get('/admin/events', getAllEvents);
 router.get('/admin/events/:eventId/participants', getEventParticipants);
 router.get('/admin/builders', getAllBuilders);
 router.get('/admin/dashboard-stats', getDashboardStats);
+router.get('/admin/settings', getSettings);
+router.put('/admin/settings', updateSettings);
 
 module.exports = router;

@@ -167,7 +167,57 @@ const login = async (req, res) => {
 
       if (rows.length > 0) {
         user = rows[0];
-        account_type = 'admin';
+        if (user.admin_type === 'builderAdmin') {
+          account_type = 'builder';
+          
+          // Verify password first before creating/linking the builder
+          const isMatch = await bcrypt.compare(password, user.password);
+          if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+          }
+
+          // Check if a builder with this mobile or email already exists
+          const [existingBuilder] = await pool.query(
+            'SELECT id, name, mobile_number, email, password, builder_type FROM builders WHERE mobile_number IN (?) OR email = ?',
+            [mobileVariations, user.email || '']
+          );
+
+          if (existingBuilder.length > 0) {
+            const builderRecord = existingBuilder[0];
+            // Sync password and name to match the admin
+            await pool.query(
+              'UPDATE builders SET name = ?, password = ?, builder_type = ? WHERE id = ?',
+              [user.name, user.password, 'BuilderAdmin', builderRecord.id]
+            );
+            user = {
+              id: builderRecord.id,
+              name: user.name,
+              mobile_number: builderRecord.mobile_number,
+              email: builderRecord.email,
+              password: user.password,
+              builder_type: 'BuilderAdmin',
+              admin_type: 'builderAdmin'
+            };
+          } else {
+            // Create a new builder record
+            const [insertResult] = await pool.query(
+              `INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type) 
+               VALUES (?, 'Admin', ?, ?, ?, 'BuilderAdmin')`,
+              [user.name, user.mobile_number, user.email || null, user.password]
+            );
+            user = {
+              id: insertResult.insertId,
+              name: user.name,
+              mobile_number: user.mobile_number,
+              email: user.email,
+              password: user.password,
+              builder_type: 'BuilderAdmin',
+              admin_type: 'builderAdmin'
+            };
+          }
+        } else {
+          account_type = 'admin';
+        }
       } else {
         // New: Builder Login
         [rows] = await pool.query(

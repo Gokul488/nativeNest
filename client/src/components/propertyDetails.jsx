@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from "./header";
 import Footer from "./footer";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import API_BASE_URL from '../config.js';   // ← one level up
 
 const PropertyDetails = () => {
@@ -20,6 +20,9 @@ const PropertyDetails = () => {
   const [allImages, setAllImages] = useState([]);
   const [videoError, setVideoError] = useState('');
   const [adminWhatsapp, setAdminWhatsapp] = useState(null);
+  const [whatsappSendToBuilder, setWhatsappSendToBuilder] = useState(false);
+  const [adminData, setAdminData] = useState(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Click-outside handler to close all dropdowns
@@ -144,7 +147,9 @@ const PropertyDetails = () => {
         const response = await fetch(`${API_BASE_URL}/api/public/admin-whatsapp`);
         if (response.ok) {
           const data = await response.json();
+          setAdminData(data);
           setAdminWhatsapp(data.mobile_number);
+          setWhatsappSendToBuilder(data.whatsapp_send_to_builder === true || data.whatsapp_send_to_builder === 'true');
         }
       } catch (err) {
         console.warn("Failed to fetch admin whatsapp");
@@ -185,21 +190,29 @@ const PropertyDetails = () => {
 
   // Handle Interested Button Click
   const handleInterested = () => {
-    const targetMobile = adminWhatsapp || property.mobile_number;
-    
-    if (!targetMobile) {
-      alert("No contact number available.");
-      return;
-    }
+    const targetBuilderMobile = adminData?.builder_admin_mobile || property?.mobile_number;
+    if (whatsappSendToBuilder && targetBuilderMobile) {
+      // Open the selection modal
+      setIsContactModalOpen(true);
+    } else {
+      // Fallback: send only to SuperAdmin (or property mobile if SuperAdmin is not loaded)
+      const targetMobile = adminWhatsapp || property?.mobile_number;
+      
+      if (!targetMobile) {
+        alert("No contact number available.");
+        return;
+      }
 
-    const message = encodeURIComponent(`Hello, I'm interested in ${property.title}.`);
-    // Remove any non-digits from targetMobile for the URL
-    const cleanMobile = targetMobile.replace(/\D/g, '');
-    
-    // If it starts with 91 and has 12 digits, use it as is, else prepend 91
-    const finalMobile = cleanMobile.length === 10 ? `91${cleanMobile}` : cleanMobile;
-    
-    window.open(`https://wa.me/${finalMobile}?text=${message}`, '_blank');
+      const message = encodeURIComponent(`Hello, I'm interested in ${property.title}.`);
+      
+      // Remove any non-digits from targetMobile for the URL
+      const cleanMobile = targetMobile.replace(/\D/g, '');
+      
+      // If it starts with 91 and has 10 digits, prepend 91
+      const finalMobile = cleanMobile.length === 10 ? `91${cleanMobile}` : cleanMobile;
+      
+      window.open(`https://wa.me/${finalMobile}?text=${message}`, '_blank');
+    }
   };
 
   // Build full address string safely
@@ -1214,6 +1227,153 @@ const PropertyDetails = () => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Contact Selection Modal */}
+      <AnimatePresence>
+        {isContactModalOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setIsContactModalOpen(false)}
+            />
+
+            {/* Dialog Container */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 md:p-8 text-center border border-slate-100 overflow-hidden"
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setIsContactModalOpen(false)}
+                className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100"
+              >
+                <i className="fas fa-times text-base"></i>
+              </button>
+
+              {/* Header Icon */}
+              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-emerald-100/50">
+                <i className="fab fa-whatsapp text-3xl text-emerald-500"></i>
+              </div>
+
+              {/* Title & Subtitle */}
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+                Connect on WhatsApp
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
+                Choose who you would like to message regarding <strong>{property?.title}</strong>
+              </p>
+
+              {/* Contact Cards Container */}
+              <div className="mt-6 space-y-4">
+                
+                {/* 1. Super Admin Card */}
+                {adminWhatsapp && (
+                  <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4 text-left transition-all hover:border-emerald-100 hover:bg-emerald-50/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center shrink-0">
+                        <i className="fas fa-user-shield text-base"></i>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-extrabold text-slate-800">
+                          {adminData?.name || "Super Admin"}
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Platform Admin Inquiries
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const message = encodeURIComponent(`Hello, I'm interested in ${property.title}.`);
+                        const cleanMobile = adminWhatsapp.replace(/\D/g, '');
+                        const finalMobile = cleanMobile.length === 10 ? `91${cleanMobile}` : cleanMobile;
+                        window.open(`https://wa.me/${finalMobile}?text=${message}`, '_blank');
+                      }}
+                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm shadow-emerald-500/10"
+                    >
+                      <i className="fab fa-whatsapp"></i> Chat
+                    </button>
+                  </div>
+                )}
+
+                {/* 2. Builder Admin Card */}
+                {(adminData?.builder_admin_mobile || property?.mobile_number) && (
+                  <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4 text-left transition-all hover:border-emerald-100 hover:bg-emerald-50/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-sky-50 text-sky-500 rounded-xl flex items-center justify-center shrink-0">
+                        <i className="fas fa-hard-hat text-base"></i>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-extrabold text-slate-800">
+                          {adminData?.builder_admin_name || property?.builderName || "Builder Admin"}
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Property Owner / Builder Direct
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const message = encodeURIComponent(`Hello, I'm interested in ${property.title}.`);
+                        const targetNum = adminData?.builder_admin_mobile || property.mobile_number;
+                        const cleanMobile = targetNum.replace(/\D/g, '');
+                        const finalMobile = cleanMobile.length === 10 ? `91${cleanMobile}` : cleanMobile;
+                        window.open(`https://wa.me/${finalMobile}?text=${message}`, '_blank');
+                      }}
+                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm shadow-emerald-500/10"
+                    >
+                      <i className="fab fa-whatsapp"></i> Chat
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Bottom Quick Action: Open Both */}
+              {adminWhatsapp && (adminData?.builder_admin_mobile || property?.mobile_number) && (
+                <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col gap-2">
+                  <button
+                    onClick={() => {
+                      const message = encodeURIComponent(`Hello, I'm interested in ${property.title}.`);
+                      
+                      // 1. Open Admin in new tab
+                      const cleanSuperMobile = adminWhatsapp.replace(/\D/g, '');
+                      const finalSuperMobile = cleanSuperMobile.length === 10 ? `91${cleanSuperMobile}` : cleanSuperMobile;
+                      window.open(`https://wa.me/${finalSuperMobile}?text=${message}`, '_blank');
+
+                      // 2. Redirect current window to Builder
+                      const targetNum = adminData?.builder_admin_mobile || property.mobile_number;
+                      const cleanBuilderMobile = targetNum.replace(/\D/g, '');
+                      const finalBuilderMobile = cleanBuilderMobile.length === 10 ? `91${cleanBuilderMobile}` : cleanBuilderMobile;
+                      
+                      // Small delay to make sure the tab open completes before page navigation
+                      setTimeout(() => {
+                        window.location.href = `https://wa.me/${finalBuilderMobile}?text=${message}`;
+                      }, 150);
+                      
+                      setIsContactModalOpen(false);
+                    }}
+                    className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold rounded-xl transition-all text-xs active:scale-[0.98] shadow-md shadow-emerald-500/25 flex items-center justify-center gap-2"
+                  >
+                    <i className="fas fa-external-link-alt"></i> Message Both (Open Both Chats)
+                  </button>
+                  <p className="text-[10px] text-slate-400 italic">
+                    *Opens Admin in a new tab and Builder Admin in this tab to bypass popup blockers.
+                  </p>
+                </div>
+              )}
+
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <Footer />
 
