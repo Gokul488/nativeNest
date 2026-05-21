@@ -162,7 +162,7 @@ const ManageUsers = () => {
               <table className="w-full">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="px-6 py-2.5 text-left w-16">#</th>
+                    <th className="px-6 py-2.5 text-left w-16">S.No</th>
                     <th
                       className="px-6 py-2.5 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
                       onClick={() => requestSort("name")}
@@ -267,9 +267,6 @@ const ManageUsers = () => {
                         </span>
                         <div>
                           <p className="font-bold text-slate-900 text-sm">{user.name}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                            ID #{user.id ? String(user.id).slice(-4) : "N/A"}
-                          </p>
                         </div>
                       </div>
                       <span className="px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold">
