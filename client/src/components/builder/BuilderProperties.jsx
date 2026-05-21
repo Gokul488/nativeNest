@@ -189,7 +189,7 @@ const BuilderProperties = () => {
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-16 px-6 py-4 text-left">#</th>
+                    <th className="w-16 px-6 py-4 text-left">S.No</th>
                     <th className="w-1/3 px-6 py-4 text-left">Property Details</th>
                     <th className="w-1/4 px-6 py-4 text-center">Sqft / Configuration</th>
                     <th className="w-40 px-6 py-4 text-center">Price</th>

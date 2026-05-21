@@ -107,7 +107,7 @@ const MyRegisteredEvents = () => {
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                   <tr>
-                    <th className="w-14 px-6 py-3 text-left border-b border-gray-200">#</th>
+                    <th className="w-14 px-6 py-3 text-left border-b border-gray-200">S.No</th>
                     <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Event Details</th>
                     <th className="w-1/4 px-6 py-3 text-left border-b border-gray-200">Location</th>
                     <th className="w-64 px-4 py-3 text-center border-b border-gray-200">Date Range</th>

@@ -163,7 +163,7 @@ const ManageStallTypes = () => {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-16 px-6 py-4 text-left">#</th>
+                    <th className="w-16 px-6 py-4 text-left">S.No</th>
                     <th className="px-6 py-4 text-left">Stall Configuration</th>
                     <th className="w-32 px-6 py-4 text-center">Quantity</th>
                     <th className="w-40 px-6 py-4 text-center">Price</th>

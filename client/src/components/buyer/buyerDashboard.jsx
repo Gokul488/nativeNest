@@ -98,7 +98,7 @@ const BuyerDashboard = () => {
   };
 
   const navLinks = [
-    { to: "/buyer-dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { to: "/buyer-dashboard", label: "Summary", icon: <LayoutDashboard className="w-5 h-5" /> },
     { to: "/buyer-dashboard/bookmarks", label: "Saved Properties", icon: <Bookmark className="w-5 h-5" /> },
     { to: "/buyer-dashboard/events", label: "Explore Events", icon: <CalendarDays className="w-5 h-5" /> },
     { to: "/buyer-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
@@ -312,7 +312,7 @@ const BuyerDashboard = () => {
                         <div className="absolute -top-6 -right-6 w-24 h-24 bg-indigo-200/40 rounded-full blur-2xl"></div>
                         <h4 className="font-bold flex items-center gap-2 mb-3 text-indigo-900 z-10 relative">
                           <Sparkles className="w-5 h-5 text-indigo-500" />
-                          Dashboard Tip
+                          Summary Tip
                         </h4>
                         <p className="text-sm text-slate-600 leading-relaxed font-medium z-10 relative">
                           Use the "Saved Properties" section to keep track of listings you liked during events. It makes comparing options much easier later!

@@ -124,7 +124,7 @@ const SoldProperties = () => {
                             <table className="w-full">
                                 <thead>
                                     <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                                        <th className="px-6 py-4 text-left w-16">#</th>
+                                        <th className="px-6 py-4 text-left w-16">S.No</th>
                                         <th className="px-6 py-4 text-left">Property Details</th>
                                         <th className="px-6 py-4 text-center">Category</th>
                                         <th className="px-6 py-4 text-center">Configuration</th>

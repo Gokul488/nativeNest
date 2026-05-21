@@ -264,7 +264,7 @@ const ManageBuilders = () => {
               <table className="w-full">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="px-6 py-2.5 text-left w-16">#</th>
+                    <th className="px-6 py-2.5 text-left w-16">S.No</th>
                     <th
                       className="px-6 py-2.5 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
                       onClick={() => requestSort("name")}
@@ -334,7 +334,7 @@ const ManageBuilders = () => {
                                     className="w-fit inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 hover:scale-105 active:scale-95 transition-all ml-6"
                                   >
                                     <Users className="w-2.5 h-2.5" />
-                                    {members.length} {members.length === 1 ? 'Member' : 'Members'}
+                                    {members.length}
                                   </button>
                                 );
                               }
@@ -433,9 +433,6 @@ const ManageBuilders = () => {
                           >
                             {builder.name}
                           </button>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                            ID #{builder.id ? String(builder.id).slice(-4) : "N/A"}
-                          </p>
                         </div>
                       </div>
                       <span className="px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold">
@@ -481,7 +478,7 @@ const ManageBuilders = () => {
                               className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-100 text-xs font-bold transition-all mt-1"
                             >
                               <Users className="w-3.5 h-3.5 shrink-0" />
-                              View Team ({members.length} {members.length === 1 ? 'Member' : 'Members'})
+                              View Team ({members.length})
                             </button>
                           );
                         }
@@ -591,7 +588,7 @@ const ManageBuilders = () => {
               <div>
                 <h3 className="font-bold text-slate-800 text-base">Edit Builder Details</h3>
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                  ID #{editingBuilder.id} • {editingBuilder.name}
+                  {editingBuilder.name}
                 </p>
               </div>
               <button 

@@ -336,7 +336,7 @@ const ViewProperties = () => {
               <table className="w-full">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-[5%] px-4 py-5 text-left text-xs">#</th>
+                    <th className="w-[5%] px-4 py-5 text-left text-xs">S.No</th>
                     <th className="w-[35%] px-4 py-5 text-left text-xs">Property Details</th>
                     <th className="w-[25%] px-4 py-5 text-left text-xs whitespace-nowrap">Builder</th>
                     <th className="w-[10%] px-4 py-5 text-center text-xs">Qty</th>

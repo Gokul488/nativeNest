@@ -16,7 +16,6 @@ import {
   Shield,
   Trash2,
   PlusCircle,
-  Lock,
   Pencil
 } from "lucide-react";
 
@@ -178,6 +177,7 @@ const ManageAdmins = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                  <th className="px-8 py-4 text-left w-16">S.No</th>
                   <th className="px-8 py-4 text-left">Admin Details</th>
                   <th className="px-8 py-4 text-left">Contact Info</th>
                   <th 
@@ -190,8 +190,11 @@ const ManageAdmins = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {paginatedAdmins.map((admin) => (
+                {paginatedAdmins.map((admin, index) => (
                   <tr key={admin.id} className="hover:bg-slate-50/50 transition-all duration-200 group">
+                    <td className="px-8 py-5 text-sm font-bold text-slate-300 w-16">
+                      {String((currentPage - 1) * itemsPerPage + index + 1).padStart(2, "0")}
+                    </td>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${
@@ -205,9 +208,6 @@ const ManageAdmins = () => {
                         </div>
                         <div>
                           <p className="font-bold text-slate-900 text-sm leading-tight">{admin.name}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 flex items-center gap-1">
-                            <Lock className="w-2.5 h-2.5" /> ID #{admin.id}
-                          </p>
                         </div>
                       </div>
                     </td>
