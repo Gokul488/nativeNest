@@ -36,14 +36,10 @@ const EditBuyer = () => {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem("token");
-        // We use the admin users list or a specific fetch if we have one. 
-        // For now, let's fetch all users and find this one, or assume there's a specific fetch.
-        // I'll update adminController to have getSingleUser if needed, 
-        // but for now I'll just use the list fetching logic.
-        const res = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const user = res.data.find(u => String(u.id) === String(userId));
+        const user = res.data;
 
         if (user) {
           setName(user.name || "");

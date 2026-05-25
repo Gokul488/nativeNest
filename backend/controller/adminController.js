@@ -174,21 +174,52 @@ const getAllUsers = async (req, res) => {
     }
 
     const [buyers] = await pool.query(
-      `SELECT id, name, mobile_number, email, gender, dob, city, country, photo, created_at
+      `SELECT id, name, mobile_number, email, gender, dob, city, country, created_at
        FROM buyers
        ORDER BY created_at DESC`
     );
 
-    const formattedBuyers = buyers.map(buyer => {
-      if (buyer.photo) {
-        buyer.photo = Buffer.from(buyer.photo).toString('base64');
-      }
-      return buyer;
-    });
-
-    res.json(formattedBuyers);
+    res.json(buyers);
   } catch (error) {
     console.error("Get buyers error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/* =========================
+   ADMIN: GET SINGLE USER (BUYER)
+========================= */
+const getSingleUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { userId } = req.params;
+
+    const [buyers] = await pool.query(
+      `SELECT id, name, mobile_number, email, gender, dob, city, country, photo, created_at
+       FROM buyers
+       WHERE id = ?`,
+      [userId]
+    );
+
+    if (buyers.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const buyer = buyers[0];
+    if (buyer.photo) {
+      buyer.photo = Buffer.from(buyer.photo).toString('base64');
+    }
+
+    res.json(buyer);
+  } catch (error) {
+    console.error("Get single user error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -724,6 +755,7 @@ module.exports = {
   updateAdminDetails,
   getWhatsappAdmin,
   getAllUsers,
+  getSingleUser,
   getAllEvents,
   getEventParticipants,
   getAllBuilders,

@@ -5,6 +5,7 @@ const {
   updateAdminDetails, 
   getWhatsappAdmin,  
   getAllUsers, 
+  getSingleUser,
   getAllEvents, 
   getEventParticipants, 
   getAllBuilders, 
@@ -24,6 +25,7 @@ router.put('/admin', updateAdminDetails);
 router.post('/admin/create', createAdmin);
 router.get('/admin/all', getAllAdmins);
 router.get('/admin/users', getAllUsers);
+router.get('/admin/users/:userId', getSingleUser);
 router.put('/admin/users/:userId', adminUpdateUser);
 router.get('/admin/manage/:adminId', getSpecificAdmin);
 router.put('/admin/manage/:adminId', updateSpecificAdmin);
