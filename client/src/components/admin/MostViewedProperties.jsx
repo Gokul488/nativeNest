@@ -77,7 +77,7 @@ const MostViewedProperties = () => {
     <div className="space-y-6 flex flex-col min-h-[600px]">
 
       {/* ── Header ── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 px-8 py-6 flex flex-col lg:flex-row justify-between items-center gap-4 sticky top-0 z-10">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 px-8 py-6 flex flex-col lg:flex-row justify-between items-center gap-4">
         {/* Left: search */}
         <div className="relative w-full lg:w-80 group">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
