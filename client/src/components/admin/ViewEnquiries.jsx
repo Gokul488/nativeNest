@@ -154,7 +154,7 @@ const ViewEnquiries = () => {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-14 px-6 py-4 text-left">#</th>
+                    <th className="w-14 px-6 py-4 text-left">S.No</th>
                     <th className="w-1/4 px-6 py-4 text-left">User Details</th>
                     <th className="px-6 py-4 text-left">Message Content</th>
                     <th className="w-24 px-6 py-4 text-center">Actions</th>

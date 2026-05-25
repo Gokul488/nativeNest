@@ -166,7 +166,7 @@ const EventParticipants = () => {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-14 px-6 py-4 text-left">#</th>
+                    <th className="w-14 px-6 py-4 text-left">S.No</th>
                     <th className="w-1/3 px-6 py-4 text-left">Participant</th>
                     <th className="w-1/4 px-6 py-4 text-left">Contact Info</th>
                     <th className="px-6 py-4 text-left">Registration</th>

@@ -17,10 +17,19 @@ const stallRoutes = require('./routes/stallRoutes');
 const app = express();
 
 app.use(cors({
-  origin: [
-    "https://nativenest-frontend.onrender.com",  // your actual frontend URL
-    "http://localhost:5173"                 // for local dev
-  ],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      "https://nativenest-frontend.onrender.com",
+      "http://localhost:5173"
+    ];
+    // Allow any .onrender.com subdomain or the specifically allowed ones
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
+      callback(null, true);
+    } else {
+      console.error('CORS blocked for origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -65,6 +74,16 @@ app.get('/api/debug/my-photo', async (req, res) => {
     });
   } catch (err) {
     res.status(500).send(err.message);
+  }
+});
+
+app.get('/api/debug/tables', async (req, res) => {
+  try {
+    const pool = require('./db');
+    const [rows] = await pool.query('SHOW TABLES');
+    res.json({ tables: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

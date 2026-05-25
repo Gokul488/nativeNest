@@ -7,6 +7,7 @@ import {
   ArrowLeft, CalendarDays, AlertTriangle, CheckCircle2,
   CloudUpload, Image, MapPin, Phone, User, Bell, Search, Loader2,
 } from "lucide-react";
+import CountryCodeDropdown from "../common/CountryCodeDropdown.jsx";
 
 // ─── Shared style constants ───────────────────────────────────────────────────
 const inputCls = "w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm text-slate-700 placeholder:text-slate-400";
@@ -70,6 +71,8 @@ const CreatePropertyEvent = () => {
     event_name: "",
     event_type: "Property Sale Mela",
     event_location: "",
+    address: "",
+    pincode: "",
     city: "",
     state: "",
     start_date: "",
@@ -79,10 +82,11 @@ const CreatePropertyEvent = () => {
     description: "",
     contact_name: "",
     contact_phone: "",
-    stall_count: 0,
+    stall_count: "",
     notify_builders: true,
     notify_buyers: true,
   });
+  const [countryCode, setCountryCode] = useState("+91");
 
   const [bannerImage, setBannerImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -117,7 +121,7 @@ const CreatePropertyEvent = () => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : name === "stall_count" ? parseInt(value) || 0 : value,
+      [name]: type === "checkbox" ? checked : name === "stall_count" ? (value === "" ? "" : parseInt(value)) : value,
     }));
   };
 
@@ -140,7 +144,13 @@ const CreatePropertyEvent = () => {
       const token = localStorage.getItem("token");
       if (!token) { navigate("/login"); return; }
       const data = new FormData();
-      for (const key in formData) data.append(key, formData[key]);
+      for (const key in formData) { 
+        if (key === "contact_phone") {
+          data.append(key, `${countryCode}${formData[key]}`);
+          continue;
+        }
+        data.append(key, formData[key]); 
+      }
       data.append("selected_builders", JSON.stringify(selectedBuilderIds));
       data.append("selected_buyers", JSON.stringify(selectedBuyerIds));
       if (bannerImage) data.append("banner_image", bannerImage);
@@ -221,16 +231,24 @@ const CreatePropertyEvent = () => {
           {/* ── Location ── */}
           <div className="border-t border-slate-100" />
           <Section icon={<MapPin className="w-3.5 h-3.5 text-sky-500" />} title="Location Details">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>Venue <span className="text-red-400">*</span></label>
                 <input type="text" name="event_location" value={formData.event_location} onChange={handleChange} required placeholder="e.g. Convention Center" className={inputCls} />
               </div>
               <div>
+                <label className={labelCls}>Address <span className="text-red-400">*</span></label>
+                <input type="text" name="address" value={formData.address} onChange={handleChange} required placeholder="e.g. 123, Anna Salai" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Pincode <span className="text-red-400">*</span></label>
+                <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} required placeholder="e.g. 600001" className={inputCls} />
+              </div>
+              <div>
                 <label className={labelCls}>City <span className="text-red-400">*</span></label>
                 <input type="text" name="city" value={formData.city} onChange={handleChange} required placeholder="e.g. Chennai" className={inputCls} />
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className={labelCls}>State <span className="text-red-400">*</span></label>
                 <input type="text" name="state" value={formData.state} onChange={handleChange} required placeholder="e.g. Tamil Nadu" className={inputCls} />
               </div>
@@ -247,7 +265,7 @@ const CreatePropertyEvent = () => {
               </div>
               <div>
                 <label className={labelCls}>End Date <span className="text-red-400">*</span></label>
-                <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className={inputCls} />
+                <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required min={formData.start_date} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Start Time</label>
@@ -255,7 +273,14 @@ const CreatePropertyEvent = () => {
               </div>
               <div>
                 <label className={labelCls}>End Time</label>
-                <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} className={inputCls} />
+                <input 
+                  type="time" 
+                  name="end_time" 
+                  value={formData.end_time} 
+                  onChange={handleChange} 
+                  min={formData.start_date === formData.end_date ? formData.start_time : ""}
+                  className={inputCls} 
+                />
               </div>
             </div>
           </Section>
@@ -270,7 +295,19 @@ const CreatePropertyEvent = () => {
               </div>
               <div>
                 <label className={labelCls}><span className="flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</span></label>
-                <input type="text" name="contact_phone" value={formData.contact_phone} onChange={handleChange} placeholder="e.g. 9876543210" className={inputCls} />
+                <div className="flex">
+                  <CountryCodeDropdown
+                    selectedCode={countryCode}
+                    onChange={setCountryCode}
+                  />
+                  <input
+                    type="text"
+                    name="contact_phone"
+                    value={formData.contact_phone}
+                    onChange={handleChange}
+                    className="flex-1 px-3 py-2 border border-l-0 border-slate-200 rounded-r-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm text-slate-700 placeholder:text-slate-400"
+                  />
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Stall Count</label>
@@ -295,22 +332,21 @@ const CreatePropertyEvent = () => {
           {/* ── Banner Image ── */}
           <div className="border-t border-slate-100" />
           <Section icon={<Image className="w-3.5 h-3.5 text-sky-500" />} title="Event Banner Image">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group">
-                <CloudUpload className="w-8 h-8 text-slate-300 group-hover:text-sky-400 mb-2 transition-colors" />
-                <p className="text-xs font-semibold text-slate-600 group-hover:text-sky-600">Click to upload banner</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Recommended: 1200×600 · Max 5MB</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center justify-center gap-2 px-4 h-10 border border-slate-200 rounded-lg cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group shrink-0 shadow-sm">
+                <CloudUpload className="w-4 h-4 text-slate-400 group-hover:text-sky-500 transition-colors" />
+                <span className="text-[11px] font-bold text-slate-600 group-hover:text-sky-600">Upload Banner</span>
                 <input type="file" className="hidden" accept="image/*" onChange={handleBannerImageChange} />
               </label>
               {previewUrl ? (
-                <div className="relative rounded-xl overflow-hidden shadow-sm border border-slate-200 h-36 group">
-                  <img src={previewUrl} alt="Banner Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><Image className="w-3.5 h-3.5" /> Banner Preview</span>
+                <div className="relative rounded-xl overflow-hidden shadow-md border border-slate-200 w-full max-w-[500px] h-32 group bg-slate-950 shrink-0">
+                  <img src={previewUrl} alt="Banner Preview" className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]" />
+                  <div className="absolute top-2 right-2 bg-slate-900/60 backdrop-blur-md px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <span className="text-white text-[9px] font-bold uppercase tracking-wider flex items-center gap-1"><Image className="w-3 h-3" /> Full Preview</span>
                   </div>
                 </div>
               ) : (
-                <div className="h-36 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-xs italic bg-white/50">No banner selected</div>
+                <div className="w-full max-w-[400px] h-32 rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-[10px] italic bg-slate-50/50 shrink-0">No banner selected</div>
               )}
             </div>
           </Section>

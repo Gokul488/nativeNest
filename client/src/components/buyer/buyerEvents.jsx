@@ -62,7 +62,12 @@ const BuyerEvents = () => {
   }, [token]);
 
   const filteredAndSortedEvents = useMemo(() => {
-    let result = [...events];
+    let result = events.filter(e => {
+      if (!e.end_date) return true;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return new Date(e.end_date) >= today;
+    });
     if (searchQuery) {
       result = result.filter(
         (e) =>
@@ -208,7 +213,7 @@ const BuyerEvents = () => {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-12 px-4 py-4 text-left">#</th>
+                    <th className="w-12 px-4 py-4 text-left">S.No</th>
                     <th
                       className="w-1/4 px-6 py-4 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none"
                       onClick={() => requestSort("event_name")}

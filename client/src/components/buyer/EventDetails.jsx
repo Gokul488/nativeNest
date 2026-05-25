@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
     FaCalendarAlt,
@@ -13,13 +13,19 @@ import {
     FaInfoCircle,
     FaBuilding,
     FaShareAlt,
-    FaRegCalendarCheck
+    FaRegCalendarCheck,
+    FaEdit,
+    FaUsers,
+    FaDownload,
+    FaStore,
+    FaCog
 } from "react-icons/fa";
 import API_BASE_URL from "../../config.js";
 
 const EventDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -27,6 +33,10 @@ const EventDetails = () => {
 
     const user = JSON.parse(localStorage.getItem("user")) || {};
     const token = localStorage.getItem("token");
+    const isAdminPortal = location.pathname.startsWith("/admin-dashboard");
+    const isBuilderPortal = location.pathname.startsWith("/builder-dashboard");
+    const isBuyerPortal = location.pathname.startsWith("/buyer-dashboard");
+    const isFullWidth = isBuilderPortal || isBuyerPortal || user?.account_type === "builder" || user?.account_type === "buyer";
 
     useEffect(() => {
         const fetchEventDetails = async () => {
@@ -67,6 +77,22 @@ const EventDetails = () => {
             alert(err.response?.data?.error || "Registration failed.");
         } finally {
             setIsRegistering(false);
+        }
+    };
+
+    const handleDownload = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/admin/events/${id}/invitation.pdf`, {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: "blob",
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `Invitation-${event.event_name.replace(/\s+/g, "-")}.pdf`;
+            link.click();
+        } catch (err) {
+            alert("Failed to download PDF.");
         }
     };
 
@@ -169,10 +195,10 @@ const EventDetails = () => {
 
             {/* ── CONTENT ── */}
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-12">
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className={isFullWidth ? "space-y-8" : "grid lg:grid-cols-3 gap-8"}>
 
                     {/* ── LEFT / MAIN ── */}
-                    <div className="lg:col-span-2 space-y-8">
+                    <div className={isFullWidth ? "space-y-8" : "lg:col-span-2 space-y-8"}>
 
                         {/* Stats row */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -213,6 +239,36 @@ const EventDetails = () => {
                             ))}
                         </div>
 
+                        {isFullWidth && (
+                            <div className="bg-white rounded-3xl p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-6" style={{ boxShadow: '0 2px 16px rgba(1,25,54,0.06)', border: '1px solid rgba(1,25,54,0.06)' }}>
+                                <div className="flex-1">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9ca3af' }}>Organizer Details</p>
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-base flex-shrink-0"
+                                            style={{ background: 'linear-gradient(135deg, rgba(46,97,113,0.12), rgba(1,25,54,0.08))', color: '#2e6171' }}>
+                                            {event.contact_name?.charAt(0)?.toUpperCase() || "O"}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm" style={{ color: '#011936' }}>{event.contact_name || "Official Host"}</p>
+                                            <p className="text-xs" style={{ color: '#9ca3af' }}>Event Coordinator</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="md:w-64">
+                                    <a
+                                        href={`tel:${event.contact_phone}`}
+                                        className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold transition-all"
+                                        style={{ background: '#f5f3ee', color: '#2e6171', border: '1px solid #e8e4da' }}
+                                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(46,97,113,0.08)'; e.currentTarget.style.borderColor = 'rgba(46,97,113,0.2)'; }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = '#f5f3ee'; e.currentTarget.style.borderColor = '#e8e4da'; }}
+                                    >
+                                        <FaPhoneAlt size={11} />
+                                        {event.contact_phone || "Request Support"}
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+
                         {/* About section */}
                         <div className="bg-white rounded-3xl p-8" style={{ boxShadow: '0 2px 16px rgba(1,25,54,0.06)', border: '1px solid rgba(1,25,54,0.06)' }}>
                             <div className="flex items-center gap-3 mb-6">
@@ -236,69 +292,146 @@ const EventDetails = () => {
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm mb-0.5" style={{ color: '#011936' }}>{event.event_location}</p>
-                                    <p className="text-sm" style={{ color: '#6b7280' }}>{event.city}</p>
+                                    <p className="text-sm" style={{ color: '#6b7280' }}>{event.address ? `${event.address}, ` : ""}{event.city}{event.state ? `, ${event.state}` : ""} {event.pincode || ""}</p>
                                 </div>
                             </div>
+
+                            {/* ── MAP INTEGRATION ── */}
+                            <div className="mt-8 rounded-2xl overflow-hidden border border-slate-100 shadow-inner h-[300px] bg-slate-50 relative group">
+                                <iframe
+                                    title="Venue Location Map"
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0, filter: 'grayscale(0.2) contrast(1.1) brightness(0.95)' }}
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(`${event.event_location || ""}, ${event.address || ""}, ${event.city || ""}, ${event.pincode || ""}`)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                    allowFullScreen
+                                    loading="lazy"
+                                ></iframe>
+                                {/* Map Overlay Decoration */}
+                                <div className="absolute inset-0 pointer-events-none border-[8px] border-white/10 rounded-2xl" />
+                            </div>
                         </div>
+
                     </div>
 
                     {/* ── SIDEBAR ── */}
-                    <div className="space-y-5">
-                        <div className="sticky top-8 space-y-5">
+                    {!isFullWidth && (
+                        <div className="space-y-5">
+                            <div className="sticky top-8 space-y-5">
 
-                            {/* Registration card */}
-                            <div className="rounded-3xl p-7 relative overflow-hidden text-white"
-                                style={{ background: 'linear-gradient(135deg, #011936 0%, #0d3347 55%, #2e6171 100%)', boxShadow: '0 8px 40px rgba(1,25,54,0.28)' }}>
+                            {/* Registration card or Admin Actions card */}
+                            {isAdminPortal ? (
+                                <div className="rounded-3xl p-7 relative overflow-hidden text-white"
+                                    style={{ background: 'linear-gradient(135deg, #011936 0%, #0d3347 55%, #2e6171 100%)', boxShadow: '0 8px 40px rgba(1,25,54,0.28)' }}>
 
-                                {/* Subtle decorative ring */}
-                                <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none"
-                                    style={{ border: '1px solid rgba(255,255,255,0.07)' }} />
-                                <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full pointer-events-none"
-                                    style={{ border: '1px solid rgba(255,255,255,0.05)' }} />
+                                    {/* Subtle decorative ring */}
+                                    <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none"
+                                        style={{ border: '1px solid rgba(255,255,255,0.07)' }} />
+                                    <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full pointer-events-none"
+                                        style={{ border: '1px solid rgba(255,255,255,0.05)' }} />
 
-                                <div className="relative z-10">
-                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)' }}>
-                                        <FaTicketAlt style={{ color: '#7eb8c4' }} />
-                                    </div>
-                                    <h3 className="font-bold text-lg mb-1.5">Secure Your Entry</h3>
-                                    <p className="text-sm mb-7" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                                        Register now to receive your digital invitation and skip the queue.
-                                    </p>
-
-                                    {user?.account_type !== "builder" && (
-                                        event.isRegistered ? (
-                                            <div className="flex flex-col items-center py-5 rounded-2xl" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-                                                <FaCheckCircle size={28} style={{ color: '#34d399', marginBottom: '8px' }} />
-                                                <span className="font-bold text-xs uppercase tracking-widest" style={{ color: '#34d399' }}>You're Registered</span>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={handleParticipate}
-                                                disabled={isRegistering}
-                                                className="w-full flex items-center justify-center gap-2.5 font-bold text-sm py-4 rounded-2xl transition-all disabled:opacity-50"
-                                                style={{ background: 'linear-gradient(135deg, #2e6171, #3a7d91)', color: 'white', boxShadow: '0 6px 20px rgba(46,97,113,0.4)', letterSpacing: '0.03em' }}
-                                                onMouseEnter={e => !isRegistering && (e.currentTarget.style.boxShadow = '0 8px 28px rgba(46,97,113,0.55)')}
-                                                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 6px 20px rgba(46,97,113,0.4)'}
-                                            >
-                                                {isRegistering ? (
-                                                    <div className="h-4 w-4 rounded-full" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 1s linear infinite' }} />
-                                                ) : (
-                                                    <><FaTicketAlt size={13} /> Get Free Invitation</>
-                                                )}
-                                            </button>
-                                        )
-                                    )}
-
-                                    {user?.account_type === "builder" && (
-                                        <div className="flex flex-col items-center py-5 rounded-2xl" style={{ background: 'rgba(46,97,113,0.15)', border: '1px solid rgba(46,97,113,0.3)' }}>
-                                            <FaInfoCircle size={24} style={{ color: '#7eb8c4', marginBottom: '8px' }} />
-                                            <span className="text-xs text-center px-4 leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                                                Book your exhibition stall from the builder dashboard.
-                                            </span>
+                                    <div className="relative z-10">
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                                            <FaCog style={{ color: '#7eb8c4' }} />
                                         </div>
-                                    )}
+                                        <h3 className="font-bold text-lg mb-1.5">Event Management</h3>
+                                        <p className="text-xs mb-6" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                                            Configure event stalls, manage registered participants, edit details, and download invitations.
+                                        </p>
+
+                                        <div className="space-y-3">
+                                            <button
+                                                onClick={() => navigate(`/admin-dashboard/manage-events/edit/${event.id}`)}
+                                                className="w-full flex items-center justify-center gap-2.5 font-bold text-xs py-3.5 rounded-2xl transition-all"
+                                                style={{ background: 'linear-gradient(135deg, #2e6171, #3a7d91)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 15px rgba(46,97,113,0.3)' }}
+                                            >
+                                                <FaEdit size={13} /> Edit Event Details
+                                            </button>
+
+                                            <button
+                                                onClick={() => navigate(`/admin-dashboard/manage-stall-types/${event.id}`)}
+                                                className="w-full flex items-center justify-center gap-2.5 font-bold text-xs py-3.5 rounded-2xl transition-all bg-white/10 hover:bg-white/15 text-white border border-white/10"
+                                            >
+                                                <FaStore size={13} /> Configure Stalls
+                                            </button>
+
+                                            <button
+                                                onClick={() => navigate(`/admin-dashboard/event-bookings/${event.id}`)}
+                                                className="w-full flex items-center justify-center gap-2.5 font-bold text-xs py-3.5 rounded-2xl transition-all bg-white/10 hover:bg-white/15 text-white border border-white/10"
+                                            >
+                                                <FaTicketAlt size={13} /> View Stall Bookings
+                                            </button>
+
+                                            <button
+                                                onClick={() => navigate(`/admin-dashboard/events/${event.id}/participants`)}
+                                                className="w-full flex items-center justify-center gap-2.5 font-bold text-xs py-3.5 rounded-2xl transition-all bg-white/10 hover:bg-white/15 text-white border border-white/10"
+                                            >
+                                                <FaUsers size={13} /> View Participants
+                                            </button>
+
+                                            <button
+                                                onClick={handleDownload}
+                                                className="w-full flex items-center justify-center gap-2.5 font-bold text-xs py-3.5 rounded-2xl transition-all bg-white/10 hover:bg-white/15 text-white border border-white/10"
+                                            >
+                                                <FaDownload size={13} /> Download Invitation PDF
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="rounded-3xl p-7 relative overflow-hidden text-white"
+                                    style={{ background: 'linear-gradient(135deg, #011936 0%, #0d3347 55%, #2e6171 100%)', boxShadow: '0 8px 40px rgba(1,25,54,0.28)' }}>
+
+                                    {/* Subtle decorative ring */}
+                                    <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none"
+                                        style={{ border: '1px solid rgba(255,255,255,0.07)' }} />
+                                    <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full pointer-events-none"
+                                        style={{ border: '1px solid rgba(255,255,255,0.05)' }} />
+
+                                    <div className="relative z-10">
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                                            <FaTicketAlt style={{ color: '#7eb8c4' }} />
+                                        </div>
+                                        <h3 className="font-bold text-lg mb-1.5">Secure Your Entry</h3>
+                                        <p className="text-sm mb-7" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                                            Register now to receive your digital invitation and skip the queue.
+                                        </p>
+
+                                        {!isFullWidth && (
+                                            event.isRegistered ? (
+                                                <div className="flex flex-col items-center py-5 rounded-2xl" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                                                    <FaCheckCircle size={28} style={{ color: '#34d399', marginBottom: '8px' }} />
+                                                    <span className="font-bold text-xs uppercase tracking-widest" style={{ color: '#34d399' }}>You're Registered</span>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={handleParticipate}
+                                                    disabled={isRegistering}
+                                                    className="w-full flex items-center justify-center gap-2.5 font-bold text-sm py-4 rounded-2xl transition-all disabled:opacity-50"
+                                                    style={{ background: 'linear-gradient(135deg, #2e6171, #3a7d91)', color: 'white', boxShadow: '0 6px 20px rgba(46,97,113,0.4)', letterSpacing: '0.03em' }}
+                                                    onMouseEnter={e => !isRegistering && (e.currentTarget.style.boxShadow = '0 8px 28px rgba(46,97,113,0.55)')}
+                                                    onMouseLeave={e => e.currentTarget.style.boxShadow = '0 6px 20px rgba(46,97,113,0.4)'}
+                                                >
+                                                    {isRegistering ? (
+                                                        <div className="h-4 w-4 rounded-full" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 1s linear infinite' }} />
+                                                    ) : (
+                                                        <><FaTicketAlt size={13} /> Get Free Invitation</>
+                                                    )}
+                                                </button>
+                                            )
+                                        )}
+
+                                        {isFullWidth && (
+                                            <div className="flex flex-col items-center py-5 rounded-2xl" style={{ background: 'rgba(46,97,113,0.15)', border: '1px solid rgba(46,97,113,0.3)' }}>
+                                                <FaInfoCircle size={24} style={{ color: '#7eb8c4', marginBottom: '8px' }} />
+                                                <span className="text-xs text-center px-4 leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                                                    Book your exhibition stall from the builder dashboard.
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Contact card */}
                             <div className="bg-white rounded-3xl p-7" style={{ boxShadow: '0 2px 16px rgba(1,25,54,0.06)', border: '1px solid rgba(1,25,54,0.06)' }}>
@@ -329,6 +462,7 @@ const EventDetails = () => {
 
                         </div>
                     </div>
+                    )}
 
                 </div>
             </div>

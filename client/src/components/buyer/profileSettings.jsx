@@ -4,11 +4,13 @@ import axios from "axios";
 import API_BASE_URL from "../../config.js";
 import { FiEye, FiEyeOff, FiUser, FiMail, FiPhone, FiLock, FiType, FiMapPin, FiGlobe, FiCalendar } from "react-icons/fi";
 import { Settings, CheckCircle2, AlertCircle, Loader2, Camera } from "lucide-react";
+import CountryCodeDropdown, { countryCodes } from "../common/CountryCodeDropdown.jsx";
 
 const ProfileSettings = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -36,7 +38,15 @@ const ProfileSettings = () => {
         const user = response.data;
         setName(user.name || "");
         setEmail(user.email || "");
-        setMobileNumber(user.mobile_number || "");
+        const fullMobile = user.mobile_number || "";
+        const matchedCode = countryCodes.find(c => fullMobile.startsWith(c.code));
+        if (matchedCode) {
+          setCountryCode(matchedCode.code);
+          setMobileNumber(fullMobile.slice(matchedCode.code.length));
+        } else {
+          setCountryCode("+91");
+          setMobileNumber(fullMobile);
+        }
         setGender(user.gender || "");
 
         // Robust date parsing for input type="date"
@@ -91,7 +101,7 @@ const ProfileSettings = () => {
       const payload = {
         name,
         email,
-        mobile_number: mobileNumber,
+        mobile_number: `${countryCode}${mobileNumber}`,
         gender,
         dob,
         city,
@@ -201,14 +211,17 @@ const ProfileSettings = () => {
               </div>
               <div className="group">
                 <label className={labelClass}>Mobile Number</label>
-                <div className="relative">
-                  <FiPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                <div className="flex">
+                  <CountryCodeDropdown
+                    selectedCode={countryCode}
+                    onChange={setCountryCode}
+                  />
                   <input
                     type="text"
                     value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    className={inputClass}
-                    maxLength="10"
+                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                    className="flex-1 px-4 py-2.5 rounded-r-xl border border-l-0 border-slate-200 bg-slate-50/50 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                    maxLength="12"
                     required
                   />
                 </div>

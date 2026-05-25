@@ -35,6 +35,8 @@ import PropertyUnits from "./PropertyUnits";
 import LogoutDialog from "../LogoutDialog";
 import CreateAdmin from "./CreateAdmin";
 import ManageAdmins from "./ManageAdmins";
+import EditAdmin from "./EditAdmin";
+import AdminSettings from "./adminSettings";
 
 // Lucide Icons
 import {
@@ -147,8 +149,11 @@ const AdminDashboard = () => {
     { to: "/admin-dashboard/manage-blogs", label: "Manage Blogs", icon: <Newspaper className="w-5 h-5" /> },
     { to: "/admin-dashboard/analytics/most-viewed", label: "Analytics", icon: <BarChart3 className="w-5 h-5" /> },
     { to: "/admin-dashboard/enquiries", label: "View Enquiries", icon: <MessageSquare className="w-5 h-5" /> },
-    ...(user.admin_type === "SuperAdmin" ? [{ to: "/admin-dashboard/manage-admins", label: "Manage Admins", icon: <User className="w-5 h-5" /> }] : []),
-    { to: "/admin-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
+    ...(user.admin_type === "SuperAdmin" ? [
+      { to: "/admin-dashboard/manage-admins", label: "Manage Admins", icon: <User className="w-5 h-5" /> },
+      { to: "/admin-dashboard/settings", label: "Settings", icon: <Settings className="w-5 h-5" /> }
+    ] : []),
+    { to: "/admin-dashboard/profile-settings", label: "Profile Settings", icon: <User className="w-5 h-5" /> },
   ];
 
   const subRouteLabels = [
@@ -168,6 +173,7 @@ const AdminDashboard = () => {
     { match: /\/property-preview\//, label: "Property Preview", icon: <Building2 className="w-5 h-5" /> },
     { match: /\/manage-users\/edit\//, label: "Edit Buyer", icon: <Users className="w-5 h-5" /> },
     { match: /\/manage-admins\/create/, label: "Add Admin", icon: <User className="w-5 h-5" /> },
+    { match: /\/manage-admins\/edit\//, label: "Edit Admin", icon: <User className="w-5 h-5" /> },
     { match: /\/sold-properties/, label: "Sold Properties", icon: <Briefcase className="w-5 h-5" /> },
   ];
 
@@ -283,13 +289,17 @@ const AdminDashboard = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
                   {[
-                    { label: "Total Properties", value: totalProperties, icon: <Building2 />, color: "sky" },
-                    { label: "Total Users", value: totalUsers, icon: <Users />, color: "indigo" },
-                    { label: "Active Builders", value: activeBuilders, icon: <HardHat />, color: "amber" },
-                    { label: "Published Blogs", value: publishedBlogs, icon: <Newspaper />, color: "emerald" },
-                    { label: "Total Events", value: totalEvents, icon: <CalendarDays />, color: "violet" },
+                    { label: "Total Properties", value: totalProperties, icon: <Building2 />, color: "sky", path: "/admin-dashboard/manage-properties" },
+                    { label: "Total Users", value: totalUsers, icon: <Users />, color: "indigo", path: "/admin-dashboard/manage-users" },
+                    { label: "Active Builders", value: activeBuilders, icon: <HardHat />, color: "amber", path: "/admin-dashboard/manage-builders" },
+                    { label: "Published Blogs", value: publishedBlogs, icon: <Newspaper />, color: "emerald", path: "/admin-dashboard/manage-blogs" },
+                    { label: "Total Events", value: totalEvents, icon: <CalendarDays />, color: "violet", path: "/admin-dashboard/manage-events" },
                   ].map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+                    <div 
+                      key={i} 
+                      onClick={() => navigate(stat.path)}
+                      className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-200 transition-all duration-300 group cursor-pointer active:scale-95"
+                    >
                       <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 text-${stat.color}-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                         {stat.icon}
                       </div>
@@ -426,6 +436,8 @@ const AdminDashboard = () => {
             <Route path="/manage-properties/units/:id" element={<PropertyUnits />} />
             <Route path="/manage-admins" element={<ManageAdmins />} />
             <Route path="/manage-admins/create" element={<CreateAdmin />} />
+            <Route path="/manage-admins/edit/:adminId" element={<EditAdmin />} />
+            <Route path="/settings" element={<AdminSettings />} />
           </Routes>
         </div>
       </main>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
 import { Search, Loader2, AlertCircle, History } from 'lucide-react';
 import API_BASE_URL from '../../config.js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Pagination from '../common/Pagination.jsx';
 
 const SoldProperties = () => {
@@ -124,7 +124,7 @@ const SoldProperties = () => {
                             <table className="w-full">
                                 <thead>
                                     <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                                        <th className="px-6 py-4 text-left w-16">#</th>
+                                        <th className="px-6 py-4 text-left w-16">S.No</th>
                                         <th className="px-6 py-4 text-left">Property Details</th>
                                         <th className="px-6 py-4 text-center">Category</th>
                                         <th className="px-6 py-4 text-center">Configuration</th>
@@ -167,9 +167,12 @@ const SoldProperties = () => {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-2.5 text-center">
-                                                    <span className="inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">
+                                                    <Link 
+                                                        to={`/admin-dashboard/manage-properties/units/${property.id}`}
+                                                        className="inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                                    >
                                                         {property.sold}
-                                                    </span>
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         );
@@ -210,9 +213,12 @@ const SoldProperties = () => {
                                                 <div className="text-sm font-black text-green-600">
                                                     ₹{property.price ? Math.floor(property.price).toLocaleString('en-IN') : 'N/A'}
                                                 </div>
-                                                <span className="inline-flex items-center px-2.5 py-0.5 bg-indigo-600 text-white rounded-full font-bold text-[10px] mt-1">
+                                                <Link 
+                                                    to={`/admin-dashboard/manage-properties/units/${property.id}`}
+                                                    className="inline-flex items-center px-2.5 py-0.5 bg-indigo-600 text-white rounded-full font-bold text-[10px] mt-1 hover:bg-indigo-700 transition-colors"
+                                                >
                                                     {property.sold} Sold
-                                                </span>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>

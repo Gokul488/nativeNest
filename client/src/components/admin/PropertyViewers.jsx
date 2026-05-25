@@ -7,7 +7,7 @@ import API_BASE_URL from '../../config.js';
 import { format } from "date-fns";
 
 const PropertyViewers = () => {
-  const { propertyId } = useParams();
+  const { id: propertyId } = useParams();
   const navigate = useNavigate();
 
   const [viewers, setViewers] = useState([]);

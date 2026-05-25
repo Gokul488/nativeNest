@@ -6,6 +6,7 @@ import { FiUser, FiMail, FiPhone, FiLock, FiEye, FiEyeOff, FiCheckCircle, FiShie
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import API_BASE_URL from "../../config.js";
+import CountryCodeDropdown from "../common/CountryCodeDropdown.jsx";
 
 const CreateAdmin = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ const CreateAdmin = () => {
     confirm_password: "",
     admin_type: "Admin",
   });
+  const [countryCode, setCountryCode] = useState("+91");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,7 +49,11 @@ const CreateAdmin = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.post(`${API_BASE_URL}/api/admin/admin/create`, formData, {
+      const payload = { 
+        ...formData, 
+        mobile_number: `${countryCode}${formData.mobile_number}` 
+      };
+      await axios.post(`${API_BASE_URL}/api/admin/create`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSuccess("Admin created successfully!");
@@ -119,17 +125,20 @@ const CreateAdmin = () => {
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Mobile Number</label>
-            <div className="relative group">
-              <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+            <div className="flex">
+              <CountryCodeDropdown
+                selectedCode={countryCode}
+                onChange={setCountryCode}
+              />
               <input
                 type="tel"
                 name="mobile_number"
                 value={formData.mobile_number}
                 onChange={handleChange}
                 required
-                maxLength={10}
-                placeholder="10-digit number"
-                className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all"
+                maxLength={12}
+                placeholder="Number"
+                className="flex-1 px-4 py-3 bg-slate-50 border border-l-0 border-slate-200 rounded-r-2xl text-sm focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all"
               />
             </div>
           </div>

@@ -222,7 +222,7 @@ const BuilderEvents = () => {
               <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-16 px-6 py-4 text-left">#</th>
+                    <th className="w-16 px-6 py-4 text-left">S.No</th>
                     <th onClick={() => requestSort("event_name")} className="w-1/4 px-6 py-4 text-left cursor-pointer hover:text-indigo-600 transition-colors select-none">
                       <span className="inline-flex items-center">Exhibition Name {getSortIcon("event_name")}</span>
                     </th>

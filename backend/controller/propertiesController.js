@@ -18,6 +18,9 @@ const createProperty = async (req, res) => {
       variants   // JSON string
     } = req.body;
 
+    console.log("createProperty called with body:", req.body);
+    console.log("createProperty called with files:", req.files ? Object.keys(req.files) : "No files");
+
     let amenities = req.body.amenities || req.body['amenities[]'] || [];
     if (!Array.isArray(amenities)) amenities = [amenities].filter(Boolean);
 
@@ -439,22 +442,41 @@ const getPropertyById = async (req, res) => {
 };
 
 const getMostViewedProperties = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
-    const [rows] = await pool.query(`
-      SELECT p.*, b.name AS builderName, (SELECT COUNT(*) FROM property_views WHERE property_id = p.property_id) AS views
+    const [rows] = await connection.query(`
+      SELECT p.property_id AS id, p.title, p.price, p.city, p.property_type, p.sqft, p.cover_image,
+             (SELECT COUNT(*) FROM property_views WHERE property_id = p.property_id) AS views,
+             b.name AS builderName
       FROM properties p
       LEFT JOIN builders b ON p.builder_id = b.id
       ORDER BY views DESC LIMIT 50
     `);
-    const properties = rows.map(p => ({
-      ...p,
-      price: parseFloat(p.price),
-      cover_image: p.cover_image ? `data:image/jpeg;base64,${Buffer.from(p.cover_image).toString('base64')}` : null,
+    
+    const properties = await Promise.all(rows.map(async (p) => {
+      let variants = [];
+      if (p.property_type === 'Apartment') {
+        const [vRows] = await connection.query(`SELECT * FROM property_variants WHERE property_id = ?`, [p.id]);
+        variants = vRows.map(formatVariant);
+      } else if (p.property_type === 'Villas') {
+        const [vRows] = await connection.query(`SELECT * FROM villa_details WHERE property_id = ?`, [p.id]);
+        variants = vRows.map(v => ({ facing: v.facing, price: parseFloat(v.price), sqft: v.sqft, quantity: v.quantity }));
+      }
+
+      return {
+        ...p,
+        price: parseFloat(p.price) || 0,
+        cover_image: p.cover_image ? `data:image/jpeg;base64,${Buffer.from(p.cover_image).toString('base64')}` : null,
+        variants
+      };
     }));
+
     res.json({ properties });
   } catch (error) {
     console.error('Error fetching most viewed:', error);
     res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    connection.release();
   }
 };
 
@@ -488,12 +510,21 @@ const getAllBuilders = async (req, res) => {
 
 const getCities = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT DISTINCT city FROM properties WHERE city IS NOT NULL AND city != "" ORDER BY city ASC');
+    // Simple test first
+    await pool.query('SELECT 1');
+    
+    const [rows] = await pool.query("SELECT DISTINCT city FROM properties WHERE city IS NOT NULL AND city != '' ORDER BY city ASC");
     const cities = rows.map(row => row.city);
-    res.json({ cities });
+    res.json({ cities, version: 'v1.1' });
   } catch (error) {
     console.error('Error fetching cities:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Database Query Failed', 
+      message: error.message,
+      database: process.env.DB_NAME, // Verify if it's the right DB
+      host: process.env.DB_HOST,
+      code: error.code 
+    });
   }
 };
 

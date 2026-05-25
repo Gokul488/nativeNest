@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config.js";
 import { FiEye, FiEyeOff, FiUser, FiMail, FiPhone, FiLock, FiType, FiMapPin, FiGlobe, FiCalendar, FiArrowLeft } from "react-icons/fi";
 import { CheckCircle2, AlertCircle, Loader2, Camera } from "lucide-react";
+import CountryCodeDropdown, { countryCodes } from "../common/CountryCodeDropdown.jsx";
 
 const EditBuyer = () => {
   const { userId } = useParams();
@@ -13,6 +14,7 @@ const EditBuyer = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -34,19 +36,23 @@ const EditBuyer = () => {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem("token");
-        // We use the admin users list or a specific fetch if we have one. 
-        // For now, let's fetch all users and find this one, or assume there's a specific fetch.
-        // I'll update adminController to have getSingleUser if needed, 
-        // but for now I'll just use the list fetching logic.
-        const res = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const user = res.data.find(u => String(u.id) === String(userId));
+        const user = res.data;
 
         if (user) {
           setName(user.name || "");
           setEmail(user.email || "");
-          setMobileNumber(user.mobile_number || "");
+          const fullMobile = user.mobile_number || "";
+          const matchedCode = countryCodes.find(c => fullMobile.startsWith(c.code));
+          if (matchedCode) {
+            setCountryCode(matchedCode.code);
+            setMobileNumber(fullMobile.slice(matchedCode.code.length));
+          } else {
+            setCountryCode("+91");
+            setMobileNumber(fullMobile);
+          }
           setGender(user.gender || "");
           setDob(user.dob ? user.dob.split('T')[0] : "");
           setCity(user.city || "");
@@ -79,7 +85,7 @@ const EditBuyer = () => {
     try {
       const token = localStorage.getItem("token");
       const payload = {
-        name, email, mobile_number: mobileNumber, gender, dob, city, country, photo: photoBase64.split(',')[1] || photoBase64
+        name, email, mobile_number: `${countryCode}${mobileNumber}`, gender, dob, city, country, photo: photoBase64.split(',')[1] || photoBase64
       };
       if (password.trim()) payload.password = password;
 
@@ -88,7 +94,7 @@ const EditBuyer = () => {
       });
 
       setSuccess("User profile updated successfully!");
-      setTimeout(() => navigate("/manage-users"), 2000);
+      setTimeout(() => navigate("/admin-dashboard/manage-users"), 2000);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to update user");
     } finally {
@@ -112,15 +118,6 @@ const EditBuyer = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      <div className="mb-6 flex items-center justify-between">
-        <button
-          onClick={() => navigate("/manage-users")}
-          className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-sm transition-colors"
-        >
-          <FiArrowLeft /> Back to Users
-        </button>
-        <h2 className="text-xl font-extrabold text-slate-800">Edit Buyer Profile</h2>
-      </div>
 
       <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
         <div className="px-8 py-8">
@@ -187,9 +184,19 @@ const EditBuyer = () => {
                 </div>
                 <div className="group">
                   <label className={labelClass}>Mobile Number</label>
-                  <div className="relative">
-                    <FiPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
-                    <input type="text" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, "").slice(0, 10))} className={inputClass} maxLength="10" required />
+                  <div className="flex">
+                    <CountryCodeDropdown
+                      selectedCode={countryCode}
+                      onChange={setCountryCode}
+                    />
+                    <input
+                      type="text"
+                      value={mobileNumber}
+                      onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                      className="flex-1 px-4 py-2.5 border border-l-0 border-slate-200 bg-slate-50/50 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                      maxLength="12"
+                      required
+                    />
                   </div>
                 </div>
                 <div className="group">

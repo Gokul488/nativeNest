@@ -135,7 +135,7 @@ const BuilderStallInterests = () => {
             <table className="hidden xl:table w-full table-fixed border-separate border-spacing-0">
               <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
                 <tr>
-                  <th className="w-14 px-6 py-4 text-left border-b border-gray-200">#</th>
+                  <th className="w-14 px-6 py-4 text-left border-b border-gray-200">S.No</th>
                   <th className="w-1/3 px-6 py-4 text-left border-b border-gray-200">Buyer Details</th>
                   <th className="w-1/4 px-6 py-4 text-left border-b border-gray-200">Event & Stall</th>
                   <th className="px-6 py-4 text-center border-b border-gray-200">Contact</th>

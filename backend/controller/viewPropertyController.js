@@ -94,6 +94,7 @@ const getPropertyById = async (req, res) => {
         p.property_type,
         p.sqft,
         p.quantity, 
+        p.sold,
         p.video,
         p.cover_image, 
         p.created_at
@@ -117,23 +118,39 @@ const getPropertyById = async (req, res) => {
       [id]
     );
 
-    // Fetch variants with block_name — apartment_type holds the BHK value
-    const [variantRows] = await pool.query(
-      `SELECT variant_id, apartment_type, block_name, floor, price, sqft, quantity
-       FROM property_variants WHERE property_id = ?
-       ORDER BY block_name, floor, apartment_type ASC`,
-      [id]
-    );
-
-    const variants = variantRows.map(v => ({
-      variant_id: v.variant_id,
-      apartment_type: v.apartment_type,
-      block_name: v.block_name || null,
-      floor: v.floor || null,
-      price: v.price ? parseFloat(v.price) : null,
-      sqft: v.sqft ? Number(v.sqft) : null,
-      quantity: v.quantity ? Number(v.quantity) : 1,
-    }));
+    let variants = [];
+    if (properties[0].property_type === 'Apartment') {
+      const [variantRows] = await pool.query(
+        `SELECT variant_id, apartment_type, block_name, floor, price, sqft, quantity, sold
+         FROM property_variants WHERE property_id = ?
+         ORDER BY block_name, floor, apartment_type ASC`,
+        [id]
+      );
+      variants = variantRows.map(v => ({
+        variant_id: v.variant_id,
+        apartment_type: v.apartment_type,
+        block_name: v.block_name || null,
+        floor: v.floor || null,
+        price: v.price ? parseFloat(v.price) : null,
+        sqft: v.sqft ? Number(v.sqft) : null,
+        quantity: v.quantity ? Number(v.quantity) : 1,
+        sold: v.sold || 0,
+      }));
+    } else if (properties[0].property_type === 'Villas') {
+      const [villaRows] = await pool.query(
+        `SELECT id, facing, price, sqft, quantity, sold
+         FROM villa_details WHERE property_id = ?`,
+        [id]
+      );
+      variants = villaRows.map(v => ({
+        variant_id: v.id,
+        facing: v.facing,
+        price: v.price ? parseFloat(v.price) : null,
+        sqft: v.sqft ? Number(v.sqft) : null,
+        quantity: v.quantity ? Number(v.quantity) : 1,
+        sold: v.sold || 0,
+      }));
+    }
 
     const property = {
       ...properties[0],
@@ -198,9 +215,14 @@ const updateProperty = async (req, res) => {
     }
 
     // ── Authorization ────────────────────────────────────────────────────────
-    const [propCheck] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
+    const [propCheck] = await pool.query('SELECT admin_id, builder_id FROM properties WHERE property_id = ?', [id]);
     if (propCheck.length === 0) return res.status(404).json({ error: 'Property not found' });
-    if (propCheck[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    
+    if (decoded.account_type === 'builder') {
+      if (propCheck[0].builder_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    } else if (decoded.account_type !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
 
     const coverImage = req.files?.['cover_image']?.[0]?.buffer || null;
     const video = req.files?.['video']?.[0]?.buffer || null;
@@ -337,9 +359,14 @@ const deleteProperty = async (req, res) => {
     const userId = decoded.userId;
     const { id } = req.params;
 
-    const [properties] = await pool.query('SELECT admin_id FROM properties WHERE property_id = ?', [id]);
+    const [properties] = await pool.query('SELECT admin_id, builder_id FROM properties WHERE property_id = ?', [id]);
     if (properties.length === 0) return res.status(404).json({ error: 'Property not found' });
-    if (properties[0].admin_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    
+    if (decoded.account_type === 'builder') {
+      if (properties[0].builder_id !== userId) return res.status(403).json({ error: 'Unauthorized' });
+    } else if (decoded.account_type !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
 
     const connection = await pool.getConnection();
     try {

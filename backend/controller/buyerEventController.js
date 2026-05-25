@@ -1,6 +1,7 @@
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
+const { getMobileVariations } = require('../utils/phoneUtils');
 
 /* ================= BUYER: GET ALL EVENTS ================= */
 const getPublicEvents = async (req, res) => {
@@ -14,6 +15,8 @@ const getPublicEvents = async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.account_type === 'buyer') {
           buyerId = decoded.userId;
+        } else if (decoded.account_type === 'admin') {
+          buyerId = -decoded.userId;
         }
       } catch (err) {
         // ignore invalid token
@@ -33,19 +36,19 @@ const getPublicEvents = async (req, res) => {
         pe.start_time,
         pe.end_time,
         pe.description,
-        ${buyerId
+        ${buyerId !== null
         ? 'CASE WHEN ep.id IS NULL THEN 0 ELSE 1 END AS isRegistered'
         : '0 AS isRegistered'
       }
       FROM property_events pe
-      ${buyerId
+      ${buyerId !== null
         ? 'LEFT JOIN event_participants ep ON ep.event_id = pe.id AND ep.buyer_id = ?'
         : ''
       }
       ORDER BY pe.start_date DESC
     `;
 
-    const [events] = buyerId
+    const [events] = buyerId !== null
       ? await pool.query(query, [buyerId])
       : await pool.query(query);
 
@@ -68,6 +71,8 @@ const getEventDetails = async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.account_type === 'buyer') {
           buyerId = decoded.userId;
+        } else if (decoded.account_type === 'admin') {
+          buyerId = -decoded.userId;
         }
       } catch (err) {
         // ignore invalid token
@@ -77,19 +82,19 @@ const getEventDetails = async (req, res) => {
     const query = `
       SELECT 
         pe.*,
-        ${buyerId
+        ${buyerId !== null
         ? 'CASE WHEN ep.id IS NULL THEN 0 ELSE 1 END AS isRegistered'
         : '0 AS isRegistered'
       }
       FROM property_events pe
-      ${buyerId
+      ${buyerId !== null
         ? 'LEFT JOIN event_participants ep ON ep.event_id = pe.id AND ep.buyer_id = ?'
         : ''
       }
       WHERE pe.id = ?
     `;
 
-    const [rows] = buyerId
+    const [rows] = buyerId !== null
       ? await pool.query(query, [buyerId, id])
       : await pool.query(query, [id]);
 
@@ -119,9 +124,11 @@ const participateEvent = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.account_type !== 'buyer') {
+    if (decoded.account_type !== 'buyer' && decoded.account_type !== 'admin') {
       return res.status(403).json({ error: 'Access denied' });
     }
+
+    const participantBuyerId = decoded.account_type === 'buyer' ? decoded.userId : -decoded.userId;
 
     const { eventId, name, phone, email } = req.body;
 
@@ -146,7 +153,7 @@ const participateEvent = async (req, res) => {
     await pool.query(
       `INSERT INTO event_participants (event_id, buyer_id, name, phone, email)
        VALUES (?, ?, ?, ?, ?)`,
-      [eventId, decoded.userId, name, phone, email || null]
+      [eventId, participantBuyerId, name, phone, email || null]
     );
 
     /* ================= SEND CONFIRMATION EMAIL ================= */
@@ -215,9 +222,11 @@ const getMyRegisteredEvents = async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.account_type !== 'buyer') {
+    if (decoded.account_type !== 'buyer' && decoded.account_type !== 'admin') {
       return res.status(403).json({ error: 'Access denied' });
     }
+
+    const buyerId = decoded.account_type === 'buyer' ? decoded.userId : -decoded.userId;
 
     const [rows] = await pool.query(`
           SELECT 
@@ -233,7 +242,7 @@ const getMyRegisteredEvents = async (req, res) => {
             WHERE ep.buyer_id = ?
             ORDER BY pe.start_date DESC
   `,
-      [decoded.userId]
+      [buyerId]
     );
 
     res.json(rows);
@@ -363,27 +372,47 @@ const markAttendance = async (req, res) => {
       return res.status(400).json({ error: 'Event ID and Mobile Number are required' });
     }
 
-    // Check if user is registered for this event
+    const mobileVariations = getMobileVariations(mobile_number);
+
+    // 1. Check if user is already registered for this event
     const [registration] = await pool.query(
-      `SELECT id FROM event_participants 
-       WHERE event_id = ? AND phone = ?`,
-      [eventId, mobile_number]
+      `SELECT id, phone FROM event_participants 
+       WHERE event_id = ? AND phone IN (?)`,
+      [eventId, mobileVariations]
     );
 
-    if (registration.length === 0) {
-      return res.status(404).json({
-        error: 'Registration not found. Please ensure you registered for this event with this mobile number.'
-      });
+    if (registration.length > 0) {
+      const matchedPhone = registration[0].phone;
+      // Update attendance status for already registered user
+      await pool.query(
+        `UPDATE event_participants SET is_attended = 1 
+         WHERE event_id = ? AND phone = ?`,
+        [eventId, matchedPhone]
+      );
+      return res.json({ message: 'Attendance marked successfully! Welcome to the event.' });
     }
 
-    // Update attendance status
-    await pool.query(
-      `UPDATE event_participants SET is_attended = 1 
-       WHERE event_id = ? AND phone = ?`,
-      [eventId, mobile_number]
+    // 2. If not in participants, check if they are a registered buyer in the system
+    const [buyerRows] = await pool.query(
+      'SELECT id, name, mobile_number, email FROM buyers WHERE mobile_number IN (?)',
+      [mobileVariations]
     );
 
-    res.json({ message: 'Attendance marked successfully! Welcome to the event.' });
+    if (buyerRows.length > 0) {
+      const buyer = buyerRows[0];
+      // Auto-register them for the event since they are at the venue scanning the QR
+      await pool.query(
+        `INSERT INTO event_participants (event_id, buyer_id, name, phone, email, is_attended)
+         VALUES (?, ?, ?, ?, ?, 1)`,
+        [eventId, buyer.id, buyer.name, buyer.mobile_number, buyer.email]
+      );
+      return res.json({ message: 'Welcome! Your registration has been processed and attendance marked.' });
+    }
+
+    // 3. If not found in either table
+    return res.status(404).json({
+      error: 'Registration not found. Please ensure you are a registered user of NativeNest with this mobile number.'
+    });
   } catch (err) {
     console.error('Attendance Error:', err);
     res.status(500).json({ error: 'Failed to mark attendance' });
@@ -399,8 +428,10 @@ const markStallAttendance = async (req, res) => {
       return res.status(400).json({ error: 'Event ID, Stall ID, and Mobile Number are required' });
     }
 
+    const mobileVariations = getMobileVariations(mobile_number);
+
     // 1. Find the buyer
-    const [buyer] = await pool.query("SELECT id FROM buyers WHERE mobile_number = ?", [mobile_number]);
+    const [buyer] = await pool.query("SELECT id FROM buyers WHERE mobile_number IN (?)", [mobileVariations]);
     if (buyer.length === 0) {
       return res.status(404).json({ error: 'Buyer not found.' });
     }

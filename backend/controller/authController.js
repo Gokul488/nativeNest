@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { getMobileVariations } = require('../utils/phoneUtils');
 
 /* ===================== REGISTER ===================== */
 const register = async (req, res) => {
@@ -25,8 +26,8 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Invalid account type' });
     }
 
-    if (!/^\d{10}$/.test(mobile_number)) {
-      return res.status(400).json({ error: 'Mobile number must be 10 digits' });
+    if (!/^\+?\d{10,15}$/.test(mobile_number)) {
+      return res.status(400).json({ error: 'Invalid mobile number format' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -36,9 +37,10 @@ const register = async (req, res) => {
 
     /* -------- BUYER REGISTER -------- */
     if (account_type === 'buyer') {
+      const mobileVariations = getMobileVariations(mobile_number);
       const [existing] = await pool.query(
-        'SELECT id FROM buyers WHERE mobile_number = ? OR email = ?',
-        [mobile_number, email || null]
+        'SELECT id FROM buyers WHERE mobile_number IN (?) OR (email IS NOT NULL AND email = ?)',
+        [mobileVariations, email || null]
       );
 
       if (existing.length > 0) {
@@ -85,9 +87,10 @@ const register = async (req, res) => {
         return res.status(400).json({ error: 'Contact person is required for builders' });
       }
 
+      const mobileVariations = getMobileVariations(mobile_number);
       const [existing] = await pool.query(
-        'SELECT id FROM builders WHERE mobile_number = ? OR email = ?',
-        [mobile_number, email || null]
+        'SELECT id FROM builders WHERE mobile_number IN (?) OR (email IS NOT NULL AND email = ?)',
+        [mobileVariations, email || null]
       );
 
       if (existing.length > 0) {
@@ -140,13 +143,14 @@ const login = async (req, res) => {
     }
 
     let user, account_type;
+    const mobileVariations = getMobileVariations(identifier);
 
     /* -------- BUYER LOGIN -------- */
     let [rows] = await pool.query(
       `SELECT id, name, mobile_number, email, password, gender, dob, city, country, photo
        FROM buyers
-       WHERE mobile_number = ? OR email = ?`,
-      [identifier, identifier]
+       WHERE mobile_number IN (?) OR email = ?`,
+      [mobileVariations, identifier]
     );
 
     if (rows.length > 0) {
@@ -157,20 +161,70 @@ const login = async (req, res) => {
       [rows] = await pool.query(
         `SELECT id, name, mobile_number, email, password, admin_type
          FROM admins
-         WHERE mobile_number = ? OR email = ?`,
-        [identifier, identifier]
+         WHERE mobile_number IN (?) OR email = ?`,
+        [mobileVariations, identifier]
       );
 
       if (rows.length > 0) {
         user = rows[0];
-        account_type = 'admin';
+        if (user.admin_type === 'builderAdmin') {
+          account_type = 'builder';
+          
+          // Verify password first before creating/linking the builder
+          const isMatch = await bcrypt.compare(password, user.password);
+          if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+          }
+
+          // Check if a builder with this mobile or email already exists
+          const [existingBuilder] = await pool.query(
+            'SELECT id, name, mobile_number, email, password, builder_type FROM builders WHERE mobile_number IN (?) OR email = ?',
+            [mobileVariations, user.email || '']
+          );
+
+          if (existingBuilder.length > 0) {
+            const builderRecord = existingBuilder[0];
+            // Sync password and name to match the admin
+            await pool.query(
+              'UPDATE builders SET name = ?, password = ?, builder_type = ? WHERE id = ?',
+              [user.name, user.password, 'BuilderAdmin', builderRecord.id]
+            );
+            user = {
+              id: builderRecord.id,
+              name: user.name,
+              mobile_number: builderRecord.mobile_number,
+              email: builderRecord.email,
+              password: user.password,
+              builder_type: 'BuilderAdmin',
+              admin_type: 'builderAdmin'
+            };
+          } else {
+            // Create a new builder record
+            const [insertResult] = await pool.query(
+              `INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type) 
+               VALUES (?, 'Admin', ?, ?, ?, 'BuilderAdmin')`,
+              [user.name, user.mobile_number, user.email || null, user.password]
+            );
+            user = {
+              id: insertResult.insertId,
+              name: user.name,
+              mobile_number: user.mobile_number,
+              email: user.email,
+              password: user.password,
+              builder_type: 'BuilderAdmin',
+              admin_type: 'builderAdmin'
+            };
+          }
+        } else {
+          account_type = 'admin';
+        }
       } else {
         // New: Builder Login
         [rows] = await pool.query(
           `SELECT id, name, mobile_number, email, password, builder_type
            FROM builders
-           WHERE mobile_number = ? OR email = ?`,
-          [identifier, identifier]
+           WHERE mobile_number IN (?) OR email = ?`,
+          [mobileVariations, identifier]
         );
 
         if (rows.length > 0) {

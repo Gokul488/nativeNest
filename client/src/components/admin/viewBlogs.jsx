@@ -167,7 +167,7 @@ const ViewBlogs = () => {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-14 px-6 py-4 text-left">#</th>
+                    <th className="w-14 px-6 py-4 text-left">S.No</th>
                     <th className="px-6 py-4 text-left">Blog Title</th>
                     <th className="w-36 px-6 py-4 text-center">Actions</th>
                   </tr>
