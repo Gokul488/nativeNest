@@ -17,7 +17,8 @@ const {
   getSpecificAdmin, 
   updateSpecificAdmin,
   getSettings,
-  updateSettings
+  updateSettings,
+  deleteUser
 } = require('../controller/adminController');
 
 router.get('/admin', getAdminDetails);
@@ -27,6 +28,7 @@ router.get('/admin/all', getAllAdmins);
 router.get('/admin/users', getAllUsers);
 router.get('/admin/users/:userId', getSingleUser);
 router.put('/admin/users/:userId', adminUpdateUser);
+router.delete('/admin/users/:userId', deleteUser);
 router.get('/admin/manage/:adminId', getSpecificAdmin);
 router.put('/admin/manage/:adminId', updateSpecificAdmin);
 router.delete('/admin/manage/:adminId', deleteAdmin);

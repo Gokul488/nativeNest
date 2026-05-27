@@ -750,6 +750,62 @@ const updateSettings = async (req, res) => {
   }
 };
 
+/* =========================
+   ADMIN: DELETE USER (BUYER)
+========================= */
+const deleteUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { userId } = req.params;
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // 1. Delete user bookmarks
+      await connection.query("DELETE FROM bookmarks WHERE buyer_id = ?", [userId]);
+
+      // 2. Delete user event participations
+      await connection.query("DELETE FROM event_participants WHERE buyer_id = ?", [userId]);
+
+      // 3. Delete user stall interest registrations
+      await connection.query("DELETE FROM buyer_stall_interest WHERE buyer_id = ?", [userId]);
+
+      // 4. Delete user property views
+      await connection.query("DELETE FROM property_views WHERE buyer_id = ?", [userId]);
+
+      // 5. Update property sales to nullify buyer_id (keeping the audit log record with plain text name/email/phone)
+      await connection.query("UPDATE property_sales SET buyer_id = NULL WHERE buyer_id = ?", [userId]);
+
+      // 6. Delete user from buyers table
+      const [result] = await connection.query("DELETE FROM buyers WHERE id = ?", [userId]);
+
+      if (result.affectedRows === 0) {
+        await connection.rollback();
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await connection.commit();
+      res.json({ message: "User deleted successfully" });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error("Delete user error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getAdminDetails,
   updateAdminDetails,
@@ -767,5 +823,6 @@ module.exports = {
   getSpecificAdmin,
   updateSpecificAdmin,
   getSettings,
-  updateSettings
+  updateSettings,
+  deleteUser
 };
