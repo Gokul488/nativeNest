@@ -1162,7 +1162,7 @@ const PostProperty = () => {
                   <div className="flex flex-wrap items-center gap-4">
                     <label className="flex items-center justify-center gap-2 px-4 h-10 border border-slate-200 rounded-lg cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group shrink-0 shadow-sm">
                       <CloudUpload className="w-4 h-4 text-slate-400 group-hover:text-sky-500 transition-colors" />
-                      <span className="text-[11px] font-bold text-slate-600 group-hover:text-sky-600">Upload Cover</span>
+                      <span className="text-[11px] font-bold text-slate-600 group-hover:text-sky-600">Upload </span>
                       <input type="file" accept="image/*" className="hidden" onChange={handleCoverImageChange} />
                     </label>
                     {coverPreview ? (
@@ -1176,7 +1176,7 @@ const PostProperty = () => {
                       </div>
                     ) : (
                       <div className="w-full max-w-[400px] h-32 rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-[10px] italic bg-slate-50/50 shrink-0">
-                        No cover selected
+                        No cover image selected
                       </div>
                     )}
                   </div>
