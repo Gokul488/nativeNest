@@ -62,7 +62,7 @@ const ManageStallTypes = () => {
       setShowDeleteDialog(false);
       setStallTypeToDelete(null);
     } catch (err) {
-      setError("Failed to delete stall type.");
+      setError(err.response?.data?.error || "Failed to delete stall type.");
       setShowDeleteDialog(false);
     }
   };

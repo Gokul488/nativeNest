@@ -149,6 +149,7 @@ const updateStallType = async (req, res) => {
 };
 
 const deleteStallType = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
     const { typeId, eventId } = req.params;
     const token = req.headers.authorization?.split(' ')[1];
@@ -157,20 +158,49 @@ const deleteStallType = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (decoded.account_type !== 'admin') return res.status(403).json({ error: 'Admin only' });
 
-    // Optional: verify event_id match
-    const [[row]] = await pool.query(
+    // Verify event_id match
+    const [[row]] = await connection.query(
       'SELECT 1 FROM stall_type WHERE stall_type_id = ? AND event_id = ?',
       [typeId, eventId]
     );
 
-    if (!row) return res.status(404).json({ error: 'Stall type not found or not associated with event' });
+    if (!row) {
+      return res.status(404).json({ error: 'Stall type not found or not associated with event' });
+    }
 
-    await pool.query('DELETE FROM stall_type WHERE stall_type_id = ?', [typeId]);
+    await connection.beginTransaction();
 
+    // Check if any stalls of this type are booked
+    const [[{ bookedCount }]] = await connection.query(
+      'SELECT COUNT(*) as bookedCount FROM stall WHERE stall_type_id = ? AND builder_id IS NOT NULL',
+      [typeId]
+    );
+
+    if (bookedCount > 0) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Cannot delete stall type because some stalls have already been booked' });
+    }
+
+    // Delete associated stalls (since they are all unbooked)
+    await connection.query(
+      'DELETE FROM stall WHERE stall_type_id = ?',
+      [typeId]
+    );
+
+    // Delete stall type
+    await connection.query(
+      'DELETE FROM stall_type WHERE stall_type_id = ?',
+      [typeId]
+    );
+
+    await connection.commit();
     res.json({ message: 'Stall type deleted' });
   } catch (err) {
+    await connection.rollback();
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+  } finally {
+    connection.release();
   }
 };
 

@@ -7,7 +7,7 @@ import { Layers, Hash, CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-r
 import API_BASE_URL from '../../config.js';
 
 const AddEditStallType = () => {
-  const { eventId, typeId } = useParams();
+  const { eventId, stallId: typeId } = useParams();
   const navigate = useNavigate();
   const isEditing = !!typeId;
 
