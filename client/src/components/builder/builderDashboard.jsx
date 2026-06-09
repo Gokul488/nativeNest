@@ -108,7 +108,7 @@ const BuilderDashboard = () => {
   const navLinks = [
     { to: "/builder-dashboard/", label: "Summary", icon: <LayoutDashboard className="w-5 h-5" /> },
     { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <Building2 className="w-5 h-5" /> },
-    { to: "/builder-dashboard/events", label: "Event Stalls", icon: <CalendarDays className="w-5 h-5" /> },
+    { to: "/builder-dashboard/events", label: "Event List", icon: <CalendarDays className="w-5 h-5" /> },
     ...(user.builder_type === "BuilderAdmin" ? [{ to: "/builder-dashboard/manage-builders", label: "Manage Builders", icon: <User className="w-5 h-5" /> }] : []),
     { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
   ];

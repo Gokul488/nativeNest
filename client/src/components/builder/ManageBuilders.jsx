@@ -162,7 +162,7 @@ const ManageBuilders = () => {
   };
 
   const filteredAndSortedBuilders = useMemo(() => {
-    let result = [...builders];
+    let result = builders.filter((b) => b.builder_type !== "BuilderAdmin");
     if (searchQuery) {
       result = result.filter((b) =>
         b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -221,7 +221,7 @@ const ManageBuilders = () => {
             />
           </div>
           <span className="hidden sm:inline-flex bg-sky-50 text-sky-600 text-sm font-bold px-3 py-1 rounded-full border border-sky-100 whitespace-nowrap">
-            {builders.length} Builders
+            {filteredAndSortedBuilders.length} Builders
           </span>
         </div>
 
