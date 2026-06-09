@@ -486,7 +486,7 @@ const getAllBuilders = async (req, res) => {
     }
 
     const [builders] = await pool.query(
-      "SELECT id, name, contact_person, mobile_number, email, builder_type, team_members, created_at FROM builders ORDER BY created_at DESC"
+      "SELECT id, name, contact_person, mobile_number, email, builder_type, team_members, created_at FROM builders WHERE builder_type != 'BuilderAdmin' OR builder_type IS NULL ORDER BY created_at DESC"
     );
 
     res.json(builders);

@@ -65,7 +65,7 @@ const DEFAULT_BLOCK = () => ({
 // ─── SectionCard sub-component ────────────────────────────────────────────────
 const SectionCard = ({ icon, title, action, children }) => (
   <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_2px_8px_rgba(15,23,42,0.04)] overflow-hidden">
-    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+    <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
       <div className="flex items-center gap-2.5">
         <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
           {icon}
@@ -74,7 +74,7 @@ const SectionCard = ({ icon, title, action, children }) => (
       </div>
       {action && <div>{action}</div>}
     </div>
-    <div className="p-6 space-y-5">
+    <div className="p-5 space-y-4">
       {children}
     </div>
   </div>
@@ -454,7 +454,7 @@ const EditProperty = () => {
   const customStyles = {
     control: (p) => ({
       ...p,
-      minHeight: 40,
+      minHeight: 36,
       borderColor: "#e2e8f0",
       borderRadius: "0.75rem",
       backgroundColor: "#f8fafc",
@@ -496,9 +496,9 @@ const EditProperty = () => {
 
   // ── Shared class constants ────────────────────────────────────
   const inputCls =
-    "w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400";
+    "w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400";
 
-  const labelCls = "block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5";
+  const labelCls = "block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1";
 
   // ── Loading state ─────────────────────────────────────────────
   if (!property) {
@@ -540,7 +540,7 @@ const EditProperty = () => {
       </div>
 
       {/* ── Body ── */}
-      <div className="p-6 lg:p-8 max-w-5xl mx-auto w-full">
+      <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full">
 
         {/* Alerts */}
         {error && (
@@ -556,7 +556,7 @@ const EditProperty = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
 
           {/* ── Section: Basic Info ──────────────────────────── */}
           <SectionCard icon={<Tag className="w-4 h-4 text-sky-500" />} title="Basic Information">
@@ -620,7 +620,7 @@ const EditProperty = () => {
 
             {/* Price / Sqft / Qty — non-apartment */}
             {formData.property_type !== "Apartment" && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className={labelCls}>Price (₹) <span className="text-red-400">*</span></label>
                   <input
@@ -686,7 +686,7 @@ const EditProperty = () => {
                 <span className="text-emerald-500">Apartment Type</span>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {blocks.map((block) => (
                   <div
                     key={block.id}
@@ -938,7 +938,7 @@ const EditProperty = () => {
 
           {/* ── Section: Location ────────────────────────────── */}
           <SectionCard icon={<MapPin className="w-4 h-4 text-sky-500" />} title="Location Details">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Address <span className="text-red-400">*</span></label>
                 <input
@@ -964,7 +964,7 @@ const EditProperty = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className={labelCls}>State <span className="text-red-400">*</span></label>
                 <input
