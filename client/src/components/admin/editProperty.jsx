@@ -65,7 +65,7 @@ const DEFAULT_BLOCK = () => ({
 // ─── SectionCard sub-component ────────────────────────────────────────────────
 const SectionCard = ({ icon, title, action, children }) => (
   <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_2px_8px_rgba(15,23,42,0.04)] overflow-hidden">
-    <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+    <div className="px-5 py-2.5 border-b border-slate-100 flex items-center justify-between">
       <div className="flex items-center gap-2.5">
         <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
           {icon}
@@ -74,7 +74,7 @@ const SectionCard = ({ icon, title, action, children }) => (
       </div>
       {action && <div>{action}</div>}
     </div>
-    <div className="p-5 space-y-4">
+    <div className="p-4 space-y-3">
       {children}
     </div>
   </div>
@@ -519,11 +519,11 @@ const EditProperty = () => {
       style={{ fontFamily: '"Inter", sans-serif' }}
     >
       {/* ── Header ── */}
-      <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="px-6 py-4 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex items-center gap-3">
           <Link
             to={backPath}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all duration-200"
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -540,7 +540,7 @@ const EditProperty = () => {
       </div>
 
       {/* ── Body ── */}
-      <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full">
+      <div className="p-4 lg:p-5 max-w-5xl mx-auto w-full">
 
         {/* Alerts */}
         {error && (
@@ -556,7 +556,7 @@ const EditProperty = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
 
           {/* ── Section: Basic Info ──────────────────────────── */}
           <SectionCard icon={<Tag className="w-4 h-4 text-sky-500" />} title="Basic Information">
