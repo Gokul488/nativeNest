@@ -282,7 +282,7 @@ const AdminDashboard = () => {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
+        <div className={`flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar ${location.pathname.endsWith("/manage-builders") ? "scrollbar-hide" : ""}`}>
           <Routes>
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">

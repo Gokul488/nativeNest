@@ -21,6 +21,8 @@ const ViewProperties = () => {
   const itemsPerPage = 10;
 
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const isSuperAdmin = user.admin_type === 'SuperAdmin';
 
   // Sync builderFilter from navigation state (e.g. clicking a builder from admin dashboard)
   useEffect(() => {
@@ -250,12 +252,14 @@ const ViewProperties = () => {
           </div>
 
           {/* Action Buttons */}
-          <Link
-            to="/admin-dashboard/sold-properties"
-            className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm shrink-0"
-          >
-            <FaHistory /> Sold Properties
-          </Link>
+          {isSuperAdmin && (
+            <Link
+              to="/admin-dashboard/sold-properties"
+              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm shrink-0"
+            >
+              <FaHistory /> Sold Properties
+            </Link>
+          )}
           <Link
             to="/admin-dashboard/manage-properties/add"
             className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm shrink-0"

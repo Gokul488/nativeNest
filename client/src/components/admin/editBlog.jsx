@@ -210,40 +210,35 @@ const EditBlog = () => {
           <div className="border-t border-slate-100" />
           <Section icon={<FileText className="w-3.5 h-3.5 text-indigo-500" />} title="Blog Content">
             <div className="rounded-lg border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all bg-slate-50">
-              <div ref={quillRef} className="min-h-[280px] text-slate-700" />
+              <div ref={quillRef} className="min-h-[160px] text-slate-700" />
             </div>
           </Section>
 
           {/* ── Featured Image ── */}
           <div className="border-t border-slate-100" />
           <Section icon={<Image className="w-3.5 h-3.5 text-sky-500" />} title="Featured Image">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group">
-                <CloudUpload className="w-8 h-8 text-slate-300 group-hover:text-sky-400 mb-2 transition-colors" />
-                <p className="text-xs font-semibold text-slate-600 group-hover:text-sky-600">
-                  {previewUrl ? 'Click to replace image' : 'Click to upload image'}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, WebP · Max 10MB</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-300 transition-all w-fit group">
+                <CloudUpload className="w-4 h-4 text-slate-400 group-hover:text-sky-500 transition-colors" />
+                <span className="text-sm font-semibold text-slate-600 group-hover:text-sky-600">Upload image</span>
                 <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
               </label>
 
               {previewUrl ? (
-                <div className="relative rounded-xl overflow-hidden shadow-sm border border-slate-200 h-36 group">
+                <div className="relative rounded-lg overflow-hidden border border-slate-200 h-20 w-32 group">
                   <img
                     src={previewUrl}
                     alt="Preview"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                      <Image className="w-3.5 h-3.5" /> Current Image
+                    <span className="text-white text-xs font-bold uppercase tracking-wider">
+                      Current
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="h-36 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-xs italic bg-white/50">
-                  No image currently set
-                </div>
+                <span className="text-xs text-slate-400 italic">No image currently set (PNG, JPG, WebP · Max 10MB)</span>
               )}
             </div>
           </Section>
