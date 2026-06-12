@@ -234,7 +234,7 @@ const BuilderDashboard = () => {
           </div>
         </header>
 
-        <main className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex-1">
+        <main className="p-5 md:p-6 max-w-[1600px] mx-auto w-full flex-1">
           <Routes>
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">
