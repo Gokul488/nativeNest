@@ -20,7 +20,7 @@ const teamMembers = [
   {
     name: "Emily Johnson",
     role: "Head of Customer Success",
-    img: "https://images.unsplash.com/photo-1573496359142-b8d877c828f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    img: "/emily_johnson.png",
     bio: "Emily ensures every user has a smooth experience, from browsing to closing deals.",
   },
 ];
