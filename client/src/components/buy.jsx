@@ -96,7 +96,7 @@ const Buy = () => {
         if (!wasBookmarked) {
           showToast(`The property has been Liked!`, 'success', () => navigate('/buyer-dashboard/bookmarks'));
         } else {
-          showToast(`"${propertyTitle}" removed from bookmarks.`, 'info');
+          showToast(`"${propertyTitle}" Unliked ".`, 'info');
         }
       } else {
         showToast('Failed to update bookmark.', 'error');
