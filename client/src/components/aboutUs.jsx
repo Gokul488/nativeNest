@@ -169,7 +169,7 @@ const AboutUs = () => {
                 Whether you're buying, selling, or renting — we make your journey effortless and exciting.
               </p>
               <Link
-                to="/register"
+                to="/login"
                 className="inline-flex items-center gap-3 bg-white text-[#2e6171] px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
               >
                 Get Started Today

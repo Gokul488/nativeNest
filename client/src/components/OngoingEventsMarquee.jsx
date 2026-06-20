@@ -30,7 +30,7 @@ const OngoingEventsMarquee = () => {
     if (isBuyerLoggedIn) {
       navigate("/buyer-dashboard/events");
     } else {
-      navigate("/login", { state: { from: "/buyer-dashboard/events" } });
+      navigate("/events");
     }
   };
 
