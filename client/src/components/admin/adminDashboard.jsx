@@ -27,6 +27,7 @@ import ViewEnquiries from "./ViewEnquiries";
 import ManageStallTypes from "./ManageStallTypes";
 import EventStallBookings from "./EventStallBookings";
 import ManageBuilders from "./ManageBuilders";
+import CreateBuilder from "./CreateBuilder";
 import AddEditStallType from "./AddEditStallType";
 import SoldProperties from "./SoldProperties";
 import PropertyPreview from "../common/PropertyPreview";
@@ -428,6 +429,7 @@ const AdminDashboard = () => {
             <Route path="/manage-stall-types/:eventId" element={<ManageStallTypes />} />
             <Route path="/event-bookings/:eventId" element={<EventStallBookings />} />
             <Route path="/manage-builders" element={<ManageBuilders />} />
+            <Route path="/manage-builders/create" element={<CreateBuilder />} />
             <Route path="/manage-stall-types/:eventId/add" element={<AddEditStallType />} />
             <Route path="/manage-stall-types/:eventId/edit/:stallId" element={<AddEditStallType />} />
             <Route path="/sold-properties" element={<SoldProperties />} />

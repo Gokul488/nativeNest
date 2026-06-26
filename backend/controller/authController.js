@@ -109,7 +109,8 @@ const register = async (req, res) => {
 
       user = {
         ...newUser[0],
-        account_type: 'builder'
+        account_type: 'builder',
+        builder_type: 'BuilderAdmin'
       };
     }
 
@@ -167,69 +168,48 @@ const login = async (req, res) => {
 
       if (rows.length > 0) {
         user = rows[0];
-        if (user.admin_type === 'builderAdmin') {
-          account_type = 'builder';
-          
-          // Verify password first before creating/linking the builder
-          const isMatch = await bcrypt.compare(password, user.password);
-          if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-          }
-
-          // Check if a builder with this mobile or email already exists
-          const [existingBuilder] = await pool.query(
-            'SELECT id, name, mobile_number, email, password, builder_type FROM builders WHERE mobile_number IN (?) OR email = ?',
-            [mobileVariations, user.email || '']
-          );
-
-          if (existingBuilder.length > 0) {
-            const builderRecord = existingBuilder[0];
-            // Sync password and name to match the admin
-            await pool.query(
-              'UPDATE builders SET name = ?, password = ?, builder_type = ? WHERE id = ?',
-              [user.name, user.password, 'BuilderAdmin', builderRecord.id]
-            );
-            user = {
-              id: builderRecord.id,
-              name: user.name,
-              mobile_number: builderRecord.mobile_number,
-              email: builderRecord.email,
-              password: user.password,
-              builder_type: 'BuilderAdmin',
-              admin_type: 'builderAdmin'
-            };
-          } else {
-            // Create a new builder record
-            const [insertResult] = await pool.query(
-              `INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type) 
-               VALUES (?, 'Admin', ?, ?, ?, 'BuilderAdmin')`,
-              [user.name, user.mobile_number, user.email || null, user.password]
-            );
-            user = {
-              id: insertResult.insertId,
-              name: user.name,
-              mobile_number: user.mobile_number,
-              email: user.email,
-              password: user.password,
-              builder_type: 'BuilderAdmin',
-              admin_type: 'builderAdmin'
-            };
-          }
-        } else {
-          account_type = 'admin';
-        }
+        account_type = 'admin';
       } else {
         // New: Builder Login
         [rows] = await pool.query(
-          `SELECT id, name, mobile_number, email, password, builder_type
+          `SELECT id, name, mobile_number, email, password, builder_type, contact_person, contact_person_2, email_2, mobile_number_2
            FROM builders
-           WHERE mobile_number IN (?) OR email = ?`,
-          [mobileVariations, identifier]
+           WHERE mobile_number IN (?) OR email = ? OR mobile_number_2 IN (?) OR email_2 = ?`,
+          [mobileVariations, identifier, mobileVariations, identifier]
         );
 
         if (rows.length > 0) {
           user = rows[0];
           account_type = 'builder';
+          user.is_sub_builder = false;
+          user.parent_builder_id = user.id;
+
+          if ((user.mobile_number_2 && mobileVariations.includes(user.mobile_number_2)) || (user.email_2 && identifier === user.email_2)) {
+            user.is_secondary = true;
+          } else {
+            user.is_secondary = false;
+          }
+        } else {
+          // Sub-builder Login Fallback
+          [rows] = await pool.query(
+            `SELECT id, name, mobile_number, email, password, contact_person, contact_person_2, email_2, mobile_number_2, parent_builder_id
+             FROM sub_builders
+             WHERE mobile_number IN (?) OR email = ? OR mobile_number_2 IN (?) OR email_2 = ?`,
+            [mobileVariations, identifier, mobileVariations, identifier]
+          );
+
+          if (rows.length > 0) {
+            user = rows[0];
+            user.builder_type = 'Builder'; // Add this so the response has it
+            account_type = 'builder';
+            user.is_sub_builder = true;
+
+            if ((user.mobile_number_2 && mobileVariations.includes(user.mobile_number_2)) || (user.email_2 && identifier === user.email_2)) {
+              user.is_secondary = true;
+            } else {
+              user.is_secondary = false;
+            }
+          }
         }
       }
     }
@@ -246,7 +226,13 @@ const login = async (req, res) => {
 
 
     const token = jwt.sign(
-      { userId: user.id, account_type },
+      { 
+        userId: user.id, 
+        account_type,
+        is_sub_builder: user.is_sub_builder || false,
+        parent_builder_id: user.parent_builder_id || null,
+        is_secondary: user.is_secondary || false
+      },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -259,8 +245,8 @@ const login = async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
-        mobile_number: user.mobile_number,
-        email: user.email,
+        mobile_number: user.is_secondary ? user.mobile_number_2 : user.mobile_number,
+        email: user.is_secondary ? user.email_2 : user.email,
         gender: user.gender,
         dob: user.dob,
         city: user.city,
@@ -268,12 +254,71 @@ const login = async (req, res) => {
         photo: photoBase,
         account_type,
         admin_type: user.admin_type || null,
-        builder_type: user.builder_type || null
+        builder_type: account_type === 'builder' ? (user.builder_type || 'BuilderAdmin') : (user.builder_type || null)
       }
     });
 
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+/* ===================== SUB-BUILDER LOGIN ===================== */
+const subBuilderLogin = async (req, res) => {
+  try {
+    const { identifier, password } = req.body;
+
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Mobile/email and password are required' });
+    }
+
+    const mobileVariations = getMobileVariations(identifier);
+
+    const [rows] = await pool.query(
+      `SELECT id, name, mobile_number, email, password, contact_person, contact_person_2, email_2, mobile_number_2, parent_builder_id
+       FROM sub_builders
+       WHERE mobile_number IN (?) OR email = ? OR mobile_number_2 IN (?) OR email_2 = ?`,
+      [mobileVariations, identifier, mobileVariations, identifier]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = rows[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        account_type: 'builder',
+        is_sub_builder: true,
+        parent_builder_id: user.parent_builder_id
+      }, // Keep account_type builder for consistency with existing routes
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        mobile_number: user.mobile_number,
+        email: user.email,
+        account_type: 'builder',
+        builder_type: 'Builder',
+        parent_builder_id: user.parent_builder_id
+      }
+    });
+
+  } catch (error) {
+    console.error('Sub-builder login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -308,6 +353,12 @@ const forgotPassword = async (req, res) => {
         if (rows.length > 0) {
           user = rows[0];
           table = 'builders';
+        } else {
+          [rows] = await pool.query('SELECT id, email FROM sub_builders WHERE email = ?', [email]);
+          if (rows.length > 0) {
+            user = rows[0];
+            table = 'sub_builders';
+          }
         }
       }
     }
@@ -381,4 +432,4 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getAccountTypes, forgotPassword, resetPassword };
+module.exports = { register, login, subBuilderLogin, getAccountTypes, forgotPassword, resetPassword };

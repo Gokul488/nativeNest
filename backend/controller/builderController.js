@@ -14,10 +14,32 @@ const getBuilderDetails = async (req, res) => {
       return res.status(403).json({ error: 'Access denied: Builder only' });
     }
 
-    const [builders] = await pool.query(
-      'SELECT id, name, contact_person, mobile_number, email FROM builders WHERE id = ?',
-      [decoded.userId]
-    );
+    let builders;
+    if (decoded.is_sub_builder) {
+      if (decoded.is_secondary) {
+        [builders] = await pool.query(
+          'SELECT id, name, contact_person_2 AS contact_person, mobile_number_2 AS mobile_number, email_2 AS email FROM sub_builders WHERE id = ?',
+          [decoded.userId]
+        );
+      } else {
+        [builders] = await pool.query(
+          'SELECT id, name, contact_person, mobile_number, email FROM sub_builders WHERE id = ?',
+          [decoded.userId]
+        );
+      }
+    } else {
+      if (decoded.is_secondary) {
+        [builders] = await pool.query(
+          'SELECT id, name, contact_person_2 AS contact_person, mobile_number_2 AS mobile_number, email_2 AS email FROM builders WHERE id = ?',
+          [decoded.userId]
+        );
+      } else {
+        [builders] = await pool.query(
+          'SELECT id, name, contact_person, mobile_number, email FROM builders WHERE id = ?',
+          [decoded.userId]
+        );
+      }
+    }
 
     if (builders.length === 0) {
       return res.status(404).json({ error: 'Builder not found' });
@@ -60,12 +82,13 @@ const updateBuilderDetails = async (req, res) => {
     }
 
     const mobileVariations = getMobileVariations(mobile_number);
+    const table = decoded.is_sub_builder ? 'sub_builders' : 'builders';
     const [existing] = await pool.query(
       `SELECT id 
-       FROM builders 
-       WHERE (mobile_number IN (?) OR (email IS NOT NULL AND email = ?)) 
+       FROM ${table} 
+       WHERE (mobile_number IN (?) OR mobile_number_2 IN (?) OR (email IS NOT NULL AND email = ?) OR (email_2 IS NOT NULL AND email_2 = ?)) 
        AND id != ?`,
-      [mobileVariations, email, builderId]
+      [mobileVariations, mobileVariations, email, email, builderId]
     );
 
     if (existing.length > 0) {
@@ -75,11 +98,11 @@ const updateBuilderDetails = async (req, res) => {
     }
 
     let query = `
-      UPDATE builders 
+      UPDATE ${table} 
       SET name = ?, 
-          email = ?, 
-          mobile_number = ?, 
-          contact_person = ?
+          ${decoded.is_secondary ? 'email_2' : 'email'} = ?, 
+          ${decoded.is_secondary ? 'mobile_number_2' : 'mobile_number'} = ?, 
+          ${decoded.is_secondary ? 'contact_person_2' : 'contact_person'} = ?
     `;
     let params = [name, email, mobile_number, contact_person];
 
@@ -97,8 +120,10 @@ const updateBuilderDetails = async (req, res) => {
     await pool.query(query, params);
 
     const [updatedRows] = await pool.query(
-      `SELECT id, name, email, mobile_number, contact_person 
-       FROM builders 
+      `SELECT id, name, ${decoded.is_secondary ? 'email_2 AS email' : 'email'}, 
+              ${decoded.is_secondary ? 'mobile_number_2 AS mobile_number' : 'mobile_number'}, 
+              ${decoded.is_secondary ? 'contact_person_2 AS contact_person' : 'contact_person'} 
+       FROM ${table} 
        WHERE id = ?`,
       [builderId]
     );
@@ -183,7 +208,7 @@ const getBuilderProperties = async (req, res) => {
       return res.status(403).json({ error: "Access denied: Builders only" });
     }
 
-    const builderId = decoded.userId;
+    const builderId = decoded.is_sub_builder ? decoded.parent_builder_id : decoded.userId;
 
     const [properties] = await pool.query(
       `SELECT 
@@ -248,7 +273,7 @@ const deleteBuilderProperty = async (req, res) => {
     if (decoded.account_type !== "builder") {
       return res.status(403).json({ error: "Access denied: Builders only" });
     }
-    const userId = decoded.userId;
+    const userId = decoded.is_sub_builder ? decoded.parent_builder_id : decoded.userId;
     const { id } = req.params;
 
     const [properties] = await pool.query(
@@ -298,7 +323,7 @@ const getBuilderStallInterests = async (req, res) => {
       return res.status(403).json({ error: "Access denied: Builders only" });
     }
 
-    const builderId = decoded.userId;
+    const builderId = decoded.is_sub_builder ? decoded.parent_builder_id : decoded.userId;
     const { eventId } = req.query; // Get eventId from query string
 
     let query = `
@@ -352,7 +377,7 @@ const getBuilderBookedStallsCount = async (req, res) => {
       return res.status(403).json({ error: "Access denied: Builders only" });
     }
 
-    const builderId = decoded.userId;
+    const builderId = decoded.is_sub_builder ? decoded.parent_builder_id : decoded.userId;
 
     const [result] = await pool.query(
       `SELECT COUNT(*) AS bookedStalls FROM stall WHERE builder_id = ?`,
@@ -379,7 +404,7 @@ const getBuilderDashboardStats = async (req, res) => {
       return res.status(403).json({ error: "Access denied: Builders only" });
     }
 
-    const builderId = decoded.userId;
+    const builderId = decoded.is_sub_builder ? decoded.parent_builder_id : decoded.userId;
 
     // 1. Total Properties Count
     const [propCount] = await pool.query(
@@ -431,15 +456,53 @@ const createBuilder = async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "No token provided" });
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.account_type !== "builder") return res.status(403).json({ error: "Access denied: Builders only" });
     
-    // Ensure the token builder is a BuilderAdmin
-    const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
-    if (!requester.length || requester[0].builder_type !== "BuilderAdmin") {
+    let isAuthorized = false;
+    if (decoded.account_type === "admin") {
+      isAuthorized = true;
+    } else if (decoded.account_type === "builder" && !decoded.is_sub_builder) {
+      const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
+      if (requester.length && requester[0].builder_type === "BuilderAdmin") {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    const { name, contact_person, mobile_number, email, password, team_members } = req.body;
+    // Handle dynamic array of sub-builders from Builder Portal
+    if (req.body.subBuilders && Array.isArray(req.body.subBuilders)) {
+      const subBuilders = req.body.subBuilders;
+      const builderType = "Builder";
+      const parentBuilderId = decoded.userId;
+
+      for (const builder of subBuilders) {
+        if (!builder.name || !builder.mobile_number || !builder.email || !builder.password) {
+          continue; // Skip invalid entries
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(builder.password, salt);
+
+        const checkMobiles = getMobileVariations(builder.mobile_number);
+        const [existing] = await pool.query(
+          "SELECT id FROM builders WHERE mobile_number IN (?) OR email = ?",
+          [checkMobiles, builder.email]
+        );
+
+        if (existing.length === 0) {
+          await pool.query(
+            "INSERT INTO sub_builders (name, contact_person, mobile_number, email, password, parent_builder_id, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+            [builder.name, builder.name, builder.mobile_number, builder.email, hashedPassword, parentBuilderId]
+          );
+        }
+      }
+      return res.status(201).json({ message: "Builders created successfully" });
+    }
+
+    // Fallback: Legacy single-builder creation (for Admin Portal)
+    const { name, contact_person, mobile_number, email, password, contact_person_2, email_2, mobile_number_2 } = req.body;
 
     if (!name || !contact_person || !mobile_number || !email || !password) {
       return res.status(400).json({ error: "All fields are required" });
@@ -448,22 +511,34 @@ const createBuilder = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const mobileVariations = getMobileVariations(mobile_number);
+    const checkMobiles = [
+      ...getMobileVariations(mobile_number),
+      ...(mobile_number_2 ? getMobileVariations(mobile_number_2) : [])
+    ];
+    const checkEmails = [email, email_2].filter(Boolean);
+
     const [existing] = await pool.query(
-      "SELECT id FROM builders WHERE mobile_number IN (?) OR (email IS NOT NULL AND email = ?)",
-      [mobileVariations, email]
+      "SELECT id FROM builders WHERE mobile_number IN (?) OR email IN (?) OR (mobile_number_2 IS NOT NULL AND mobile_number_2 IN (?)) OR (email_2 IS NOT NULL AND email_2 IN (?))",
+      [checkMobiles, checkEmails, checkMobiles, checkEmails]
     );
 
     if (existing.length > 0) {
       return res.status(400).json({ error: "Builder with this email/mobile already exists" });
     }
 
-    const teamMembersStr = team_members ? JSON.stringify(team_members) : null;
+    const parentBuilderId = decoded.account_type === "admin" ? null : decoded.userId;
 
-    await pool.query(
-      "INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type, team_members, created_at) VALUES (?, ?, ?, ?, ?, 'Builder', ?, NOW())",
-      [name, contact_person, mobile_number, email, hashedPassword, teamMembersStr]
-    );
+    if (decoded.account_type === "admin") {
+      await pool.query(
+        "INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type, contact_person_2, email_2, mobile_number_2, parent_builder_id, created_at) VALUES (?, ?, ?, ?, ?, 'BuilderAdmin', ?, ?, ?, ?, NOW())",
+        [name, contact_person, mobile_number, email, hashedPassword, contact_person_2 || null, email_2 || null, mobile_number_2 || null, parentBuilderId]
+      );
+    } else {
+      await pool.query(
+        "INSERT INTO sub_builders (name, contact_person, mobile_number, email, password, contact_person_2, email_2, mobile_number_2, parent_builder_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+        [name, contact_person, mobile_number, email, hashedPassword, contact_person_2 || null, email_2 || null, mobile_number_2 || null, parentBuilderId]
+      );
+    }
 
     res.status(201).json({ message: "Builder created successfully" });
   } catch (error) {
@@ -477,7 +552,7 @@ const getAllBuilders = async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "No token provided" });
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.account_type !== "builder") return res.status(403).json({ error: "Access denied" });
+    if (decoded.account_type !== "builder" || decoded.is_sub_builder) return res.status(403).json({ error: "Access denied" });
 
     // Check if the current requester is a BuilderAdmin
     const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
@@ -486,7 +561,8 @@ const getAllBuilders = async (req, res) => {
     }
 
     const [builders] = await pool.query(
-      "SELECT id, name, contact_person, mobile_number, email, builder_type, team_members, created_at FROM builders WHERE builder_type != 'BuilderAdmin' OR builder_type IS NULL ORDER BY created_at DESC"
+      "SELECT id, name, contact_person, mobile_number, email, 'Builder' AS builder_type, contact_person_2, email_2, mobile_number_2, created_at FROM sub_builders WHERE parent_builder_id = ? ORDER BY created_at DESC",
+      [decoded.userId]
     );
 
     res.json(builders);
@@ -501,22 +577,32 @@ const deleteBuilderByAdmin = async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "No token provided" });
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.account_type !== "builder") return res.status(403).json({ error: "Access denied" });
+    let isAuthorized = false;
+    if (decoded.account_type === "admin") {
+      isAuthorized = true;
+    } else if (decoded.account_type === "builder" && !decoded.is_sub_builder) {
+      const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
+      if (requester.length && requester[0].builder_type === "BuilderAdmin") {
+        isAuthorized = true;
+      }
+    }
 
-    // Check if the current requester is a BuilderAdmin
-    const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
-    if (!requester.length || requester[0].builder_type !== "BuilderAdmin") {
+    if (!isAuthorized) {
       return res.status(403).json({ error: "Access denied" });
     }
 
     const { builderId } = req.params;
 
     // Prevent deleting self
-    if (parseInt(builderId) === decoded.userId) {
+    if (parseInt(builderId) === decoded.userId && decoded.account_type === "builder") {
       return res.status(400).json({ error: "You cannot delete yourself" });
     }
 
-    await pool.query("DELETE FROM builders WHERE id = ?", [builderId]);
+    if (decoded.account_type === "admin") {
+      await pool.query("DELETE FROM builders WHERE id = ?", [builderId]);
+    } else {
+      await pool.query("DELETE FROM sub_builders WHERE id = ?", [builderId]);
+    }
 
     res.json({ message: "Builder deleted successfully" });
   } catch (error) {
@@ -535,7 +621,7 @@ const updateBuilderByAdmin = async (req, res) => {
     let isAuthorized = false;
     if (decoded.account_type === "admin") {
       isAuthorized = true;
-    } else if (decoded.account_type === "builder") {
+    } else if (decoded.account_type === "builder" && !decoded.is_sub_builder) {
       const [requester] = await pool.query("SELECT builder_type FROM builders WHERE id = ?", [decoded.userId]);
       if (requester.length && requester[0].builder_type === "BuilderAdmin") {
         isAuthorized = true;
@@ -547,27 +633,32 @@ const updateBuilderByAdmin = async (req, res) => {
     }
 
     const { builderId } = req.params;
-    const { name, contact_person, mobile_number, email, team_members } = req.body;
+    const { name, contact_person, mobile_number, email, contact_person_2, email_2, mobile_number_2 } = req.body;
 
     if (!name || !contact_person || !mobile_number || !email) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    const mobileVariations = getMobileVariations(mobile_number);
+    const checkMobiles = [
+      ...getMobileVariations(mobile_number),
+      ...(mobile_number_2 ? getMobileVariations(mobile_number_2) : [])
+    ];
+    const checkEmails = [email, email_2].filter(Boolean);
+
+    const table = decoded.account_type === "admin" ? "builders" : "sub_builders";
+
     const [existing] = await pool.query(
-      "SELECT id FROM builders WHERE (mobile_number IN (?) OR email = ?) AND id != ?",
-      [mobileVariations, email, builderId]
+      `SELECT id FROM ${table} WHERE (mobile_number IN (?) OR email IN (?) OR (mobile_number_2 IS NOT NULL AND mobile_number_2 IN (?)) OR (email_2 IS NOT NULL AND email_2 IN (?))) AND id != ?`,
+      [checkMobiles, checkEmails, checkMobiles, checkEmails, builderId]
     );
 
     if (existing.length > 0) {
       return res.status(400).json({ error: "Builder with this email/mobile already exists" });
     }
 
-    const teamMembersStr = team_members ? JSON.stringify(team_members) : null;
-
     await pool.query(
-      "UPDATE builders SET name = ?, contact_person = ?, mobile_number = ?, email = ?, team_members = ? WHERE id = ?",
-      [name, contact_person, mobile_number, email, teamMembersStr, builderId]
+      `UPDATE ${table} SET name = ?, contact_person = ?, mobile_number = ?, email = ?, contact_person_2 = ?, email_2 = ?, mobile_number_2 = ? WHERE id = ?`,
+      [name, contact_person, mobile_number, email, contact_person_2 || null, email_2 || null, mobile_number_2 || null, builderId]
     );
 
     res.json({ message: "Builder updated successfully" });
