@@ -23,7 +23,8 @@ import {
   X,
   User,
   Edit,
-  Trash2
+  Trash2,
+  PlusCircle
 } from "lucide-react";
 
 const ManageBuilders = () => {
@@ -35,12 +36,15 @@ const ManageBuilders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBuilder, setSelectedBuilder] = useState(null);
   const [editingBuilder, setEditingBuilder] = useState(null);
+  const [showSecondOwnerEdit, setShowSecondOwnerEdit] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
     contact_person: "",
     email: "",
     mobile_number: "",
-    team_members: []
+    contact_person_2: "",
+    email_2: "",
+    mobile_number_2: ""
   });
   const [isSaving, setIsSaving] = useState(false);
   const [editError, setEditError] = useState("");
@@ -68,23 +72,17 @@ const ManageBuilders = () => {
   }, [navigate]);
 
   const handleEditClick = (builder) => {
-    let parsedMembers = [];
-    try {
-      parsedMembers = typeof builder.team_members === 'string'
-        ? JSON.parse(builder.team_members)
-        : (builder.team_members || []);
-    } catch (e) {
-      parsedMembers = [];
-    }
-
     setEditingBuilder(builder);
     setEditForm({
       name: builder.name || "",
       contact_person: builder.contact_person || "",
       email: builder.email || "",
       mobile_number: builder.mobile_number || "",
-      team_members: parsedMembers
+      contact_person_2: builder.contact_person_2 || "",
+      email_2: builder.email_2 || "",
+      mobile_number_2: builder.mobile_number_2 || ""
     });
+    setShowSecondOwnerEdit(!!(builder.contact_person_2 || builder.email_2 || builder.mobile_number_2));
     setEditError("");
   };
 
@@ -92,32 +90,7 @@ const ManageBuilders = () => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
-  const handleEditMemberChange = (index, field, value) => {
-    setEditForm(prev => {
-      const updatedMembers = prev.team_members.map((member, i) => {
-        if (i === index) {
-          return { ...member, [field]: value };
-        }
-        return member;
-      });
-      return { ...prev, team_members: updatedMembers };
-    });
-  };
 
-  const addEditTeamMember = () => {
-    if (editForm.team_members.length >= 10) return;
-    setEditForm(prev => ({
-      ...prev,
-      team_members: [...prev.team_members, { name: "", role: "", mobile: "" }]
-    }));
-  };
-
-  const removeEditTeamMember = (index) => {
-    setEditForm(prev => ({
-      ...prev,
-      team_members: prev.team_members.filter((_, i) => i !== index)
-    }));
-  };
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
@@ -126,7 +99,16 @@ const ManageBuilders = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${API_BASE_URL}/api/builder/${editingBuilder.id}`, editForm, {
+      const payload = {
+        name: editForm.name,
+        contact_person: editForm.contact_person,
+        email: editForm.email,
+        mobile_number: editForm.mobile_number,
+        contact_person_2: showSecondOwnerEdit && editForm.contact_person_2 ? editForm.contact_person_2 : null,
+        email_2: showSecondOwnerEdit && editForm.email_2 ? editForm.email_2 : null,
+        mobile_number_2: showSecondOwnerEdit && editForm.mobile_number_2 ? editForm.mobile_number_2 : null
+      };
+      await axios.put(`${API_BASE_URL}/api/builder/${editingBuilder.id}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -207,24 +189,31 @@ const ManageBuilders = () => {
 
       {/* ── Header ── */}
       <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-center gap-4">
-        {/* Left: search */}
-        <div className="relative w-full lg:w-80 group">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-          <input
-            type="text"
-            placeholder="Search company, person, or phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
-          />
-        </div>
+        <div className="flex items-center gap-4 w-full lg:w-auto">
+          {/* Left: search */}
+          <div className="relative w-full lg:w-80 group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search company, person, or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+            />
+          </div>
 
-        {/* Right: total count */}
-        <div className="italic flex items-center gap-3">
-          <span className="ml-1 bg-indigo-50 text-indigo-600 text-md font-bold px-3 py-1 rounded-full border border-indigo-100">
+          <span className="hidden sm:inline-flex bg-indigo-50 text-indigo-600 text-sm font-bold px-3 py-1 rounded-full border border-indigo-100 whitespace-nowrap">
             {builders.length} Builders
           </span>
         </div>
+
+        <button
+          onClick={() => navigate("/admin-dashboard/manage-builders/create")}
+          className="w-full lg:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-full text-sm font-bold shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Create BuilderAdmin
+        </button>
       </div>
 
       {/* ── Body ── */}
@@ -321,50 +310,44 @@ const ManageBuilders = () => {
                                 {builder.name}
                               </span>
                             </button>
-                            {(() => {
-                              let members = [];
-                              try {
-                                members = typeof builder.team_members === 'string' 
-                                  ? JSON.parse(builder.team_members) 
-                                  : (builder.team_members || []);
-                              } catch (e) {
-                                members = [];
-                              }
-                              if (members && members.length > 0) {
-                                return (
-                                  <button
-                                    onClick={() => setSelectedBuilder(builder)}
-                                    className="w-fit inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 hover:scale-105 active:scale-95 transition-all ml-6"
-                                  >
-                                    <Users className="w-2.5 h-2.5" />
-                                    {members.length}
-                                  </button>
-                                );
-                              }
-                              return null;
-                            })()}
+
                           </div>
                         </td>
 
                         {/* Contact Person */}
                         <td className="px-3 py-2.5 text-sm text-slate-800 font-bold">
-                          {builder.contact_person || "—"}
+                          <div>{builder.contact_person || "—"}</div>
+                          {builder.contact_person_2 && (
+                            <div className="text-xs text-slate-400 font-medium mt-1 pt-1 border-t border-slate-100">{builder.contact_person_2}</div>
+                          )}
                         </td>
 
                         {/* Mobile */}
                         <td className="px-3 py-2.5 text-sm text-slate-500 font-medium w-36">
-                          <span className="inline-flex items-center gap-2">
+                          <div className="flex items-center gap-2">
                             <Phone className="w-3.5 h-3.5 text-slate-300 shrink-0" />
                             <span className="truncate">{builder.mobile_number || "—"}</span>
-                          </span>
+                          </div>
+                          {builder.mobile_number_2 && (
+                            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium mt-1 pt-1 border-t border-slate-100 w-36">
+                              <Phone className="w-3 h-3 text-slate-300 shrink-0" />
+                              <span className="truncate">{builder.mobile_number_2}</span>
+                            </div>
+                          )}
                         </td>
 
                         {/* Email */}
                         <td className="px-3 py-2.5 text-sm text-slate-500 font-medium max-w-[240px]">
-                          <span className="inline-flex items-center gap-2">
+                          <div className="flex items-center gap-2">
                             <Mail className="w-3.5 h-3.5 text-slate-300 shrink-0" />
                             <span className="truncate">{builder.email || "—"}</span>
-                          </span>
+                          </div>
+                          {builder.email_2 && (
+                            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium mt-1 pt-1 border-t border-slate-100 max-w-[240px]">
+                              <Mail className="w-3 h-3 text-slate-300 shrink-0" />
+                              <span className="truncate">{builder.email_2}</span>
+                            </div>
+                          )}
                         </td>
 
                         {/* Quantities */}
@@ -447,46 +430,48 @@ const ManageBuilders = () => {
                     </div>
 
                     <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-slate-100">
-                        <User className="w-4 h-4 text-indigo-400 shrink-0" />
-                        <span className="font-bold text-slate-800">{builder.contact_person || "—"}</span>
+                      <div className="bg-white rounded-xl p-3 border border-slate-100 space-y-2">
+                        <div className="flex items-center gap-2.5">
+                          <User className="w-4 h-4 text-indigo-400 shrink-0" />
+                          <span className="font-bold text-slate-800">{builder.contact_person || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-xs text-slate-505 pl-6">
+                          <Phone className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                          <span>{builder.mobile_number || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-xs text-slate-505 pl-6 overflow-hidden">
+                          <Mail className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                          <span className="truncate">{builder.email || "—"}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-slate-100">
-                        <Phone className="w-4 h-4 text-slate-300 shrink-0" />
-                        <span className="font-medium text-slate-600">{builder.mobile_number || "—"}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-slate-100 overflow-hidden">
-                        <Mail className="w-4 h-4 text-slate-300 shrink-0" />
-                        <span className="font-medium text-slate-600 truncate">{builder.email || "—"}</span>
-                      </div>
+
+                      {builder.contact_person_2 && (
+                        <div className="bg-slate-100/50 rounded-xl p-3 border border-slate-100 space-y-2">
+                          <div className="flex items-center gap-2.5">
+                            <User className="w-4 h-4 text-slate-400 shrink-0" />
+                            <span className="font-semibold text-slate-700">{builder.contact_person_2} (contactperson2)</span>
+                          </div>
+                          {builder.mobile_number_2 && (
+                            <div className="flex items-center gap-2.5 text-xs text-slate-500 pl-6">
+                              <Phone className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                              <span>{builder.mobile_number_2}</span>
+                            </div>
+                          )}
+                          {builder.email_2 && (
+                            <div className="flex items-center gap-2.5 text-xs text-slate-500 pl-6 overflow-hidden">
+                              <Mail className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                              <span className="truncate">{builder.email_2}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2.5 bg-indigo-50 rounded-xl px-3 py-2.5 border border-indigo-100">
                         <LayoutGrid className="w-4 h-4 text-indigo-400 shrink-0" />
                         <span className="font-bold text-indigo-700 text-sm">
                           {builder.total_properties ?? 0} Properties
                         </span>
                       </div>
-                      {(() => {
-                        let members = [];
-                        try {
-                          members = typeof builder.team_members === 'string'
-                            ? JSON.parse(builder.team_members)
-                            : (builder.team_members || []);
-                        } catch (e) {
-                          members = [];
-                        }
-                        if (members && members.length > 0) {
-                          return (
-                            <button
-                              onClick={() => setSelectedBuilder(builder)}
-                              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-100 text-xs font-bold transition-all mt-1"
-                            >
-                              <Users className="w-3.5 h-3.5 shrink-0" />
-                              View Team ({members.length})
-                            </button>
-                          );
-                        }
-                        return null;
-                      })()}
+
                       <div className="flex gap-2 mt-2">
                         <button
                           onClick={() => handleEditClick(builder)}
@@ -520,66 +505,7 @@ const ManageBuilders = () => {
         )}
       </div>
 
-      {/* Team Members Modal */}
-      {selectedBuilder && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-            <div className="px-6 py-5 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center shrink-0">
-              <div>
-                <h3 className="font-bold text-slate-800 text-base">{selectedBuilder.name}</h3>
-                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Team Members</p>
-              </div>
-              <button 
-                onClick={() => setSelectedBuilder(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto space-y-4 flex-1">
-              {(() => {
-                let members = [];
-                try {
-                  members = typeof selectedBuilder.team_members === 'string'
-                    ? JSON.parse(selectedBuilder.team_members)
-                    : (selectedBuilder.team_members || []);
-                } catch (e) {
-                  members = [];
-                }
-                
-                if (!members || members.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-slate-400 text-sm">
-                      No team members recorded.
-                    </div>
-                  );
-                }
-                
-                return members.map((member, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100/50 hover:border-indigo-100 transition-colors animate-in fade-in slide-in-from-bottom-2 duration-200">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-bold text-sm">
-                      {member.name ? member.name.charAt(0).toUpperCase() : "?"}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-800 text-sm">{member.name}</h4>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-[11px] font-medium">
-                        <span className="text-indigo-600 font-semibold">{member.role}</span>
-                        {member.mobile && (
-                          <span className="text-slate-500 flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                            {member.mobile}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ));
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+
       {/* Edit Builder Modal */}
       {editingBuilder && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -661,68 +587,59 @@ const ManageBuilders = () => {
                 </div>
               </div>
 
-              {/* Team Members List */}
-              <div className="border-t border-slate-100 pt-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Team Members ({editForm.team_members.length}/10)</span>
-                  {editForm.team_members.length < 10 && (
-                    <button
-                      type="button"
-                      onClick={addEditTeamMember}
-                      className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100 text-[10px] font-bold rounded-lg transition-all"
-                    >
-                      + Add Member
-                    </button>
-                  )}
+              {/* Toggle Second Owner in Edit */}
+              <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                <div>
+                  <span className="text-xs font-bold text-slate-700">BuilderAdmin</span>
                 </div>
-
-                {editForm.team_members.length > 0 ? (
-                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                    {editForm.team_members.map((member, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100/50">
-                        <span className="text-[10px] font-bold text-slate-300 w-4">#{index+1}</span>
-                        <div className="grid grid-cols-3 gap-2 flex-1">
-                          <input
-                            type="text"
-                            required
-                            placeholder="Name"
-                            value={member.name || ""}
-                            onChange={(e) => handleEditMemberChange(index, "name", e.target.value)}
-                            className="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-500 transition-all"
-                          />
-                          <input
-                            type="text"
-                            required
-                            placeholder="Role"
-                            value={member.role || ""}
-                            onChange={(e) => handleEditMemberChange(index, "role", e.target.value)}
-                            className="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-500 transition-all"
-                          />
-                          <input
-                            type="tel"
-                            required
-                            placeholder="Mobile"
-                            value={member.mobile || ""}
-                            onChange={(e) => handleEditMemberChange(index, "mobile", e.target.value)}
-                            className="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-indigo-500 transition-all"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeEditTeamMember(index)}
-                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-6 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-                    <p className="text-xs text-slate-400">No team members added yet.</p>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowSecondOwnerEdit(!showSecondOwnerEdit)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg border border-indigo-100 text-[10px] font-bold transition-all cursor-pointer"
+                >
+                  {showSecondOwnerEdit ? "- Remove" : "+ Add"}
+                </button>
               </div>
+
+              {showSecondOwnerEdit && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">contactperson2</label>
+                    <input
+                      type="text"
+                      name="contact_person_2"
+                      value={editForm.contact_person_2}
+                      onChange={handleEditFormChange}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Second Email</label>
+                    <input
+                      type="email"
+                      name="email_2"
+                      value={editForm.email_2}
+                      onChange={handleEditFormChange}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Second Mobile Number</label>
+                    <input
+                      type="tel"
+                      name="mobile_number_2"
+                      value={editForm.mobile_number_2}
+                      onChange={handleEditFormChange}
+                      placeholder="+91..."
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold"
+                    />
+                  </div>
+                </div>
+              )}
+
+
             </div>
 
             <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-2 shrink-0">

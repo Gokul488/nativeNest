@@ -190,7 +190,7 @@ const PropertyDetails = () => {
 
   // Handle Interested Button Click
   const handleInterested = () => {
-    const targetBuilderMobile = adminData?.builder_admin_mobile || property?.mobile_number;
+    const targetBuilderMobile = property?.mobile_number;
     if (whatsappSendToBuilder && targetBuilderMobile) {
       // Open the selection modal
       setIsContactModalOpen(true);
@@ -1303,8 +1303,8 @@ const PropertyDetails = () => {
                   </div>
                 )}
 
-                {/* 2. Builder Admin Card */}
-                {(adminData?.builder_admin_mobile || property?.mobile_number) && (
+                {/* 2. Builder Card */}
+                {property?.mobile_number && (
                   <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4 text-left transition-all hover:border-emerald-100 hover:bg-emerald-50/10">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-sky-50 text-sky-500 rounded-xl flex items-center justify-center shrink-0">
@@ -1312,7 +1312,7 @@ const PropertyDetails = () => {
                       </div>
                       <div>
                         <h4 className="text-sm font-extrabold text-slate-800">
-                          {adminData?.builder_admin_name || property?.builderName || "Builder Admin"}
+                          {property?.builderName || "Builder / Owner"}
                         </h4>
                         <p className="text-[11px] text-slate-400">
                           Property Owner / Builder Direct
@@ -1322,7 +1322,7 @@ const PropertyDetails = () => {
                     <button
                       onClick={() => {
                         const message = encodeURIComponent(`Hello, I'm interested in ${property.title}.`);
-                        const targetNum = adminData?.builder_admin_mobile || property.mobile_number;
+                        const targetNum = property.mobile_number;
                         const cleanMobile = targetNum.replace(/\D/g, '');
                         const finalMobile = cleanMobile.length === 10 ? `91${cleanMobile}` : cleanMobile;
                         window.open(`https://wa.me/${finalMobile}?text=${message}`, '_blank');
@@ -1337,7 +1337,7 @@ const PropertyDetails = () => {
               </div>
 
               {/* Bottom Quick Action: Open Both */}
-              {adminWhatsapp && (adminData?.builder_admin_mobile || property?.mobile_number) && (
+              {adminWhatsapp && property?.mobile_number && (
                 <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col gap-2">
                   <button
                     onClick={() => {
@@ -1349,7 +1349,7 @@ const PropertyDetails = () => {
                       window.open(`https://wa.me/${finalSuperMobile}?text=${message}`, '_blank');
 
                       // 2. Redirect current window to Builder
-                      const targetNum = adminData?.builder_admin_mobile || property.mobile_number;
+                      const targetNum = property.mobile_number;
                       const cleanBuilderMobile = targetNum.replace(/\D/g, '');
                       const finalBuilderMobile = cleanBuilderMobile.length === 10 ? `91${cleanBuilderMobile}` : cleanBuilderMobile;
                       
@@ -1365,7 +1365,7 @@ const PropertyDetails = () => {
                     <i className="fas fa-external-link-alt"></i> Message Both (Open Both Chats)
                   </button>
                   <p className="text-[10px] text-slate-400 italic">
-                    *Opens Admin in a new tab and Builder Admin in this tab to bypass popup blockers.
+                    *Opens Admin in a new tab and Builder in this tab to bypass popup blockers.
                   </p>
                 </div>
               )}

@@ -18,12 +18,34 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-pool.query("ALTER TABLE builders ADD COLUMN builder_type VARCHAR(50) DEFAULT 'Builder'").catch(e => {
-  if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding builder_type:', e);
+pool.query("ALTER TABLE builders ADD COLUMN builder_type VARCHAR(50) DEFAULT 'BuilderAdmin'").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME') {
+    console.error('Error adding builder_type:', e);
+  } else {
+    pool.query("ALTER TABLE builders ALTER COLUMN builder_type SET DEFAULT 'BuilderAdmin'").catch(err => {
+      console.error('Error altering builder_type default:', err);
+    });
+  }
 });
 
-pool.query("ALTER TABLE builders ADD COLUMN team_members TEXT DEFAULT NULL").catch(e => {
-  if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding team_members:', e);
+pool.query("UPDATE builders SET builder_type = 'BuilderAdmin' WHERE builder_type = 'Builder' OR builder_type IS NULL").catch(e => {
+  console.error('Error updating builders type:', e);
+});
+
+pool.query("ALTER TABLE builders ADD COLUMN contact_person_2 VARCHAR(255) DEFAULT NULL").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding contact_person_2:', e);
+});
+
+pool.query("ALTER TABLE builders ADD COLUMN email_2 VARCHAR(255) DEFAULT NULL").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding email_2:', e);
+});
+
+pool.query("ALTER TABLE builders ADD COLUMN mobile_number_2 VARCHAR(50) DEFAULT NULL").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding mobile_number_2:', e);
+});
+
+pool.query("ALTER TABLE builders ADD COLUMN parent_builder_id INT DEFAULT NULL").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding parent_builder_id:', e);
 });
 
 pool.query(`
