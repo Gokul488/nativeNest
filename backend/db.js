@@ -48,6 +48,18 @@ pool.query("ALTER TABLE builders ADD COLUMN parent_builder_id INT DEFAULT NULL")
   if (e.code !== 'ER_DUP_FIELDNAME') console.error('Error adding parent_builder_id:', e);
 });
 
+pool.query("ALTER TABLE sub_builders ADD COLUMN contact_person_2 VARCHAR(255) DEFAULT NULL").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME' && e.code !== 'ER_NO_SUCH_TABLE') console.error('Error adding contact_person_2 to sub_builders:', e);
+});
+
+pool.query("ALTER TABLE sub_builders ADD COLUMN email_2 VARCHAR(255) DEFAULT NULL").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME' && e.code !== 'ER_NO_SUCH_TABLE') console.error('Error adding email_2 to sub_builders:', e);
+});
+
+pool.query("ALTER TABLE sub_builders ADD COLUMN mobile_number_2 VARCHAR(50) DEFAULT NULL").catch(e => {
+  if (e.code !== 'ER_DUP_FIELDNAME' && e.code !== 'ER_NO_SUCH_TABLE') console.error('Error adding mobile_number_2 to sub_builders:', e);
+});
+
 pool.query(`
   CREATE TABLE IF NOT EXISTS settings (
     setting_key VARCHAR(100) PRIMARY KEY,
