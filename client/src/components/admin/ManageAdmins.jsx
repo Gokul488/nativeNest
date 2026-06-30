@@ -200,8 +200,6 @@ const ManageAdmins = () => {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${
                           admin.admin_type === "SuperAdmin" 
                           ? "bg-amber-50 text-amber-600 border border-amber-100" 
-                          : admin.admin_type === "builderAdmin"
-                          ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
                           : "bg-sky-50 text-sky-600 border border-sky-100"
                         }`}>
                           {admin.name.charAt(0)}
@@ -227,8 +225,6 @@ const ManageAdmins = () => {
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border transition-colors ${
                         admin.admin_type === "SuperAdmin" 
                         ? "bg-amber-50 text-amber-600 border-amber-100" 
-                        : admin.admin_type === "builderAdmin"
-                        ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
                         : "bg-sky-50 text-sky-600 border-sky-100"
                       }`}>
                         <Shield className="w-3 h-3" />

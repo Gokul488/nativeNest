@@ -50,6 +50,9 @@ const BuilderEvents = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const isBuilder = user.builder_type === "Builder";
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -231,7 +234,7 @@ const BuilderEvents = () => {
                     </th>
                     <th className="w-1/4 px-6 py-4 text-left">Schedule</th>
                     <th className="w-24 px-4 py-4 text-center">Visitors</th>
-                    {!isCompleted && <th className="w-32 px-6 py-4 text-center">Book Stall</th>}
+                    {!isCompleted && !isBuilder && <th className="w-32 px-6 py-4 text-center">Book Stall</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -278,7 +281,7 @@ const BuilderEvents = () => {
                             <Users size={18} />
                           </Link>
                         </td>
-                        {!isCompleted && (
+                        {!isCompleted && !isBuilder && (
                           <td className="px-6 py-4 text-center">
                             <Link
                               to={`/builder-dashboard/stall-booking/${event.id}`}
@@ -348,7 +351,7 @@ const BuilderEvents = () => {
                       >
                         <Users size={14} /> Visitors
                       </Link>
-                      {!isCompleted && (
+                      {!isCompleted && !isBuilder && (
                         <Link
                           to={`/builder-dashboard/stall-booking/${event.id}`}
                           className="flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-indigo-100 active:scale-[0.98] transition-all"

@@ -17,8 +17,10 @@ import {
   Users,
   Edit2,
   CheckCircle,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
+import DeleteDialog from "../DeleteDialog";
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -29,6 +31,10 @@ const ManageUsers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const navigate = useNavigate();
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -94,6 +100,31 @@ const ManageUsers = () => {
     ) : (
       <ChevronDown className="ml-1.5 w-3.5 h-3.5 text-indigo-500" />
     );
+  };
+
+  const handleDeleteClick = (userId) => {
+    setUserToDelete(userId);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    setDeletingId(userToDelete);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API_BASE_URL}/api/admin/users/${userToDelete}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete));
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to delete user.");
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -242,6 +273,14 @@ const ManageUsers = () => {
                               >
                                 <Edit2 className="w-4 h-4" />
                               </button>
+                              <button
+                                onClick={() => handleDeleteClick(user.id)}
+                                disabled={deletingId === user.id}
+                                className={`p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all shadow-sm ${deletingId === user.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                title="Delete User"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </td>
                       </tr>
@@ -287,13 +326,23 @@ const ManageUsers = () => {
                         <span className="font-medium text-slate-600 truncate">{user.email || "—"}</span>
                       </div>
                       
-                      <button
-                        onClick={() => navigate(`/admin-dashboard/manage-users/edit/${user.id}`)}
-                        className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-100 active:scale-95 transition-all"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        Edit Buyer Profile
-                      </button>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => navigate(`/admin-dashboard/manage-users/edit/${user.id}`)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-100 active:scale-95 transition-all"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(user.id)}
+                          disabled={deletingId === user.id}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 rounded-xl text-xs font-bold active:scale-95 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -310,6 +359,13 @@ const ManageUsers = () => {
           </div>
         )}
       </div>
+      <DeleteDialog
+        isOpen={showDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        title="Delete User?"
+        message="Are you sure you want to delete this user? This will also remove all their bookmarks, event registrations, and interest data. This action cannot be undone."
+      />
     </div>
   );
 };

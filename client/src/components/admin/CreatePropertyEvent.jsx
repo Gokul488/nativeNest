@@ -144,12 +144,12 @@ const CreatePropertyEvent = () => {
       const token = localStorage.getItem("token");
       if (!token) { navigate("/login"); return; }
       const data = new FormData();
-      for (const key in formData) { 
+      for (const key in formData) {
         if (key === "contact_phone") {
           data.append(key, `${countryCode}${formData[key]}`);
           continue;
         }
-        data.append(key, formData[key]); 
+        data.append(key, formData[key]);
       }
       data.append("selected_builders", JSON.stringify(selectedBuilderIds));
       data.append("selected_buyers", JSON.stringify(selectedBuyerIds));
@@ -273,13 +273,13 @@ const CreatePropertyEvent = () => {
               </div>
               <div>
                 <label className={labelCls}>End Time</label>
-                <input 
-                  type="time" 
-                  name="end_time" 
-                  value={formData.end_time} 
-                  onChange={handleChange} 
+                <input
+                  type="time"
+                  name="end_time"
+                  value={formData.end_time}
+                  onChange={handleChange}
                   min={formData.start_date === formData.end_date ? formData.start_time : ""}
-                  className={inputCls} 
+                  className={inputCls}
                 />
               </div>
             </div>
@@ -335,7 +335,7 @@ const CreatePropertyEvent = () => {
             <div className="flex flex-wrap items-center gap-4">
               <label className="flex items-center justify-center gap-2 px-4 h-10 border border-slate-200 rounded-lg cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group shrink-0 shadow-sm">
                 <CloudUpload className="w-4 h-4 text-slate-400 group-hover:text-sky-500 transition-colors" />
-                <span className="text-[11px] font-bold text-slate-600 group-hover:text-sky-600">Upload Banner</span>
+                <span className="text-[11px] font-bold text-slate-600 group-hover:text-sky-600">Upload image</span>
                 <input type="file" className="hidden" accept="image/*" onChange={handleBannerImageChange} />
               </label>
               {previewUrl ? (

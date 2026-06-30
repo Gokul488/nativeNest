@@ -20,7 +20,7 @@ const teamMembers = [
   {
     name: "Emily Johnson",
     role: "Head of Customer Success",
-    img: "https://images.unsplash.com/photo-1573496359142-b8d877c828f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    img: "/emily_johnson.png",
     bio: "Emily ensures every user has a smooth experience, from browsing to closing deals.",
   },
 ];
@@ -169,7 +169,7 @@ const AboutUs = () => {
                 Whether you're buying, selling, or renting — we make your journey effortless and exciting.
               </p>
               <Link
-                to="/register"
+                to="/login"
                 className="inline-flex items-center gap-3 bg-white text-[#2e6171] px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
               >
                 Get Started Today

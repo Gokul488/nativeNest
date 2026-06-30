@@ -137,22 +137,12 @@ const getWhatsappAdmin = async (req, res) => {
 
     const sendToBuilder = settings.length > 0 ? (settings[0].setting_value === 'true') : false;
 
-    // Fetch the builderAdmin details if they exist
-    const [builderAdminRows] = await pool.query(
-      `SELECT name, mobile_number
-       FROM admins
-       WHERE admin_type = 'builderAdmin'
-       LIMIT 1`
-    );
-
-    const builderAdmin = builderAdminRows.length > 0 ? builderAdminRows[0] : null;
-
     res.json({
       name: rows[0].name,
       mobile_number: rows[0].mobile_number,
       whatsapp_send_to_builder: sendToBuilder,
-      builder_admin_name: builderAdmin ? builderAdmin.name : null,
-      builder_admin_mobile: builderAdmin ? builderAdmin.mobile_number : null
+      builder_admin_name: null,
+      builder_admin_mobile: null
     });
   } catch (error) {
     console.error("WhatsApp admin fetch error:", error);
@@ -305,11 +295,12 @@ const getAllBuilders = async (req, res) => {
 
     const [builders] = await pool.query(
       `SELECT 
-        b.id, b.name, b.contact_person, b.mobile_number, b.email, b.created_at, b.team_members,
+        b.id, b.name, b.contact_person, b.mobile_number, b.email, b.created_at,
+        b.contact_person_2, b.email_2, b.mobile_number_2,
         COUNT(p.property_id) AS total_properties
        FROM builders b
        LEFT JOIN properties p ON p.builder_id = b.id
-       GROUP BY b.id, b.name, b.contact_person, b.mobile_number, b.email, b.team_members, b.created_at
+       GROUP BY b.id, b.name, b.contact_person, b.mobile_number, b.email, b.contact_person_2, b.email_2, b.mobile_number_2, b.created_at
        ORDER BY b.created_at DESC`
     );
 
@@ -441,7 +432,7 @@ const createAdmin = async (req, res) => {
     }
 
     const finalAdminType = admin_type || "Admin";
-    if (!["Admin", "SuperAdmin", "builderAdmin"].includes(finalAdminType)) {
+    if (!["Admin", "SuperAdmin"].includes(finalAdminType)) {
       return res.status(400).json({ error: "Invalid admin type" });
     }
 
@@ -463,13 +454,7 @@ const createAdmin = async (req, res) => {
       [name, mobile_number, email, hashedPassword, finalAdminType]
     );
 
-    if (finalAdminType === "builderAdmin") {
-      // Also insert into builders table to ensure database schema compatibility
-      await pool.query(
-        "INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type) VALUES (?, 'Admin', ?, ?, ?, 'BuilderAdmin')",
-        [name, mobile_number, email || null, hashedPassword]
-      );
-    }
+
 
     res.status(201).json({ message: "Admin created successfully" });
   } catch (error) {
@@ -536,13 +521,7 @@ const deleteAdmin = async (req, res) => {
       return res.status(400).json({ error: "You cannot delete yourself" });
     }
 
-    // Get old admin details for syncing/cleanup
-    const [oldAdmins] = await pool.query("SELECT email, mobile_number, admin_type FROM admins WHERE id = ?", [adminId]);
-    if (oldAdmins.length > 0 && oldAdmins[0].admin_type === "builderAdmin") {
-      const mobileVariations = getMobileVariations(oldAdmins[0].mobile_number);
-      // Delete the corresponding builder from builders table
-      await pool.query("DELETE FROM builders WHERE mobile_number IN (?) OR email = ?", [mobileVariations, oldAdmins[0].email || '']);
-    }
+
 
     await pool.query("DELETE FROM admins WHERE id = ?", [adminId]);
 
@@ -610,7 +589,7 @@ const updateSpecificAdmin = async (req, res) => {
       return res.status(400).json({ error: "Name, email, mobile number and admin type are required" });
     }
 
-    if (!["Admin", "SuperAdmin", "builderAdmin"].includes(admin_type)) {
+    if (!["Admin", "SuperAdmin"].includes(admin_type)) {
       return res.status(400).json({ error: "Invalid admin type" });
     }
 
@@ -650,35 +629,7 @@ const updateSpecificAdmin = async (req, res) => {
 
     await pool.query(query, params);
 
-    // Sync with builders table
-    const oldMobileVariations = getMobileVariations(oldAdmin.mobile_number);
-    if (admin_type === "builderAdmin") {
-      const newMobileVariations = getMobileVariations(mobile_number);
-      const [existingBuilders] = await pool.query(
-        "SELECT id FROM builders WHERE mobile_number IN (?) OR email = ? OR mobile_number IN (?) OR email = ?",
-        [oldMobileVariations, oldAdmin.email || '', newMobileVariations, email || '']
-      );
 
-      const finalPassword = hashedPassword || oldAdmin.password;
-
-      if (existingBuilders.length > 0) {
-        await pool.query(
-          "UPDATE builders SET name = ?, email = ?, mobile_number = ?, password = ?, builder_type = ? WHERE id = ?",
-          [name, email, mobile_number, finalPassword, "BuilderAdmin", existingBuilders[0].id]
-        );
-      } else {
-        await pool.query(
-          "INSERT INTO builders (name, contact_person, mobile_number, email, password, builder_type) VALUES (?, 'Admin', ?, ?, ?, 'BuilderAdmin')",
-          [name, mobile_number, email || null, finalPassword]
-        );
-      }
-    } else if (oldAdmin.admin_type === "builderAdmin") {
-      // Demote the builder if they were a builderAdmin before but aren't anymore
-      await pool.query(
-        "UPDATE builders SET builder_type = 'Builder' WHERE mobile_number IN (?) OR email = ?",
-        [oldMobileVariations, oldAdmin.email || '']
-      );
-    }
 
     res.json({ message: "Admin updated successfully" });
 
@@ -750,6 +701,62 @@ const updateSettings = async (req, res) => {
   }
 };
 
+/* =========================
+   ADMIN: DELETE USER (BUYER)
+========================= */
+const deleteUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.account_type !== "admin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { userId } = req.params;
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // 1. Delete user bookmarks
+      await connection.query("DELETE FROM bookmarks WHERE buyer_id = ?", [userId]);
+
+      // 2. Delete user event participations
+      await connection.query("DELETE FROM event_participants WHERE buyer_id = ?", [userId]);
+
+      // 3. Delete user stall interest registrations
+      await connection.query("DELETE FROM buyer_stall_interest WHERE buyer_id = ?", [userId]);
+
+      // 4. Delete user property views
+      await connection.query("DELETE FROM property_views WHERE buyer_id = ?", [userId]);
+
+      // 5. Update property sales to nullify buyer_id (keeping the audit log record with plain text name/email/phone)
+      await connection.query("UPDATE property_sales SET buyer_id = NULL WHERE buyer_id = ?", [userId]);
+
+      // 6. Delete user from buyers table
+      const [result] = await connection.query("DELETE FROM buyers WHERE id = ?", [userId]);
+
+      if (result.affectedRows === 0) {
+        await connection.rollback();
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await connection.commit();
+      res.json({ message: "User deleted successfully" });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error("Delete user error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getAdminDetails,
   updateAdminDetails,
@@ -767,5 +774,6 @@ module.exports = {
   getSpecificAdmin,
   updateSpecificAdmin,
   getSettings,
-  updateSettings
+  updateSettings,
+  deleteUser
 };

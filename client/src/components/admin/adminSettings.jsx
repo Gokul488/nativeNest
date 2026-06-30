@@ -128,7 +128,7 @@ const AdminSettings = () => {
                 <div>
                   <h4 className="text-sm font-bold text-slate-800">Route WhatsApp Messages to Builder</h4>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    When enabled, "I'm Interested" button clicks on the property detail pages will open chat windows to both the <strong>SuperAdmin</strong> and the <strong>builderAdmin</strong> (who posted the listing). If disabled, it opens to the SuperAdmin only.
+                    When enabled, "I'm Interested" button clicks on the property detail pages will open chat windows to both the <strong>SuperAdmin</strong> and the <strong>builder</strong> (who posted the listing). If disabled, it opens to the SuperAdmin only.
                   </p>
                 </div>
               </div>

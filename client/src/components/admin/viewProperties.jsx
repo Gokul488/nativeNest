@@ -21,6 +21,8 @@ const ViewProperties = () => {
   const itemsPerPage = 10;
 
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const isSuperAdmin = user.admin_type === 'SuperAdmin';
 
   // Sync builderFilter from navigation state (e.g. clicking a builder from admin dashboard)
   useEffect(() => {
@@ -200,7 +202,7 @@ const ViewProperties = () => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px]">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-100 flex flex-col gap-2 bg-white sticky top-0 z-10">
+      <div className="px-5 py-3 border-b border-slate-100 flex flex-col gap-2 bg-white sticky top-0 z-10">
         {/* Single row: Search + Builder Filter + Actions + Count */}
         <div className="flex items-center gap-2 w-full flex-wrap">
           {/* Text Search (title / city) */}
@@ -250,12 +252,14 @@ const ViewProperties = () => {
           </div>
 
           {/* Action Buttons */}
-          <Link
-            to="/admin-dashboard/sold-properties"
-            className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm shrink-0"
-          >
-            <FaHistory /> Sold Properties
-          </Link>
+          {isSuperAdmin && (
+            <Link
+              to="/admin-dashboard/sold-properties"
+              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm shrink-0"
+            >
+              <FaHistory /> Sold Properties
+            </Link>
+          )}
           <Link
             to="/admin-dashboard/manage-properties/add"
             className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-full font-semibold transition-all shadow-sm active:scale-95 text-sm shrink-0"
@@ -336,12 +340,12 @@ const ViewProperties = () => {
               <table className="w-full">
                 <thead>
                   <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                    <th className="w-[5%] px-4 py-5 text-left text-xs">S.No</th>
-                    <th className="w-[35%] px-4 py-5 text-left text-xs">Property Details</th>
-                    <th className="w-[25%] px-4 py-5 text-left text-xs whitespace-nowrap">Builder</th>
-                    <th className="w-[10%] px-4 py-5 text-center text-xs">Qty</th>
-                    <th className="w-[10%] px-4 py-5 text-center text-xs">Sold</th>
-                    <th className="w-[15%] px-4 py-5 text-center text-xs">Actions</th>
+                    <th className="w-[5%] px-4 py-3 text-left text-xs">S.No</th>
+                    <th className="w-[35%] px-4 py-3 text-left text-xs">Property Details</th>
+                    <th className="w-[25%] px-4 py-3 text-left text-xs whitespace-nowrap">Builder</th>
+                    <th className="w-[10%] px-4 py-3 text-center text-xs">Qty</th>
+                    <th className="w-[10%] px-4 py-3 text-center text-xs">Sold</th>
+                    <th className="w-[15%] px-4 py-3 text-center text-xs">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">

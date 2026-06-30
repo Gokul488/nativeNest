@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import {
   LayoutDashboard, Building2, CalendarDays, Settings, LogOut, Menu, User, Loader2,
-  Flame, PlusCircle, ArrowRight, TrendingUp, Sparkles
+  Flame, PlusCircle, ArrowRight, TrendingUp, Sparkles, HardHat
 } from "lucide-react";
 import { isAfter, isBefore, addDays } from "date-fns";
 import API_BASE_URL from "../../config.js";
@@ -108,8 +108,8 @@ const BuilderDashboard = () => {
   const navLinks = [
     { to: "/builder-dashboard/", label: "Summary", icon: <LayoutDashboard className="w-5 h-5" /> },
     { to: "/builder-dashboard/my-properties", label: "My Properties", icon: <Building2 className="w-5 h-5" /> },
-    { to: "/builder-dashboard/events", label: "Event Stalls", icon: <CalendarDays className="w-5 h-5" /> },
-    ...(user.builder_type === "BuilderAdmin" ? [{ to: "/builder-dashboard/manage-builders", label: "Manage Builders", icon: <User className="w-5 h-5" /> }] : []),
+    { to: "/builder-dashboard/events", label: "Event List", icon: <CalendarDays className="w-5 h-5" /> },
+    ...(user.builder_type !== "Builder" ? [{ to: "/builder-dashboard/manage-builders", label: "Manage Builders", icon: <HardHat className="w-5 h-5" /> }] : []),
     { to: "/builder-dashboard/profile-settings", label: "Profile Settings", icon: <Settings className="w-5 h-5" /> },
   ];
 
@@ -121,8 +121,7 @@ const BuilderDashboard = () => {
     { match: /\/event-bookings\//, label: "Booked Stalls", icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/interests/, label: "Stall Interests", icon: <CalendarDays className="w-5 h-5" /> },
     { match: /\/property-preview\//, label: "Property Preview", icon: <Building2 className="w-5 h-5" /> },
-    { match: /\/manage-builders\/create/, label: "Create Builder", icon: <User className="w-5 h-5" /> },
-    { match: /\/manage-builders/, label: "Manage Builders", icon: <User className="w-5 h-5" /> },
+    { match: /\/manage-builders\/create/, label: "Createbuilder", icon: <HardHat className="w-5 h-5" /> },
   ];
 
   const activePage = (() => {
@@ -225,8 +224,8 @@ const BuilderDashboard = () => {
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden md:flex flex-col items-end mr-2">
-              <span className="text-sm font-bold text-slate-700 leading-none">Welcome, {user.name || "Builder"}</span>
-              <span className="text-[10px] font-bold text-sky-500 uppercase tracking-tighter mt-1">{user.builder_type || 'Builder'}</span>
+              <span className="text-sm font-bold text-slate-700 leading-none">Welcome, {user.name || "Createbuilder"}</span>
+              <span className="text-[10px] font-bold text-sky-500 uppercase tracking-tighter mt-1">{user.builder_type || 'BuilderAdmin'}</span>
             </div>
             <div className="w-10 h-10 bg-sky-50 rounded-full border-2 border-sky-100 flex items-center justify-center text-sky-500 shadow-sm">
               <User className="w-6 h-6" />
@@ -234,7 +233,7 @@ const BuilderDashboard = () => {
           </div>
         </header>
 
-        <main className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex-1">
+        <main className="p-5 md:p-6 max-w-[1600px] mx-auto w-full flex-1">
           <Routes>
             <Route path="/" element={
               <div className="space-y-8 animate-in fade-in duration-500">

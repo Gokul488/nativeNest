@@ -455,7 +455,7 @@ const PostProperty = () => {
   const customStyles = {
     control: (p) => ({
       ...p,
-      minHeight: 40,
+      minHeight: 36,
       borderColor: "#e2e8f0",
       borderRadius: "0.75rem",
       backgroundColor: "#f8fafc",
@@ -497,9 +497,9 @@ const PostProperty = () => {
 
   // ── Shared input class ────────────────────────────────────────
   const inputCls =
-    "w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400";
+    "w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all text-sm font-medium text-slate-700 placeholder:text-slate-400";
 
-  const labelCls = "block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5";
+  const labelCls = "block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1";
 
   // ── Render ────────────────────────────────────────────────────
   return (
@@ -508,11 +508,11 @@ const PostProperty = () => {
       style={{ fontFamily: '"Inter", sans-serif' }}
     >
       {/* ── Header ── */}
-      <div className="px-8 py-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="px-6 py-4 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex items-center gap-3">
           <Link
             to={backPath}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all duration-200"
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -528,7 +528,7 @@ const PostProperty = () => {
       </div>
 
       {/* ── Body ── */}
-      <div className="p-6 lg:p-8 max-w-5xl mx-auto w-full">
+      <div className="p-4 lg:p-5 max-w-5xl mx-auto w-full">
 
         {/* Alerts */}
         {error && (
@@ -544,7 +544,7 @@ const PostProperty = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
 
           {/* ── Section: Basic Info ──────────────────────────── */}
           <SectionCard icon={<Tag className="w-4 h-4 text-sky-500" />} title="Basic Information">
@@ -623,7 +623,7 @@ const PostProperty = () => {
 
             {/* Price / Sqft / Qty — non-apartment and non-villa */}
             {formData.property_type !== "Apartment" && formData.property_type !== "Villas" && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className={labelCls}>Price (₹) <span className="text-red-400">*</span></label>
                   <input
@@ -772,7 +772,7 @@ const PostProperty = () => {
                 <span className="text-emerald-500">Apartment Type</span>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {blocks.map((block) => (
                   <div
                     key={block.id}
@@ -1024,7 +1024,7 @@ const PostProperty = () => {
 
           {/* ── Section: Location ────────────────────────────── */}
           <SectionCard icon={<MapPin className="w-4 h-4 text-sky-500" />} title="Location Details">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Address <span className="text-red-400">*</span></label>
                 <input
@@ -1050,7 +1050,7 @@ const PostProperty = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>State <span className="text-red-400">*</span></label>
                 <input
@@ -1162,7 +1162,7 @@ const PostProperty = () => {
                   <div className="flex flex-wrap items-center gap-4">
                     <label className="flex items-center justify-center gap-2 px-4 h-10 border border-slate-200 rounded-lg cursor-pointer bg-white hover:bg-sky-50 hover:border-sky-400 transition-all group shrink-0 shadow-sm">
                       <CloudUpload className="w-4 h-4 text-slate-400 group-hover:text-sky-500 transition-colors" />
-                      <span className="text-[11px] font-bold text-slate-600 group-hover:text-sky-600">Upload Cover</span>
+                      <span className="text-[11px] font-bold text-slate-600 group-hover:text-sky-600">Upload </span>
                       <input type="file" accept="image/*" className="hidden" onChange={handleCoverImageChange} />
                     </label>
                     {coverPreview ? (
@@ -1176,7 +1176,7 @@ const PostProperty = () => {
                       </div>
                     ) : (
                       <div className="w-full max-w-[400px] h-32 rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-[10px] italic bg-slate-50/50 shrink-0">
-                        No cover selected
+                        No cover image selected
                       </div>
                     )}
                   </div>
@@ -1307,7 +1307,7 @@ const PostProperty = () => {
 // ─── Section Card sub-component ───────────────────────────────────────────────
 const SectionCard = ({ icon, title, action, children }) => (
   <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_2px_8px_rgba(15,23,42,0.04)] overflow-hidden">
-    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+    <div className="px-5 py-2.5 border-b border-slate-100 flex items-center justify-between">
       <div className="flex items-center gap-2.5">
         <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
           {icon}
@@ -1316,7 +1316,7 @@ const SectionCard = ({ icon, title, action, children }) => (
       </div>
       {action && <div>{action}</div>}
     </div>
-    <div className="p-6 space-y-5">
+    <div className="p-4 space-y-3">
       {children}
     </div>
   </div>

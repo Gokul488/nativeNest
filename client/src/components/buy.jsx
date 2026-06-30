@@ -94,9 +94,9 @@ const Buy = () => {
           return newSet;
         });
         if (!wasBookmarked) {
-          showToast(`The property has been bookmarked!`, 'success', () => navigate('/buyer-dashboard/bookmarks'));
+          showToast(`The property has been Liked!`, 'success', () => navigate('/buyer-dashboard/bookmarks'));
         } else {
-          showToast(`"${propertyTitle}" removed from bookmarks.`, 'info');
+          showToast(`"${propertyTitle}" Unliked ".`, 'info');
         }
       } else {
         showToast('Failed to update bookmark.', 'error');
@@ -300,7 +300,7 @@ const Buy = () => {
     setSelectedMaxPrice(Math.min(maxPrice, Math.max(val, selectedMinPrice, 0)));
   };
 
-  const handleMinPriceBlur = () => { 
+  const handleMinPriceBlur = () => {
     if (selectedMinPrice > selectedMaxPrice) {
       setSelectedMinPrice(selectedMaxPrice);
       updateFiltersAndNavigate({ minPrice: selectedMaxPrice });
@@ -308,7 +308,7 @@ const Buy = () => {
       updateFiltersAndNavigate({ minPrice: selectedMinPrice });
     }
   };
-  const handleMaxPriceBlur = () => { 
+  const handleMaxPriceBlur = () => {
     if (selectedMaxPrice < selectedMinPrice) {
       setSelectedMaxPrice(selectedMinPrice);
       updateFiltersAndNavigate({ maxPrice: selectedMinPrice });
@@ -491,14 +491,14 @@ const Buy = () => {
                       />
                     </div>
                   </div>
-                    <button
-                      type="button"
-                      onClick={resetFilters}
-                      className="bg-gray-100 text-[#011936] h-12 w-12 rounded-xl font-semibold hover:bg-gray-200 transition duration-300 shadow-sm flex items-center justify-center text-sm shrink-0"
-                      aria-label="Reset all filters"
-                    >
-                      <i className="fa-solid fa-rotate-right text-lg"></i>
-                    </button>
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="bg-gray-100 text-[#011936] h-12 w-12 rounded-xl font-semibold hover:bg-gray-200 transition duration-300 shadow-sm flex items-center justify-center text-sm shrink-0"
+                    aria-label="Reset all filters"
+                  >
+                    <i className="fa-solid fa-rotate-right text-lg"></i>
+                  </button>
                 </div>
               </div>
             </form>
@@ -659,7 +659,7 @@ const Buy = () => {
                 <h2 className="text-xl font-bold">Connection Issue</h2>
               </div>
               <p className="mb-4 text-sm font-medium opacity-90">{propertyError}</p>
-              
+
               {/* This will show the exact backend error details if available */}
               <button
                 onClick={() => window.location.reload()}
